@@ -148,18 +148,23 @@ class GlobalStateManager {
     /**
      * Update user profile
      * @param {Object} updates - Partial profile updates
+     * @param {boolean} silent - If true, skip emitting change events (to prevent sync loops)
      */
-    updateProfile(updates) {
+    updateProfile(updates, silent = false) {
         this.userProfile = {
             ...this.userProfile,
             ...updates
         };
 
         this._saveToStorage();
-        this._emitChange('profile', this.userProfile);
+        
+        // Only emit events if not a silent update
+        if (!silent) {
+            this._emitChange('profile', this.userProfile);
 
-        if (this.onProfileUpdate) {
-            this.onProfileUpdate(this.userProfile);
+            if (this.onProfileUpdate) {
+                this.onProfileUpdate(this.userProfile);
+            }
         }
     }
 

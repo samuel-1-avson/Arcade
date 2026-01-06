@@ -18,6 +18,11 @@ class UserAccountService {
         this.syncStatus = 'idle'; // 'idle' | 'syncing' | 'synced' | 'error' | 'offline'
         this.pendingSync = null;
         this.initialized = false;
+        
+        // Prevent infinite sync loops
+        this._isSyncing = false;
+        this._lastSyncTime = 0;
+        this._syncDebounceMs = 2000; // Minimum 2 seconds between syncs
     }
 
     /**
@@ -292,12 +297,20 @@ class UserAccountService {
             this.syncStatus = 'synced';
             this.emitSyncStatus();
             eventBus.emit('profileSyncedFromCloud', cloudData);
-        } else if (localLastModified > cloudLastModified) {
-            // Local is newer - push to cloud
+        } else if (localLastModified > cloudLastModified && !this._isSyncing) {
+            // Local is newer - push to cloud (with debounce)
+            const now = Date.now();
+            if (now - this._lastSyncTime < this._syncDebounceMs) {
+                // Too soon, skip this sync cycle
+                this.syncStatus = 'synced';
+                this.emitSyncStatus();
+                return;
+            }
             console.log('[UserAccountService] Local data is newer, pushing to cloud...');
+            this._lastSyncTime = now;
             this.performCloudSave();
         } else {
-            // Same timestamp - already synced
+            // Same timestamp or already syncing - already synced
             this.syncStatus = 'synced';
             this.emitSyncStatus();
         }
@@ -357,11 +370,18 @@ class UserAccountService {
      */
     async performCloudSave(retryCount = 0) {
         if (!this.currentUser || !firebaseService.db) return;
+        
+        // Prevent re-entrant calls
+        if (this._isSyncing) {
+            console.log('[UserAccountService] Sync already in progress, skipping');
+            return;
+        }
 
         const MAX_RETRIES = 3;
         const BASE_DELAY = 1000; // 1 second
 
         try {
+            this._isSyncing = true;
             this.syncStatus = 'syncing';
             this.emitSyncStatus();
 
@@ -388,8 +408,8 @@ class UserAccountService {
                 localModifiedAt: now // Client timestamp for conflict resolution
             });
 
-            // Update local lastModified
-            globalStateManager.updateProfile({ lastModified: now });
+            // Update local lastModified WITHOUT triggering another sync
+            globalStateManager.updateProfile({ lastModified: now }, true); // silent update
 
             this.syncStatus = 'synced';
             this.emitSyncStatus();
@@ -402,6 +422,7 @@ class UserAccountService {
                 const delay = BASE_DELAY * Math.pow(2, retryCount);
                 console.log(`[UserAccountService] Retrying in ${delay}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
                 
+                this._isSyncing = false; // Reset flag before retry
                 setTimeout(() => {
                     this.performCloudSave(retryCount + 1);
                 }, delay);
@@ -415,6 +436,9 @@ class UserAccountService {
                 // Queue for offline save after all retries exhausted
                 this.queueOfflineSave();
             }
+        } finally {
+            // Always reset sync flag after operation completes
+            this._isSyncing = false;
         }
     }
 
