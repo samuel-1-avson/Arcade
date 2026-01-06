@@ -13,7 +13,7 @@
  *     }
  *     
  *     onGameStart() { this.game.startMultiplayerGame(); }
- *     onGameAction(action) { /* handle remote actions */ }
+ *     onGameAction(action) { ... }
  * }
  */
 
