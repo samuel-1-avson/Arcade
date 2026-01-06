@@ -4,7 +4,7 @@
  */
 
 import { ICONS } from './Icons.js';
-import { BRICK_TYPES } from './BrickTypes.js';
+import { BRICK_TYPES, Brick } from './BrickTypes.js';
 
 // Map configuration constants
 const CONFIG = {
@@ -469,32 +469,22 @@ export class LevelMapManager {
             const x = CONFIG.offsetLeft + data.col * (CONFIG.brickWidth + CONFIG.brickPadding);
             const y = CONFIG.offsetTop + data.row * (CONFIG.brickHeight + CONFIG.brickPadding);
             
-            const brick = {
+            // Create Brick instance
+            const brick = new Brick(
                 x, y,
-                baseX: x,
-                baseY: y,
-                width: CONFIG.brickWidth,
-                height: CONFIG.brickHeight,
-                typeId: data.type,
-                type: BRICK_TYPES[data.type] || BRICK_TYPES.NORMAL,
-                row: data.row,
-                col: data.col,
-                alive: true,
-                hits: (BRICK_TYPES[data.type] || BRICK_TYPES.NORMAL).hits,
-                maxHits: (BRICK_TYPES[data.type] || BRICK_TYPES.NORMAL).hits,
-                points: (BRICK_TYPES[data.type] || BRICK_TYPES.NORMAL).points,
-                movement: data.movement,
-                // Movement state
-                angle: data.movement?.startAngle || 0,
-                direction: 1,
-                visible: true,
-                phaseTimer: 0,
-                regenTimer: 0,
-                wasDestroyed: false,
-                rainbowHue: 0
-            };
+                CONFIG.brickWidth,
+                CONFIG.brickHeight,
+                data.type,
+                data.row
+            );
+
+            // Assign extra properties
+            brick.col = data.col;
+            brick.movement = data.movement;
+            brick.angle = data.movement?.startAngle || 0;
+            brick.randomTarget = null;
             
-            // Set color
+            // Set color (Brick constructor sets basic color, but we might overlap)
             this.updateBrickColor(brick);
             
             bricks.push(brick);
