@@ -1,0 +1,132 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function isValidScore() {
+      return request.resource.data.score is number 
+        && request.resource.data.score >= 0
+        && request.resource.data.gameId is string;
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      // Users can read their own profile
+      allow read: if isSignedIn() && isOwner(userId);
+      
+      // Users can create their own profile
+      allow create: if isSignedIn() && isOwner(userId);
+      
+      // Users can update their own profile
+      allow update: if isSignedIn() && isOwner(userId);
+      
+      // No delete (soft delete only via admin)
+      allow delete: if false;
+      
+      // Achievements subcollection
+      match /achievements/{achievementId} {
+        allow read: if isSignedIn() && isOwner(userId);
+        allow write: if isSignedIn() && isOwner(userId);
+      }
+      
+      // Game stats subcollection
+      match /gameStats/{gameId} {
+        allow read: if isSignedIn() && isOwner(userId);
+        allow write: if isSignedIn() && isOwner(userId);
+      }
+    }
+    
+    // Scores collection
+    match /scores/{scoreId} {
+      // Anyone signed in can read scores (for leaderboards)
+      allow read: if isSignedIn();
+      
+      // Users can only submit their own scores
+      allow create: if isSignedIn() 
+        && request.resource.data.userId == request.auth.uid
+        && isValidScore();
+      
+      // Only Cloud Functions can update (for verification)
+      allow update: if false;
+      allow delete: if false;
+    }
+    
+    // Leaderboards collection (aggregated, read-only)
+    match /leaderboards/{gameId} {
+      allow read: if true; // Public read
+      allow write: if false; // Only Cloud Functions
+    }
+    
+    // Analytics collection
+    match /analytics/{eventId} {
+      // Users can submit analytics events
+      allow create: if isSignedIn();
+      allow read, update, delete: if false; // Cloud Functions only
+    }
+    
+    // Analytics counters (read by admins only)
+    match /analytics_counters/{dateId} {
+      allow read, write: if false; // Cloud Functions only
+    }
+    
+    // Analytics daily rollups
+    match /analytics_daily/{dateId} {
+      allow read, write: if false; // Cloud Functions only
+    }
+    
+    // Processed analytics
+    match /analytics_processed/{dateId}/events/{eventId} {
+      allow read, write: if false; // Cloud Functions only
+    }
+    
+    // Tournaments
+    match /tournaments/{tournamentId} {
+      // Anyone can read tournaments
+      allow read: if true;
+      
+      // Only signed in users can create
+      allow create: if isSignedIn();
+      
+      // Participants can update (join)
+      allow update: if isSignedIn();
+      
+      allow delete: if false;
+      
+      // Tournament scores
+      match /scores/{scoreId} {
+        allow read: if true;
+        allow create: if isSignedIn() 
+          && request.resource.data.userId == request.auth.uid;
+        allow update, delete: if false;
+      }
+    }
+    
+    // Tournament scores (global collection)
+    match /tournament_scores/{scoreId} {
+      allow read: if true;
+      allow create: if isSignedIn() 
+        && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
+    }
+    
+    // Challenges
+    match /challenges/{type}/{challengeId} {
+      allow read: if true;
+      allow write: if false; // Admin/Cloud Functions only
+    }
+    
+    // Global stats (public read)
+    match /stats/{statId} {
+      allow read: if true;
+      allow write: if false; // Cloud Functions only
+    }
+  }
+}

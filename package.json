@@ -1,0 +1,31 @@
+{
+  "name": "arcade-hub",
+  "version": "1.5.0",
+  "description": "A retro-futuristic arcade game hub with SPA architecture",
+  "main": "js/app.js",
+  "type": "module",
+  "scripts": {
+    "start": "serve .",
+    "dev": "serve .",
+    "build": "echo \"No build step required for vanilla JS\" && exit 0",
+    "lint": "eslint js/**/*.js",
+    "format": "prettier --write \"**/*.{js,css,html}\""
+  },
+  "keywords": [
+    "game",
+    "arcade",
+    "javascript",
+    "retro",
+    "spa"
+  ],
+  "author": "Antigravity",
+  "license": "MIT",
+  "dependencies": {
+    "three": "^0.182.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0",
+    "prettier": "^3.2.0",
+    "serve": "^14.2.0"
+  }
+}

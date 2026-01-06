@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Play Platformer - Jump and run through levels!">
+    <title>🏃 Platformer | Arcade Hub</title>
+    
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="platformer.css">
+    
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏃</text></svg>">
+</head>
+<body>
+    <div class="game-wrapper">
+        <header class="game-header">
+            <div class="game-header-left">
+                <a href="../../index.html" class="back-btn">
+                    <span>←</span>
+                    <span>Back</span>
+                </a>
+                <h1 class="game-title">🏃 Platformer</h1>
+            </div>
+            
+            <div class="game-header-center">
+                <div class="level-display">
+                    <div class="level-label">Level</div>
+                    <div class="level-value">1</div>
+                </div>
+                <div class="coins-display">
+                    <div class="coins-label">Coins</div>
+                    <div class="coins-value">🪙 0</div>
+                </div>
+                <div class="lives-display">
+                    <div class="lives-label">Lives</div>
+                    <div class="lives-value">❤️❤️❤️</div>
+                </div>
+            </div>
+            
+            <div class="game-header-right">
+                <button class="icon-btn" id="pause-btn" title="Pause">⏸️</button>
+                <button class="icon-btn" id="restart-btn" title="Restart">🔄</button>
+            </div>
+        </header>
+
+        <main class="game-container">
+            <div class="canvas-wrapper platformer-canvas">
+                <canvas id="game-canvas" width="800" height="400"></canvas>
+                
+                <div class="game-overlay" id="game-overlay">
+                    <h2 class="overlay-title">PLATFORMER</h2>
+                    <p class="overlay-message">Collect coins and reach the flag!</p>
+                    <div class="overlay-buttons">
+                        <button class="btn btn-primary" id="start-btn">▶ Play</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="controls-hint">
+                <div class="control-key">
+                    <span class="key">←</span><span class="key">→</span>
+                    <span>Move</span>
+                </div>
+                <div class="control-key">
+                    <span class="key">SPACE</span>
+                    <span>Jump</span>
+                </div>
+                <div class="control-key">
+                    <span class="key">↓</span>
+                    <span>Drop Down</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module" src="Platformer.js"></script>
+</body>
+</html>

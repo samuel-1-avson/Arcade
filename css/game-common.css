@@ -1,0 +1,292 @@
+/* ==========================================================================
+   Shared Game Styles (Refactored)
+   ========================================================================== */
+
+/* Game wrapper */
+.game-wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-main);
+}
+
+/* Game header */
+.game-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-md) var(--space-lg);
+    background: var(--bg-panel);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Subtle separator */
+}
+
+.game-header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.back-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-md);
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition);
+}
+
+.back-btn:hover {
+    color: var(--text-bright);
+    background: var(--bg-panel-hover);
+    border-color: var(--glass-border);
+}
+
+.game-title {
+    font-size: 1.125rem;
+    color: var(--text-bright);
+    letter-spacing: 0.05em;
+}
+
+.game-header-center {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xl);
+}
+
+.score-display,
+.highscore-display {
+    font-family: var(--font-mono);
+    text-align: center;
+}
+
+.score-label,
+.highscore-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 2px;
+}
+
+.score-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.highscore-value {
+    font-size: 1.25rem;
+    color: var(--warning);
+}
+
+.game-header-right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.icon-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-size: 1.25rem;
+    transition: all var(--transition);
+}
+
+.icon-btn:hover {
+    background: var(--bg-panel-hover);
+    color: var(--text-bright);
+}
+
+/* Game container */
+.game-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-md);
+}
+
+/* Canvas wrapper */
+.canvas-wrapper {
+    position: relative;
+    background: #000;
+    border: 4px solid var(--bg-panel-hover);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+}
+
+.game-canvas {
+    display: block;
+}
+
+/* Game overlay (menu, pause, game over) */
+.game-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    justify-content: center;
+    background: var(--bg-overlay);
+    z-index: 10;
+    animation: fadeIn 0.3s ease;
+}
+
+.game-overlay.hidden {
+    display: none;
+}
+
+.overlay-title {
+    font-family: var(--font-display);
+    font-size: 2.5rem;
+    margin-bottom: var(--space-md);
+    color: var(--text-bright);
+}
+
+.overlay-title.game-over { color: var(--danger); }
+.overlay-title.paused { color: var(--warning); }
+
+.overlay-score {
+    font-family: var(--font-mono);
+    font-size: 1.5rem;
+    color: var(--primary);
+    margin-bottom: var(--space-lg);
+}
+
+.overlay-message {
+    color: var(--text-muted);
+    margin-bottom: var(--space-xl);
+    max-width: 400px;
+    text-align: center;
+    line-height: 1.5;
+}
+
+.overlay-buttons {
+    display: flex;
+    gap: var(--space-md);
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: var(--bg-main);
+    padding: var(--space-sm) var(--space-xl);
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    transition: transform var(--transition);
+}
+.btn-primary:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+}
+
+/* Controls hint */
+.controls-hint {
+    margin-top: var(--space-xl);
+    display: flex;
+    gap: var(--space-lg);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.control-key {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.key {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    padding: 0 8px;
+    background: var(--bg-panel-hover);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-bright);
+}
+
+/* Mobile touch controls */
+.touch-controls {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: var(--space-lg);
+    left: 0;
+    right: 0;
+    padding: var(--space-lg);
+    background: var(--bg-panel);
+    border-top: 1px solid var(--glass-border);
+}
+
+.touch-dpad {
+    display: grid;
+    grid-template-columns: repeat(3, 64px);
+    grid-template-rows: repeat(3, 64px);
+    gap: 8px;
+    justify-content: center;
+}
+
+.touch-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.05);
+    border-radius: var(--radius-md);
+    color: var(--text-main);
+    font-size: 1.5rem;
+    touch-action: manipulation;
+}
+
+.touch-btn:active {
+    background: var(--primary);
+    color: var(--bg-main);
+}
+
+.touch-btn-up { grid-column: 2; grid-row: 1; }
+.touch-btn-left { grid-column: 1; grid-row: 2; }
+.touch-btn-right { grid-column: 3; grid-row: 2; }
+.touch-btn-down { grid-column: 2; grid-row: 3; }
+
+.touch-action-buttons {
+    display: flex;
+    gap: var(--space-md);
+    justify-content: center;
+    margin-top: var(--space-md);
+}
+
+.touch-action-btn {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: var(--bg-main);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.25rem;
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .touch-controls { display: block; }
+    .game-container { padding-bottom: 220px; }
+    .controls-hint { display: none; }
+}

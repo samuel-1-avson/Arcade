@@ -1,0 +1,173 @@
+/* ==========================================================================
+   Party Widget
+   ========================================================================== */
+.party-widget {
+    position: relative;
+    width: 100%;
+    background: var(--bg-panel);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+    margin-top: var(--space-lg);
+    box-shadow: none;
+    transition: all var(--transition-normal);
+}
+
+.party-widget:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--glow-primary);
+}
+
+.party-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-sm);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.party-icon {
+    font-size: 1.25rem;
+}
+
+.party-title {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 600;
+    color: var(--color-text-bright);
+    flex: 1;
+}
+
+.party-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+.party-content {
+    margin-bottom: var(--space-md);
+}
+
+.party-content.hidden {
+    display: none;
+}
+
+.party-code-display {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-input);
+    border: 1px solid var(--glass-border);
+    padding: var(--space-sm);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-sm);
+}
+
+.code-label {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+.code-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    color: var(--color-primary);
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.icon-btn-sm {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.icon-btn-sm:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.party-members {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: var(--space-sm);
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.party-member {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 6px;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.party-member.is-host {
+    border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.member-avatar {
+    font-size: 1rem;
+}
+
+.member-name {
+    font-size: 0.8rem;
+    flex: 1;
+}
+
+.host-badge {
+    font-size: 0.7rem;
+    background: var(--color-accent);
+    color: var(--color-bg-dark);
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+.party-actions {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.join-area {
+    margin-top: var(--space-sm);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.join-area .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    width: 100%;
+}
+
+#join-party-input {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid var(--glass-border);
+    color: white;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+}
+
+#join-party-input:focus {
+    border-color: var(--color-primary);
+    outline: none;
+}
+
+/* Ensure the Go button is full width */
+.join-area .btn-primary {
+    width: 100%;
+}
+

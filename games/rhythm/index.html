@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rhythm | Arcade Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./rhythm.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDemoKey12345",
+            authDomain: "arcade-hub.firebaseapp.com",
+            databaseURL: "https://arcade-hub-default-rtdb.firebaseio.com",
+            projectId: "arcade-hub",
+            storageBucket: "arcade-hub.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abc123"
+        };
+        firebase.initializeApp(firebaseConfig);
+    </script>
+</head>
+<body>
+    <div id="app" class="app">
+        
+        <!-- SCREEN: Main Menu -->
+        <div id="screen-menu" class="screen active">
+            <button id="rhythm-back-btn" class="nav-back">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Back to Hub
+            </button>
+            
+            <div class="menu-content">
+                <div class="logo">
+                    <span class="logo-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                        </svg>
+                    </span>
+                    <h1>Rhythm</h1>
+                </div>
+                <p class="tagline">Feel the beat. Master the flow.</p>
+                
+                <div class="modes">
+                    <button class="mode-card" data-mode="arcade">
+                        <span class="mode-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="6" width="20" height="12" rx="2"/>
+                                <circle cx="8" cy="12" r="2"/>
+                                <path d="M15 9v6M12 12h6"/>
+                            </svg>
+                        </span>
+                        <span class="mode-title">Arcade</span>
+                        <span class="mode-sub">Free Play</span>
+                    </button>
+                    <button class="mode-card" data-mode="story">
+                        <span class="mode-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                            </svg>
+                        </span>
+                        <span class="mode-title">Story</span>
+                        <span class="mode-sub">20 Levels</span>
+                    </button>
+                    <button class="mode-card multiplayer" data-mode="multiplayer">
+                        <span class="mode-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                            </svg>
+                        </span>
+                        <span class="mode-title">Multiplayer</span>
+                        <span class="mode-sub">Battle Online</span>
+                    </button>
+                    <button class="mode-card" data-mode="practice">
+                        <span class="mode-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <circle cx="12" cy="12" r="6"/>
+                                <circle cx="12" cy="12" r="2"/>
+                            </svg>
+                        </span>
+                        <span class="mode-title">Practice</span>
+                        <span class="mode-sub">Learn Songs</span>
+                    </button>
+                    <button class="mode-card" data-mode="endless">
+                        <span class="mode-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18.178 8c5.096 0 5.096 8 0 8-5.095 0-7.133-8-12.739-8-4.585 0-4.585 8 0 8 5.606 0 7.644-8 12.74-8z"/>
+                            </svg>
+                        </span>
+                        <span class="mode-title">Endless</span>
+                        <span class="mode-sub">Marathon</span>
+                    </button>
+                    <button class="mode-card" data-mode="zen">
+                        <span class="mode-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10"/>
+                                <path d="M12 8v4l3 3"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </span>
+                        <span class="mode-title">Zen</span>
+                        <span class="mode-sub">Relaxed</span>
+                    </button>
+                </div>
+                
+                <div class="menu-footer">
+                    <button id="btn-settings" class="btn-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                        Settings
+                    </button>
+                    <div class="menu-stats">
+                        <span>
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                            </svg>
+                            <span id="stat-achievements">0</span>
+                        </span>
+                        <span>
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
+                            </svg>
+                            <span id="stat-stars">0</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN: Song Select -->
+        <div id="screen-songs" class="screen">
+            <div class="screen-header">
+                <button class="nav-back" data-goto="menu">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    Back
+                </button>
+                <h2 class="screen-title">Select Song</h2>
+            </div>
+            <div id="song-list" class="song-list"></div>
+        </div>
+
+        <!-- SCREEN: Story Select -->
+        <div id="screen-story" class="screen">
+            <div class="screen-header">
+                <button class="nav-back" data-goto="menu">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    Back
+                </button>
+                <h2 class="screen-title">Story Mode</h2>
+                <span class="stars-count">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
+                    </svg>
+                    <span id="total-stars">0</span>/60
+                </span>
+            </div>
+            <div id="story-chapters" class="story-chapters"></div>
+        </div>
+
+        <!-- SCREEN: Multiplayer Lobby -->
+        <div id="screen-multiplayer" class="screen">
+            <div class="screen-header">
+                <button class="nav-back" data-goto="menu">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    Back
+                </button>
+                <h2 class="screen-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                    </svg>
+                    Multiplayer
+                </h2>
+            </div>
+            
+            <div class="mp-options" id="mp-options">
+                <button id="btn-create-room" class="mp-option-btn">
+                    <span class="mp-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                    </span>
+                    <span class="mp-label">Create Room</span>
+                    <span class="mp-desc">Host a game and invite a friend</span>
+                </button>
+                <button id="btn-join-room" class="mp-option-btn">
+                    <span class="mp-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                        </svg>
+                    </span>
+                    <span class="mp-label">Join Room</span>
+                    <span class="mp-desc">Enter a room code</span>
+                </button>
+            </div>
+
+            <!-- Join Room Input -->
+            <div id="join-panel" class="mp-panel hidden">
+                <h3>Enter Room Code</h3>
+                <input type="text" id="input-room-code" class="room-code-input" placeholder="ABC123" maxlength="6">
+                <div class="mp-panel-btns">
+                    <button id="btn-cancel-join" class="btn ghost">Cancel</button>
+                    <button id="btn-confirm-join" class="btn primary">Join</button>
+                </div>
+            </div>
+
+            <!-- Lobby -->
+            <div id="mp-lobby" class="mp-lobby hidden">
+                <div class="lobby-header">
+                    <span>Room Code:</span>
+                    <span id="lobby-code" class="room-code">ABC123</span>
+                </div>
+
+                <div class="lobby-players">
+                    <div class="lobby-player you">
+                        <span class="player-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </span>
+                        <span class="player-name">You (Host)</span>
+                        <span id="your-status" class="player-status">Not Ready</span>
+                    </div>
+                    <div class="lobby-player opponent" id="opponent-slot">
+                        <span class="player-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <polyline points="12,6 12,12 16,14"/>
+                            </svg>
+                        </span>
+                        <span class="player-name" id="opponent-name">Waiting...</span>
+                        <span id="opponent-status" class="player-status"></span>
+                    </div>
+                </div>
+
+                <div class="lobby-song" id="lobby-song-select">
+                    <h4>Select Song</h4>
+                    <div id="mp-song-list" class="mp-song-list"></div>
+                </div>
+
+                <div class="lobby-chat">
+                    <div id="chat-messages" class="chat-messages"></div>
+                    <div class="chat-input-row">
+                        <input type="text" id="chat-input" placeholder="Type a message...">
+                        <button id="btn-send-chat" class="btn small">Send</button>
+                    </div>
+                </div>
+
+                <div class="lobby-actions">
+                    <button id="btn-ready" class="btn primary large">Ready</button>
+                    <button id="btn-leave-room" class="btn ghost danger">Leave</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN: Gameplay -->
+        <div id="screen-game" class="screen game-screen">
+            <!-- Countdown Overlay -->
+            <div id="countdown" class="countdown hidden">
+                <span id="countdown-num">3</span>
+            </div>
+
+            <!-- Game HUD - Industrial Design -->
+            <div class="game-hud">
+                <div class="hud-left">
+                    <span id="hud-name" class="hud-song">Song Name</span>
+                    <span id="hud-mode" class="hud-mode">ARCADE</span>
+                </div>
+                <div class="hud-center">
+                    <div class="hud-stat score">
+                        <label>SCORE</label>
+                        <span id="hud-score">0</span>
+                    </div>
+                    <div class="hud-stat combo">
+                        <label>COMBO</label>
+                        <span id="hud-combo">0</span>
+                    </div>
+                    <div class="hud-stat accuracy">
+                        <label>ACC</label>
+                        <span id="hud-acc">100%</span>
+                    </div>
+                </div>
+                <div class="hud-right">
+                    <button id="btn-pause" class="hud-btn">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <rect x="6" y="4" width="4" height="16"/>
+                            <rect x="14" y="4" width="4" height="16"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Song Progress -->
+            <div class="song-progress">
+                <div id="progress-fill" class="progress-fill"></div>
+            </div>
+
+            <!-- Game Canvas Area -->
+            <div class="game-area">
+                <canvas id="game-canvas" width="560" height="600"></canvas>
+                
+                <!-- Hit Receptors (visual only, below canvas) -->
+                <div class="receptors">
+                    <div class="receptor" data-lane="0">
+                        <span class="receptor-key">D</span>
+                    </div>
+                    <div class="receptor" data-lane="1">
+                        <span class="receptor-key">F</span>
+                    </div>
+                    <div class="receptor" data-lane="2">
+                        <span class="receptor-key">J</span>
+                    </div>
+                    <div class="receptor" data-lane="3">
+                        <span class="receptor-key">K</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feedback Text -->
+            <div id="hit-feedback" class="hit-feedback"></div>
+        </div>
+
+        <!-- MODAL: Results -->
+        <div id="modal-results" class="modal">
+            <div class="modal-box results-modal">
+                <div class="results-header">
+                    <span id="result-song">Song Name</span>
+                    <span id="result-mode-badge" class="mode-badge">ARCADE</span>
+                </div>
+                <div id="result-grade" class="grade">S</div>
+                <div class="new-record hidden" id="new-record">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
+                    </svg>
+                    NEW RECORD!
+                </div>
+                
+                <div class="result-stats">
+                    <div class="stat-box">
+                        <label>Final Score</label>
+                        <span id="r-score" class="big-num">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <div class="stat-box small">
+                            <label>Accuracy</label>
+                            <span id="r-acc">100%</span>
+                        </div>
+                        <div class="stat-box small">
+                            <label>Max Combo</label>
+                            <span id="r-combo">0x</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hit-breakdown">
+                    <span class="hit perfect">Perfect <b id="r-perfect">0</b></span>
+                    <span class="hit good">Good <b id="r-good">0</b></span>
+                    <span class="hit ok">OK <b id="r-ok">0</b></span>
+                    <span class="hit miss">Miss <b id="r-miss">0</b></span>
+                </div>
+
+                <div id="story-result" class="story-result hidden">
+                    <div id="earned-stars" class="earned-stars">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+                        <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+                        <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+                    </div>
+                </div>
+
+                <div class="modal-btns">
+                    <button id="btn-retry" class="btn ghost">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23,4 23,10 17,10"/>
+                            <polyline points="1,20 1,14 7,14"/>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                        </svg>
+                        Retry
+                    </button>
+                    <button id="btn-menu" class="btn primary">Menu</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: Pause -->
+        <div id="modal-pause" class="modal">
+            <div class="modal-box pause-modal">
+                <h2>
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <rect x="6" y="4" width="4" height="16"/>
+                        <rect x="14" y="4" width="4" height="16"/>
+                    </svg>
+                    Paused
+                </h2>
+                <div class="pause-info">
+                    <span id="pause-song">Song Name</span>
+                    <span id="pause-progress">50% Complete</span>
+                </div>
+                <div class="modal-btns vertical">
+                    <button id="btn-resume" class="btn primary large">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5,3 19,12 5,21"/>
+                        </svg>
+                        Resume
+                    </button>
+                    <button id="btn-restart" class="btn ghost">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23,4 23,10 17,10"/>
+                            <polyline points="1,20 1,14 7,14"/>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                        </svg>
+                        Restart
+                    </button>
+                    <button id="btn-quit" class="btn ghost danger">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                        Quit
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: Dialogue -->
+        <div id="modal-dialogue" class="modal">
+            <div class="modal-box dialogue-modal">
+                <p id="dialogue-text"></p>
+                <button id="btn-continue" class="btn primary">
+                    Continue
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="5" y1="12" x2="19" y2="12"/>
+                        <polyline points="12,5 19,12 12,19"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- MODAL: Settings -->
+        <div id="modal-settings" class="modal">
+            <div class="modal-box settings-modal">
+                <div class="modal-head">
+                    <h2>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                        Settings
+                    </h2>
+                    <button id="btn-close-settings" class="close-x">×</button>
+                </div>
+                
+                <div class="settings-group">
+                    <h3>Gameplay</h3>
+                    <div class="setting">
+                        <label>Note Speed</label>
+                        <input type="range" id="set-speed" min="0.5" max="2" step="0.1" value="1">
+                        <span id="val-speed">1.0x</span>
+                    </div>
+                    <div class="setting">
+                        <label>Audio Offset</label>
+                        <input type="range" id="set-offset" min="-100" max="100" step="5" value="0">
+                        <span id="val-offset">0ms</span>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3>Visual</h3>
+                    <div class="setting toggle">
+                        <label>Lane Effects</label>
+                        <input type="checkbox" id="set-effects" checked>
+                    </div>
+                    <div class="setting toggle">
+                        <label>Screen Flash</label>
+                        <input type="checkbox" id="set-flash" checked>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Achievement Toast -->
+        <div id="toast" class="toast">
+            <span class="toast-icon">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+            </span>
+            <div>
+                <small>Achievement Unlocked!</small>
+                <strong id="toast-name">First Combo</strong>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="../../js/utils/GameBridge.js"></script>
+    <script type="module" src="./Rhythm.js"></script>
+</body>
+</html>

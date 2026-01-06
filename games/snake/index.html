@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Play Snake - Enhanced arcade game with modes, levels, and achievements">
+    <title>🐍 Snake | Arcade Hub</title>
+    
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="snake.css">
+    <!-- Retro Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐍</text></svg>">
+</head>
+<body>
+    <!-- Overlays removed for Retro Minimal theme -->
+    
+    <div class="game-wrapper">
+        <!-- Main Menu -->
+        <div id="main-menu" class="main-menu">
+            <div class="menu-content arcade-panel">
+                <h1 class="menu-title">SNAKE</h1>
+                <p class="menu-subtitle">ARCADE EDITION</p>
+                
+                <div class="mode-selection">
+                    <h3>SELECT MODE</h3>
+                    <div class="mode-buttons">
+                        <button class="mode-btn active" data-mode="endless">
+                            <span class="mode-icon"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg></span>
+                            <div class="mode-info">
+                                <span class="mode-name">Endless</span>
+                            </div>
+                        </button>
+                        <button class="mode-btn" data-mode="classic">
+                            <span class="mode-icon"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></span>
+                            <div class="mode-info">
+                                <span class="mode-name">Classic</span>
+                            </div>
+                        </button>
+                        <button class="mode-btn" data-mode="timeAttack">
+                            <span class="mode-icon"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61l1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42C16.07 4.74 14.12 4 12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9 9-4.03 9-9c0-2.12-.74-4.07-1.97-5.61zM12 20c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg></span>
+                            <div class="mode-info">
+                                <span class="mode-name">Time</span>
+                            </div>
+                        </button>
+                        <button class="mode-btn" data-mode="story">
+                            <span class="mode-icon"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg></span>
+                            <div class="mode-info">
+                                <span class="mode-name">Story</span>
+                            </div>
+                        </button>
+                        <button class="mode-btn" data-mode="multiplayer">
+                            <span class="mode-icon"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M6 2l-2 2h3l9 9-4 4-9-9v-3l2-2h-3l4 4h3l-2-2h3l2 2h-3l2 2v3l9 9 4-4-9-9h-3l-2 2v-3l-2-2h3l-2-2h3z"/></svg></span>
+                            <div class="mode-info">
+                                <span class="mode-name">Battle</span>
+                            </div>
+                        </button>
+                        <button class="mode-btn" data-mode="puzzle">
+                            <span class="mode-icon"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5C13 2.12 11.88 1 10.5 1S8 2.12 8 3.5V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5c1.38 0 2.5-1.12 2.5-2.5S21.88 11 20.5 11z"/></svg></span>
+                            <div class="mode-info">
+                                <span class="mode-name">Puzzle</span>
+                            </div>
+                        </button>
+                        <button class="mode-btn" data-mode="zen">
+                            <span class="mode-icon"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/></svg></span>
+                            <div class="mode-info">
+                                <span class="mode-name">Zen</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="mode-description" class="mode-description">
+                    Survive as long as you can.
+                </div>
+                
+                <div class="map-selection">
+                    <h3>SELECT ZONE</h3>
+                    <!-- Visual Map Grid -->
+                    <div id="map-grid" class="map-grid">
+                        <!-- Populated by JS -->
+                    </div>
+                    <!-- Hidden select for compatibility -->
+                    <select id="map-select" class="map-select hidden">
+                        <option value="1">1. System Core</option>
+                        <option value="2">2. Data Stream</option>
+                        <option value="3">3. Firewall</option>
+                        <option value="4">4. Memory Bank</option>
+                        <option value="5">5. Cold Storage</option>
+                        <option value="6">6. Kernel Panic</option>
+                        <option value="7">7. Neon Proxy</option>
+                        <option value="8">8. Void Null</option>
+                        <option value="9">9. Mainframe</option>
+                        <option value="10">10. Crystal Logic</option>
+                        <option value="11">11. Cyber Grid</option>
+                        <option value="12">12. Overheat</option>
+                        <option value="13">13. Deep Web</option>
+                        <option value="14">14. Dark Mode</option>
+                        <option value="15">15. Prism</option>
+                    </select>
+                </div>
+                
+                <button id="start-btn" class="btn btn-large btn-primary">START GAME</button>
+                
+                <div class="menu-footer">
+                    <button id="snake-back-btn" class="back-link" style="background:none;border:none;color:inherit;cursor:pointer;font-family:inherit;font-size:inherit;text-decoration:underline;">Back to Hub</button>
+                </div>
+            </div>
+        </div>
+
+         <!-- Game UI -->
+        <div id="game-ui" class="game-ui hidden">
+            <div class="game-header">
+                <!-- Left: Navigation/Info -->
+                <div class="header-left">
+                    <button id="menu-btn" class="retro-btn" title="Main Menu">
+                        <svg class="breadcrumb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="1.2em" height="1.2em"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+                    </button>
+                    <div class="retro-box level-info" id="level-display">
+                        <div class="level-name" style="font-size: 0.9em; color: var(--accent-primary);">LVL 01</div>
+                        <div class="level-progress-bar" style="width: 80px; height: 4px; background: rgba(255,255,255,0.1); margin-top: 4px; border-radius: 2px;">
+                            <div class="level-progress-fill" style="width: 0%; height: 100%; background: var(--accent-success); border-radius: 2px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center: Score -->
+                <div class="header-center">
+                    <div class="score-label">SCORE</div>
+                    <div class="score-value">0</div>
+                    <div class="highscore-value" title="High Score">HI: 0</div>
+                </div>
+
+                <!-- Right: Status/Utility -->
+                <div class="header-right">
+                    <div id="powerup-display" class="powerup-display"></div>
+                    <div class="retro-box" id="timer-display">
+                        <span class="timer-icon"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg></span>
+                        <span class="timer-value">60</span>
+                    </div>
+                    <div class="retro-box" id="lives-display">
+                        <span class="lives-value"></span>
+                    </div>
+                    <button id="view-toggle" class="retro-btn" title="Toggle View">2D</button>
+                    <button id="pause-btn" class="retro-btn" title="Pause"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg></button>
+                    <button id="restart-btn" class="retro-btn" title="Restart"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></button>
+                    <button id="settings-btn" class="retro-btn" title="Settings"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button>
+                </div>
+            </div>
+
+            <!-- Game Container -->
+            <main class="game-container">
+                <div class="canvas-wrapper arcade-bezel">
+                    <canvas id="game-canvas" width="600" height="600"></canvas>
+                    
+                    <div class="game-overlay" id="game-overlay">
+                        <h2 class="overlay-title glitch-text">PAUSED</h2>
+                        <p class="overlay-message flicker">PRESS START TO CONTINUE</p>
+                        <div class="overlay-buttons">
+                            <button class="btn btn-primary retro-btn" id="resume-btn">RESUME</button>
+                        </div>
+                    </div>
+
+                    <div id="level-transition" class="level-transition hidden">
+                        <div class="level-complete glitch-text">STAGE CLEAR</div>
+                        <div class="level-name typewriter">NEXT STAGE...</div>
+                    </div>
+                </div>
+                
+                <!-- Controls hint -->
+                <div class="controls-hint pixel-font">
+                    <div class="control-key">
+                        <span class="key-cap">ARROWS</span>
+                        <span>MOVE</span>
+                    </div>
+                    <div class="control-key">
+                        <span class="key-cap">WASD</span>
+                        <span>MOVE</span>
+                    </div>
+                    <div class="control-key">
+                        <span class="key-cap">ESC</span>
+                        <span>PAUSE</span>
+                    </div>
+                </div>
+
+                <!-- Power-up Legend (Using Generic Icon Classes - SVG inserted via JS or CSS for these? Let's use generic simple text + inline SVGs where possible, or stick to simple text labels for now to match minimal theme. Actually, user asked for icons. I will use the SVGs) -->
+                <div class="powerup-legend retro-panel">
+                     <div class="legend-item tooltip" data-tooltip="Normal food - 10pts"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg> 10PTS</div>
+                    <div class="legend-item tooltip" data-tooltip="Bonus - 50pts"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg> 50PTS</div>
+                    <div class="legend-item tooltip" data-tooltip="Speed boost for 5s"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg> SPD</div>
+                    <div class="legend-item tooltip" data-tooltip="Slow down for 5s"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg> SLOW</div>
+                    <div class="legend-item tooltip" data-tooltip="Double points for 10s"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><circle cx="12" cy="12" r="10"/><text x="12" y="16" font-size="12" text-anchor="middle" fill="#000" font-weight="bold">2x</text></svg> 2X</div>
+                    <div class="legend-item tooltip" data-tooltip="Triple points for 8s"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><circle cx="12" cy="12" r="10"/><text x="12" y="16" font-size="12" text-anchor="middle" fill="#000" font-weight="bold">3x</text></svg> 3X</div>
+                    <div class="legend-item tooltip" data-tooltip="Blocks one death"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg> SHLD</div>
+                    <div class="legend-item tooltip" data-tooltip="Invincible for 5s"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> INV</div>
+                    <div class="legend-item tooltip" data-tooltip="Shrink by 3 segments"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M19 13H5v-2h14v2z"/></svg> CUT</div>
+                    <div class="legend-item tooltip" data-tooltip="Pass through self"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5.5-2.5l7.51-3.22-3.22-7.51-7.51 3.22 3.22 7.51z"/></svg> GHOST</div>
+                    <div class="legend-item tooltip" data-tooltip="Pass through obstacles"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M2.5 19h19v2h-19zm0-17h19v2h-19zm0 13h19v2h-19zm0-17h19v2h-19zOpacity"/></svg> PHASE</div>
+                    <div class="legend-item tooltip" data-tooltip="Food comes to you"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5C13 2.12 11.88 1 10.5 1S8 2.12 8 3.5V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5c1.38 0 2.5-1.12 2.5-2.5S21.88 11 20.5 11z"/></svg> MAG</div>
+                    <div class="legend-item tooltip" data-tooltip="Suck in bonus food"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg> VAC</div>
+                    <div class="legend-item tooltip" data-tooltip="Pause timer for 5s"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg> STOP</div>
+                    <div class="legend-item tooltip" data-tooltip="Slow motion for 6s"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg> TIME</div>
+                    <div class="legend-item tooltip" data-tooltip="Destroy obstacles"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M19.48 12.35c-1.57-4.08-7.16-4.3-5.81-10.23-2.76 3.1-6.85 7.62-4.5 11.23C13.67 19.46 20.35 15.37 19.48 12.35zM7.4 12c-1.26 1.88-1.78 4.2-1.37 6.36.19 1.01.6 1.95 1.18 2.76.58-.8 1.4-1.92 1.49-3.23.16-2.39-1.25-4.22-1.3-5.89z"/></svg> FIRE</div>
+                    <div class="legend-item tooltip" data-tooltip="Explode nearby obstacles"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><circle cx="12" cy="12" r="8"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg> BOMB</div>
+                    <div class="legend-item tooltip" data-tooltip="Chain lightning bonus"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg> BOLT</div>
+                    <div class="legend-item tooltip" data-tooltip="Teleport randomly"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg> WARP</div>
+                    <div class="legend-item tooltip" data-tooltip="Reverse direction"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M19 11h-8v6h8v-6zm4 8V4.98C23 3.88 22.1 3 21 3H3c-1.1 0-2 .88-2 1.98V19c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2zm-2.02 .02H3V5.98h17.98V19.02zM14 12V6l-4 4 4 4v-2z"/></svg> REV</div>
+                    <div class="legend-item tooltip" data-tooltip="Create decoy snake"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> CLONE</div>
+                    <div class="legend-item tooltip" data-tooltip="Shoot food beam"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><rect x="3" y="11" width="18" height="2"/></svg> LASER</div>
+                </div>
+            </main>
+
+            <!-- Mobile Touch Controls -->
+            <div class="touch-controls">
+                <div class="touch-dpad">
+                    <button class="touch-btn touch-btn-up" data-dir="up">▲</button>
+                    <button class="touch-btn touch-btn-left" data-dir="left">◀</button>
+                    <button class="touch-btn touch-btn-right" data-dir="right">▶</button>
+                    <button class="touch-btn touch-btn-down" data-dir="down">▼</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK (v8 Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script type="module" src="../../js/utils/GameBridge.js"></script>
+    <script type="module" src="Snake.js"></script>
+</body>
+</html>

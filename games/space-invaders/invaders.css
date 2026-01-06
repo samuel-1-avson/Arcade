@@ -1,0 +1,57 @@
+/* Space Invaders Styles */
+
+.invaders-canvas {
+    box-shadow: 0 0 30px rgba(0, 255, 0, 0.4);
+    border-color: #00ff00;
+}
+
+.lives-value {
+    font-size: 1.25rem;
+    letter-spacing: 0.2em;
+}
+
+/* Retro scanlines effect */
+.invaders-canvas::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.1) 0px,
+        rgba(0, 0, 0, 0.1) 1px,
+        transparent 1px,
+        transparent 2px
+    );
+    pointer-events: none;
+}
+
+/* Wave announcement */
+.wave-announcement {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2rem;
+    color: var(--color-accent);
+    text-shadow: 0 0 20px var(--color-accent);
+    animation: waveIn 1.5s ease forwards;
+    pointer-events: none;
+}
+
+@keyframes waveIn {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(2); }
+    20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* Hit flash */
+.hit-flash {
+    animation: hitFlash 0.1s ease;
+}
+
+@keyframes hitFlash {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(2); }
+}

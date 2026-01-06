@@ -1,0 +1,71 @@
+{
+  "rules": {
+    "presence": {
+      "$userId": {
+        ".read": true,
+        ".write": "$userId === auth.uid"
+      }
+    },
+    "liveLeaderboards": {
+      "$gameId": {
+        ".read": true,
+        "$scoreId": {
+          ".write": "auth != null"
+        }
+      }
+    },
+    "gameRooms": {
+      "$roomCode": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        "players": {
+          "$playerId": {
+            ".write": "$playerId === auth.uid || data.child('host').val() === auth.uid"
+          }
+        },
+        "chat": {
+          ".read": "auth != null",
+          "$messageId": {
+            ".write": "auth != null && newData.child('userId').val() === auth.uid"
+          }
+        },
+        "actions": {
+          "$actionId": {
+            ".write": "auth != null"
+          }
+        }
+      }
+    },
+    "liveEvents": {
+      ".read": true,
+      "$eventId": {
+        ".write": false,
+        "participants": {
+          "$userId": {
+            ".write": "$userId === auth.uid"
+          }
+        }
+      }
+    },
+    "notifications": {
+      "$userId": {
+        ".read": "$userId === auth.uid",
+        ".write": true,
+        "$notificationId": {
+          ".read": "$userId === auth.uid",
+          ".write": "$userId === auth.uid || auth != null"
+        }
+      }
+    },
+    "streams": {
+      "$gameId": {
+        "$playerId": {
+          ".read": true,
+          "actions": {
+            ".write": "$playerId === auth.uid"
+          }
+        }
+      }
+    }
+  }
+}
