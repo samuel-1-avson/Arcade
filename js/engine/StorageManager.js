@@ -188,6 +188,12 @@ class StorageManager {
     addPlayTime(seconds) {
         this.localData.stats.totalPlayTime += seconds;
         this._saveLocalData();
+        
+        // Sync to cloud at end of game session (Game Over)
+        // This satisfies "record results" requirement
+        if (this.firebaseEnabled) {
+            this.syncToCloud();
+        }
     }
 
     /**

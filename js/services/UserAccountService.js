@@ -44,13 +44,14 @@ class UserAccountService {
 
         // Listen for profile/stats changes and sync to cloud
         eventBus.on('globalStateChange', ({ type }) => {
-            // Only sync profile and stats changes, not session or other transient data
+            // Sync on profile/stats changes AND game session completion
+            // 'session' type is emitted by recordGameSession (Game Over)
             // Add debounce to prevent sync loops if cloud is pushing back
             // Only sync if sufficient time passed since our last cloud save
             const timeSinceLastSave = Date.now() - this._lastCloudSaveTime;
             const isDebounced = timeSinceLastSave > this._syncDebounceMs;
 
-            if ((type === 'profile' || type === 'stats' || type === 'statistics') && 
+            if ((type === 'profile' || type === 'stats' || type === 'statistics' || type === 'session') && 
                 !this._isSyncing && 
                 isDebounced) {
                 this.saveToCloud();
