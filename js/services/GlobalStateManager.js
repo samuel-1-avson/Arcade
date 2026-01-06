@@ -383,13 +383,16 @@ class GlobalStateManager {
     /**
      * Update game statistics (for cloud sync merging)
      * @param {Object} mergedStats - Merged gameStats from cloud sync
+     * @param {boolean} silent - If true, skip emitting change events (to prevent sync loops)
      * @private
      */
-    _updateGameStats(mergedStats) {
+    _updateGameStats(mergedStats, silent = false) {
         this.statistics.gameStats = mergedStats;
         this.userProfile.lastModified = Date.now();
         this._saveToStorage();
-        this._emitChange('statistics', this.statistics);
+        if (!silent) {
+            this._emitChange('statistics', this.statistics);
+        }
     }
 
     // ============ ARTIFACTS ============

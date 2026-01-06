@@ -27,3 +27,4 @@ ui-debug.log
 
 # Mac
 .DS_Store
+.vercel

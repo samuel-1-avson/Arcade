@@ -190,11 +190,33 @@ export class AudioManager {
         this.sfxEnabled = true;
         
         this.initAudioContext();
+        
+        // Add one-time unlock listeners
+        const unlockHandler = () => {
+            if (this.audioContext && this.audioContext.state === 'suspended') {
+                this.audioContext.resume();
+            } else if (!this.audioContext) {
+                this.initAudioContext();
+            }
+            // We can keep listening to ensure resume works on mobile or if state suspends
+            if (this.audioContext && this.audioContext.state === 'running') {
+                 window.removeEventListener('click', unlockHandler);
+                 window.removeEventListener('keydown', unlockHandler);
+                 window.removeEventListener('touchstart', unlockHandler);
+            }
+        };
+
+        window.addEventListener('click', unlockHandler);
+        window.addEventListener('keydown', unlockHandler);
+        window.addEventListener('touchstart', unlockHandler);
     }
     
     initAudioContext() {
+        if (this.audioContext) return;
+
         try {
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.audioContext = new AudioContext();
             
             // Master gain
             this.masterGain = this.audioContext.createGain();

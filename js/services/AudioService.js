@@ -50,8 +50,41 @@ class AudioService {
         // In a real AAA app, we'd preload the actual buffer here.
         // Initialize Web Audio
         try {
+            // Web Audio Context - Initialize lazily
+            this.ctx = null;
+        } catch (e) {
+            console.warn('Web Audio support check failed', e);
+        }
+
+        this.initialized = true;
+        console.log('AudioService initialized (waiting for user gesture)');
+
+        // Add unlock listeners
+        const unlockHandler = () => {
+            this._tryInitContext();
+            // Remove listeners after first successful interaction
+            window.removeEventListener('click', unlockHandler);
+            window.removeEventListener('keydown', unlockHandler);
+            window.removeEventListener('touchstart', unlockHandler);
+        };
+
+        window.addEventListener('click', unlockHandler);
+        window.addEventListener('keydown', unlockHandler);
+        window.addEventListener('touchstart', unlockHandler);
+    }
+
+    _tryInitContext() {
+        if (this.ctx) {
+            if (this.ctx.state === 'suspended') {
+                this.ctx.resume().catch(e => console.warn('Audio resume failed', e));
+            }
+            return;
+        }
+
+        try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             this.ctx = new AudioContext();
+            
             this.mainBus = this.ctx.createGain();
             this.mainBus.connect(this.ctx.destination);
             
@@ -62,8 +95,9 @@ class AudioService {
             // Start Ambience
             this._startAmbience();
             
+            console.log('AudioContext started successfully');
         } catch (e) {
-            console.warn('Web Audio not supported', e);
+            console.warn('AudioContext init failed', e);
         }
 
         this.initialized = true;

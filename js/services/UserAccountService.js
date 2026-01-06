@@ -45,7 +45,14 @@ class UserAccountService {
         // Listen for profile/stats changes and sync to cloud
         eventBus.on('globalStateChange', ({ type }) => {
             // Only sync profile and stats changes, not session or other transient data
-            if ((type === 'profile' || type === 'stats' || type === 'statistics') && !this._isSyncing) {
+            // Add debounce to prevent sync loops if cloud is pushing back
+            // Only sync if sufficient time passed since our last cloud save
+            const timeSinceLastSave = Date.now() - this._lastCloudSaveTime;
+            const isDebounced = timeSinceLastSave > this._syncDebounceMs;
+
+            if ((type === 'profile' || type === 'stats' || type === 'statistics') && 
+                !this._isSyncing && 
+                isDebounced) {
                 this.saveToCloud();
             }
         });
@@ -360,7 +367,7 @@ class UserAccountService {
         }
 
         // Update local state with merged stats
-        globalStateManager._updateGameStats(mergedStats);
+        globalStateManager._updateGameStats(mergedStats, true); // silent update to prevent sync loop
     }
 
     /**
