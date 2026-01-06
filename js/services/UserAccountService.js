@@ -42,6 +42,14 @@ class UserAccountService {
             await this.handleAuthChange(currentUser);
         }
 
+        // Listen for profile/stats changes and sync to cloud
+        eventBus.on('globalStateChange', ({ type }) => {
+            // Only sync profile and stats changes, not session or other transient data
+            if ((type === 'profile' || type === 'stats' || type === 'statistics') && !this._isSyncing) {
+                this.saveToCloud();
+            }
+        });
+
         this.initialized = true;
         console.log('[UserAccountService] Initialized');
     }
