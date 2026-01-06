@@ -22,7 +22,9 @@ class UserAccountService {
         // Prevent infinite sync loops
         this._isSyncing = false;
         this._lastSyncTime = 0;
-        this._syncDebounceMs = 2000; // Minimum 2 seconds between syncs
+        this._lastCloudSaveTime = 0; // Track when WE last saved to cloud
+        this._syncDebounceMs = 5000; // Minimum 5 seconds between syncs
+        this._ignoreNextSnapshot = false; // Ignore snapshot triggered by our own write
     }
 
     /**
@@ -266,6 +268,22 @@ class UserAccountService {
      * @param {Object} cloudData
      */
     handleCloudUpdate(cloudData) {
+        // Skip if we're currently syncing or just wrote to cloud
+        if (this._isSyncing) {
+            console.log('[UserAccountService] Ignoring snapshot - currently syncing');
+            return;
+        }
+        
+        // Ignore snapshots triggered by our own writes (within 10 seconds of our cloud save)
+        const timeSinceOurSave = Date.now() - this._lastCloudSaveTime;
+        if (this._ignoreNextSnapshot || timeSinceOurSave < 10000) {
+            console.log('[UserAccountService] Ignoring snapshot triggered by our own write');
+            this._ignoreNextSnapshot = false;
+            this.syncStatus = 'synced';
+            this.emitSyncStatus();
+            return;
+        }
+
         // Only update if data version matches or is newer
         if (cloudData.dataVersion && cloudData.dataVersion > DATA_VERSION) {
             console.warn('[UserAccountService] Cloud data version newer than client');
@@ -276,41 +294,34 @@ class UserAccountService {
         const cloudLastModified = cloudData.lastSeen?.toMillis?.() || 
                                    cloudData.lastModified?.toMillis?.() || 0;
 
-        // Timestamp-based conflict resolution
-        if (cloudLastModified > localLastModified) {
+        // Timestamp-based conflict resolution - only merge if cloud is significantly newer (5+ seconds)
+        if (cloudLastModified > localLastModified + 5000) {
             // Cloud is newer - merge cloud data into local
             console.log('[UserAccountService] Cloud data is newer, merging...');
+            
+            // Set syncing flag to prevent recursive updates
+            this._isSyncing = true;
             
             globalStateManager.updateProfile({
                 displayName: cloudData.displayName,
                 avatar: cloudData.avatar,
-                level: Math.max(cloudData.level || 1, localProfile.level || 1), // Take higher level
-                xp: Math.max(cloudData.xp || 0, localProfile.xp || 0), // Take higher XP
+                level: Math.max(cloudData.level || 1, localProfile.level || 1),
+                xp: Math.max(cloudData.xp || 0, localProfile.xp || 0),
                 lastModified: cloudLastModified
-            });
+            }, true); // silent update to prevent event triggering
 
             // Merge game stats (take higher values for each game)
             if (cloudData.gameStats) {
                 this._mergeGameStats(cloudData.gameStats);
             }
 
+            this._isSyncing = false;
             this.syncStatus = 'synced';
             this.emitSyncStatus();
             eventBus.emit('profileSyncedFromCloud', cloudData);
-        } else if (localLastModified > cloudLastModified && !this._isSyncing) {
-            // Local is newer - push to cloud (with debounce)
-            const now = Date.now();
-            if (now - this._lastSyncTime < this._syncDebounceMs) {
-                // Too soon, skip this sync cycle
-                this.syncStatus = 'synced';
-                this.emitSyncStatus();
-                return;
-            }
-            console.log('[UserAccountService] Local data is newer, pushing to cloud...');
-            this._lastSyncTime = now;
-            this.performCloudSave();
         } else {
-            // Same timestamp or already syncing - already synced
+            // Local is same or newer - just mark as synced, don't push back
+            // (Pushing back would create an infinite loop)
             this.syncStatus = 'synced';
             this.emitSyncStatus();
         }
@@ -410,6 +421,10 @@ class UserAccountService {
 
             // Update local lastModified WITHOUT triggering another sync
             globalStateManager.updateProfile({ lastModified: now }, true); // silent update
+            
+            // Mark that we just saved - ignore incoming snapshots from our own write
+            this._lastCloudSaveTime = now;
+            this._ignoreNextSnapshot = true;
 
             this.syncStatus = 'synced';
             this.emitSyncStatus();
