@@ -375,6 +375,18 @@ class GlobalStateManager {
         return this.gameSaves[gameId] || null;
     }
 
+    /**
+     * Update game statistics (for cloud sync merging)
+     * @param {Object} mergedStats - Merged gameStats from cloud sync
+     * @private
+     */
+    _updateGameStats(mergedStats) {
+        this.statistics.gameStats = mergedStats;
+        this.userProfile.lastModified = Date.now();
+        this._saveToStorage();
+        this._emitChange('statistics', this.statistics);
+    }
+
     // ============ ARTIFACTS ============
 
     /**

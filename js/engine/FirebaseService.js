@@ -221,7 +221,7 @@ class FirebaseService {
     }
 
     /**
-     * Update user's personal best for a game
+     * Update user's personal best for a game (legacy - non-transactional)
      */
     async updatePersonalBest(gameId, score) {
         if (!this.db || !this.user) return;
@@ -245,6 +245,108 @@ class FirebaseService {
             }
         } catch (error) {
             console.error('Update personal best error:', error);
+        }
+    }
+
+    /**
+     * Update user's personal best using a transaction (atomic operation)
+     * Prevents race conditions when multiple score submissions happen simultaneously
+     * @param {string} gameId - The game identifier
+     * @param {number} score - The new score to potentially save
+     * @returns {Promise<{updated: boolean, previousBest: number|null, newBest: number}>}
+     */
+    async updatePersonalBestWithTransaction(gameId, score) {
+        if (!this.db || !this.user) {
+            return { updated: false, previousBest: null, newBest: score };
+        }
+
+        const userRef = this.db.collection('users').doc(this.user.uid);
+
+        try {
+            const result = await this.db.runTransaction(async (transaction) => {
+                const userDoc = await transaction.get(userRef);
+                const userData = userDoc.exists ? userDoc.data() : {};
+                const currentBests = userData.highScores || {};
+                const currentBest = currentBests[gameId] || 0;
+
+                if (score > currentBest) {
+                    // Score is higher, update it atomically
+                    const updateData = {
+                        [`highScores.${gameId}`]: score,
+                        displayName: this.user.displayName || 'Anonymous',
+                        photoURL: this.user.photoURL || null,
+                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+
+                    if (userDoc.exists) {
+                        transaction.update(userRef, updateData);
+                    } else {
+                        transaction.set(userRef, {
+                            highScores: { [gameId]: score },
+                            displayName: this.user.displayName || 'Anonymous',
+                            photoURL: this.user.photoURL || null,
+                            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+
+                    return { updated: true, previousBest: currentBest, newBest: score };
+                }
+
+                // Score is not higher, no update needed
+                return { updated: false, previousBest: currentBest, newBest: currentBest };
+            });
+
+            if (result.updated) {
+                console.log(`New personal best for ${gameId}: ${result.newBest} (was ${result.previousBest})`);
+            }
+
+            return result;
+        } catch (error) {
+            console.error('Transaction update personal best error:', error);
+            return { updated: false, previousBest: null, newBest: score, error: error.message };
+        }
+    }
+
+    /**
+     * Submit score with transaction-based personal best update
+     * This is the recommended method for score submission
+     * @param {string} gameId - The game identifier
+     * @param {number} score - The score to submit
+     * @param {Object} metadata - Additional score metadata
+     * @returns {Promise<{scoreId: string|null, isNewBest: boolean}>}
+     */
+    async submitScoreWithTransaction(gameId, score, metadata = {}) {
+        if (!this.db || !this.user) {
+            console.warn('Cannot submit score: not signed in or DB not initialized');
+            return { scoreId: null, isNewBest: false };
+        }
+
+        try {
+            // First, add the score document
+            const scoreDoc = {
+                gameId,
+                score,
+                userId: this.user.uid,
+                userName: this.user.displayName || 'Anonymous',
+                userPhoto: this.user.photoURL || null,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                ...metadata
+            };
+
+            const docRef = await this.db.collection('scores').add(scoreDoc);
+
+            // Then update personal best with transaction
+            const bestResult = await this.updatePersonalBestWithTransaction(gameId, score);
+
+            return {
+                scoreId: docRef.id,
+                isNewBest: bestResult.updated,
+                previousBest: bestResult.previousBest,
+                newBest: bestResult.newBest
+            };
+        } catch (error) {
+            console.error('Submit score with transaction error:', error);
+            return { scoreId: null, isNewBest: false, error: error.message };
         }
     }
 

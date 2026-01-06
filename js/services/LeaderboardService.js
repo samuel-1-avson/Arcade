@@ -172,9 +172,11 @@ class LeaderboardService {
 
     /**
      * Submit score to leaderboard
+     * Uses transaction-based update for atomic high score handling
      * @param {string} gameId
      * @param {number} score
      * @param {Object} metadata
+     * @returns {Promise<{submitted: boolean, isNewBest: boolean}>}
      */
     async submitScore(gameId, score, metadata = {}) {
         // Update local state first
@@ -185,10 +187,14 @@ class LeaderboardService {
             perfect: metadata.perfect || false
         });
 
+        let isNewBest = false;
+
         // Submit to Firebase if signed in
         try {
             if (firebaseService.isSignedIn()) {
-                await firebaseService.submitScore(gameId, score, metadata);
+                // Use transaction-based submission for atomic updates
+                const result = await firebaseService.submitScoreWithTransaction(gameId, score, metadata);
+                isNewBest = result.isNewBest || false;
                 
                 // Invalidate cache
                 this._invalidateCache(gameId);
@@ -197,8 +203,10 @@ class LeaderboardService {
             console.warn('Failed to submit score to Firebase:', e);
         }
 
-        // Emit event
-        eventBus.emit('scoreSubmitted', { gameId, score });
+        // Emit event with isNewBest flag
+        eventBus.emit('scoreSubmitted', { gameId, score, isNewBest });
+
+        return { submitted: true, isNewBest };
     }
 
     // ============ PRIVATE METHODS ============

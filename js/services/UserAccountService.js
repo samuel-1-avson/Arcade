@@ -257,6 +257,7 @@ class UserAccountService {
 
     /**
      * Handle updates from cloud (from other devices)
+     * Uses timestamp-based conflict resolution
      * @param {Object} cloudData
      */
     handleCloudUpdate(cloudData) {
@@ -265,18 +266,69 @@ class UserAccountService {
             console.warn('[UserAccountService] Cloud data version newer than client');
         }
 
-        // Update local state with cloud data
-        globalStateManager.updateProfile({
-            displayName: cloudData.displayName,
-            avatar: cloudData.avatar,
-            level: cloudData.level,
-            xp: cloudData.xp
-        });
+        const localProfile = globalStateManager.getProfile();
+        const localLastModified = localProfile.lastModified || 0;
+        const cloudLastModified = cloudData.lastSeen?.toMillis?.() || 
+                                   cloudData.lastModified?.toMillis?.() || 0;
 
-        this.syncStatus = 'synced';
-        this.emitSyncStatus();
+        // Timestamp-based conflict resolution
+        if (cloudLastModified > localLastModified) {
+            // Cloud is newer - merge cloud data into local
+            console.log('[UserAccountService] Cloud data is newer, merging...');
+            
+            globalStateManager.updateProfile({
+                displayName: cloudData.displayName,
+                avatar: cloudData.avatar,
+                level: Math.max(cloudData.level || 1, localProfile.level || 1), // Take higher level
+                xp: Math.max(cloudData.xp || 0, localProfile.xp || 0), // Take higher XP
+                lastModified: cloudLastModified
+            });
 
-        eventBus.emit('profileSyncedFromCloud', cloudData);
+            // Merge game stats (take higher values for each game)
+            if (cloudData.gameStats) {
+                this._mergeGameStats(cloudData.gameStats);
+            }
+
+            this.syncStatus = 'synced';
+            this.emitSyncStatus();
+            eventBus.emit('profileSyncedFromCloud', cloudData);
+        } else if (localLastModified > cloudLastModified) {
+            // Local is newer - push to cloud
+            console.log('[UserAccountService] Local data is newer, pushing to cloud...');
+            this.performCloudSave();
+        } else {
+            // Same timestamp - already synced
+            this.syncStatus = 'synced';
+            this.emitSyncStatus();
+        }
+    }
+
+    /**
+     * Merge game stats taking higher values
+     * @private
+     */
+    _mergeGameStats(cloudGameStats) {
+        const localStats = globalStateManager.getStatistics();
+        const mergedStats = { ...localStats.gameStats };
+
+        for (const [gameId, cloudStats] of Object.entries(cloudGameStats)) {
+            if (!mergedStats[gameId]) {
+                mergedStats[gameId] = cloudStats;
+            } else {
+                // Merge individual stats, taking higher values
+                mergedStats[gameId] = {
+                    ...mergedStats[gameId],
+                    highScore: Math.max(mergedStats[gameId].highScore || 0, cloudStats.highScore || 0),
+                    played: Math.max(mergedStats[gameId].played || 0, cloudStats.played || 0),
+                    totalScore: Math.max(mergedStats[gameId].totalScore || 0, cloudStats.totalScore || 0),
+                    achievements: Math.max(mergedStats[gameId].achievements || 0, cloudStats.achievements || 0),
+                    perfectRuns: Math.max(mergedStats[gameId].perfectRuns || 0, cloudStats.perfectRuns || 0)
+                };
+            }
+        }
+
+        // Update local state with merged stats
+        globalStateManager._updateGameStats(mergedStats);
     }
 
     /**
@@ -301,9 +353,13 @@ class UserAccountService {
 
     /**
      * Perform the actual cloud save
+     * @param {number} retryCount - Current retry attempt (for exponential backoff)
      */
-    async performCloudSave() {
+    async performCloudSave(retryCount = 0) {
         if (!this.currentUser || !firebaseService.db) return;
+
+        const MAX_RETRIES = 3;
+        const BASE_DELAY = 1000; // 1 second
 
         try {
             this.syncStatus = 'syncing';
@@ -313,6 +369,8 @@ class UserAccountService {
             const localStats = globalStateManager.getStatistics();
             const userRef = firebaseService.db.collection('users').doc(this.currentUser.uid);
 
+            const now = Date.now();
+            
             await userRef.update({
                 displayName: localProfile.displayName,
                 avatar: localProfile.avatar,
@@ -325,19 +383,38 @@ class UserAccountService {
                 totalScore: localStats.totalScore,
                 longestStreak: localStats.longestStreak,
                 gameStats: localStats.gameStats,
-                lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+                lastModified: firebase.firestore.FieldValue.serverTimestamp(),
+                localModifiedAt: now // Client timestamp for conflict resolution
             });
+
+            // Update local lastModified
+            globalStateManager.updateProfile({ lastModified: now });
 
             this.syncStatus = 'synced';
             this.emitSyncStatus();
             console.log('[UserAccountService] Saved to cloud');
         } catch (error) {
             console.error('[UserAccountService] Cloud save error:', error);
-            this.syncStatus = 'error';
-            this.emitSyncStatus();
             
-            // Queue for retry
-            this.queueOfflineSave();
+            // Exponential backoff retry
+            if (retryCount < MAX_RETRIES) {
+                const delay = BASE_DELAY * Math.pow(2, retryCount);
+                console.log(`[UserAccountService] Retrying in ${delay}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+                
+                setTimeout(() => {
+                    this.performCloudSave(retryCount + 1);
+                }, delay);
+                
+                this.syncStatus = 'retrying';
+                this.emitSyncStatus();
+            } else {
+                this.syncStatus = 'error';
+                this.emitSyncStatus();
+                
+                // Queue for offline save after all retries exhausted
+                this.queueOfflineSave();
+            }
         }
     }
 

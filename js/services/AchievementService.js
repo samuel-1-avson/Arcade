@@ -634,6 +634,165 @@ class AchievementService {
         setInterval(() => {
             this.checkMetaAchievements();
         }, 30000); // Every 30 seconds
+
+        // Debounced cloud sync (every 60 seconds or on page unload)
+        setInterval(() => {
+            this.syncToCloud();
+        }, 60000);
+
+        window.addEventListener('beforeunload', () => {
+            this.syncToCloudSync();
+        });
+    }
+
+    // ============ CLOUD SYNC METHODS ============
+
+    /**
+     * Sync all meta-achievements to Firestore using batched writes
+     * This is more efficient than individual writes
+     */
+    async syncToCloud() {
+        // Dynamic import to avoid circular dependency
+        const { firebaseService } = await import('../engine/FirebaseService.js');
+        
+        const db = firebaseService.db;
+        const user = firebaseService.getCurrentUser();
+        
+        if (!db || !user || this.unlockedMeta.length === 0) {
+            return { synced: 0, skipped: 0 };
+        }
+
+        try {
+            const batch = db.batch();
+            const userRef = db.collection('users').doc(user.uid);
+            let syncedCount = 0;
+
+            // Batch all meta-achievements
+            for (const achievementId of this.unlockedMeta) {
+                const achievement = META_ACHIEVEMENTS[achievementId];
+                if (!achievement) continue;
+
+                const achRef = userRef.collection('achievements').doc(`meta_${achievementId}`);
+                batch.set(achRef, {
+                    id: achievementId,
+                    name: achievement.name,
+                    desc: achievement.desc,
+                    category: achievement.category,
+                    xp: achievement.xp,
+                    unlockedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+                syncedCount++;
+            }
+
+            // Also update user's total achievement count
+            batch.update(userRef, {
+                'stats.totalMetaAchievements': this.unlockedMeta.length,
+                lastAchievementSync: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            await batch.commit();
+            console.log(`[AchievementService] Synced ${syncedCount} achievements to cloud`);
+            
+            return { synced: syncedCount, skipped: 0 };
+        } catch (error) {
+            console.error('[AchievementService] Cloud sync error:', error);
+            return { synced: 0, error: error.message };
+        }
+    }
+
+    /**
+     * Synchronous version for page unload (stores pending sync)
+     */
+    syncToCloudSync() {
+        if (this.unlockedMeta.length === 0) return;
+        
+        try {
+            // Store pending achievements for sync on next load
+            const pending = JSON.parse(localStorage.getItem('pendingAchievementSync') || '[]');
+            const newPending = this.unlockedMeta.filter(id => !pending.includes(id));
+            if (newPending.length > 0) {
+                localStorage.setItem('pendingAchievementSync', 
+                    JSON.stringify([...new Set([...pending, ...newPending])]));
+            }
+        } catch (e) {
+            console.warn('[AchievementService] Failed to queue sync:', e);
+        }
+    }
+
+    /**
+     * Process any pending achievement syncs from previous sessions
+     */
+    async processPendingSync() {
+        try {
+            const pending = JSON.parse(localStorage.getItem('pendingAchievementSync') || '[]');
+            if (pending.length === 0) return;
+
+            // Merge pending into current unlocked
+            for (const id of pending) {
+                if (!this.unlockedMeta.includes(id)) {
+                    this.unlockedMeta.push(id);
+                }
+            }
+
+            // Sync to cloud
+            await this.syncToCloud();
+            
+            // Clear pending
+            localStorage.removeItem('pendingAchievementSync');
+            console.log(`[AchievementService] Processed ${pending.length} pending achievement syncs`);
+        } catch (e) {
+            console.warn('[AchievementService] Failed to process pending sync:', e);
+        }
+    }
+
+    /**
+     * Batch unlock multiple achievements at once
+     * More efficient than unlocking one at a time
+     * @param {string[]} achievementIds - Array of achievement IDs to unlock
+     */
+    async batchUnlockAchievements(achievementIds) {
+        const newlyUnlocked = [];
+        let totalXP = 0;
+
+        for (const id of achievementIds) {
+            const achievement = META_ACHIEVEMENTS[id];
+            if (!achievement || this.unlockedMeta.includes(id)) continue;
+
+            this.unlockedMeta.push(id);
+            newlyUnlocked.push(achievement);
+            totalXP += achievement.xp || 0;
+        }
+
+        if (newlyUnlocked.length === 0) return { unlocked: 0, xp: 0 };
+
+        // Save to localStorage
+        this._saveUnlocked();
+
+        // Add XP all at once
+        if (totalXP > 0) {
+            globalStateManager.addXP(totalXP);
+        }
+
+        // Show notifications for each
+        for (const achievement of newlyUnlocked) {
+            notificationService.showAchievement({
+                name: `🌟 ${achievement.name}`,
+                desc: achievement.desc,
+                icon: achievement.icon,
+                xp: achievement.xp
+            });
+        }
+
+        // Emit batch event
+        eventBus.emit('batchAchievementsUnlocked', {
+            achievements: newlyUnlocked,
+            totalXP
+        });
+
+        // Trigger cloud sync
+        this.syncToCloud();
+
+        return { unlocked: newlyUnlocked.length, xp: totalXP };
     }
 
     /**
