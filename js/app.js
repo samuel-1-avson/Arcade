@@ -1258,7 +1258,8 @@ class ArcadeHub {
         card.className = 'game-card';
         card.style.animationDelay = `${index * 0.05}s`;
 
-        const highScore = this.highScores[game.id] || 0;
+        const stats = globalStateManager.getStatistics();
+        const highScore = stats.gameStats[game.id]?.highScore || 0;
         const difficultyClass = `difficulty-${game.difficulty}`;
         const svgIcon = GAME_ICONS[game.id] || '';
 
@@ -1470,6 +1471,15 @@ class ArcadeHub {
         eventBus.on(GameEvents.HIGHSCORE_UPDATE, ({ gameId, score }) => {
             this.highScores[gameId] = score;
             this.updateStats();
+            // Re-render game cards to show updated high scores
+            this.renderGames();
+        });
+        
+        // Also listen for global state changes to update scores
+        eventBus.on('globalStateChange', ({ type }) => {
+            if (type === 'session' || type === 'stats') {
+                this.renderGames();
+            }
         });
 
         // Keyboard shortcuts

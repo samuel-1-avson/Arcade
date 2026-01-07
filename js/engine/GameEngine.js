@@ -185,20 +185,46 @@ class GameEngine {
         this.animationId = null;
 
         // Track play time
-        if (this.sessionStartTime) {
-            const playTime = Math.floor((Date.now() - this.sessionStartTime) / 1000);
+        const playTime = this.sessionStartTime 
+            ? Math.floor((Date.now() - this.sessionStartTime) / 1000) 
+            : 0;
+        if (playTime > 0) {
             storageManager.addPlayTime(playTime);
         }
 
-        // Check for new high score
+        // Check for new high score (local storage)
         const isNewHighScore = storageManager.setHighScore(this.gameId, this.score);
         if (isNewHighScore) {
             this.highScore = this.score;
+            // Emit high score update event for Hub
+            eventBus.emit(GameEvents.HIGHSCORE_UPDATE, {
+                gameId: this.gameId,
+                score: this.score
+            });
         }
 
         // Award XP based on score
         const xpGained = Math.floor(this.score / 10) + 5;
         storageManager.addXP(xpGained);
+
+        // Submit score to Hub via HubSDK (for iframe-embedded games)
+        // This sends a postMessage to the parent Hub which processes it
+        if (window.HubSDK && window.HubSDK.submitScore) {
+            window.HubSDK.submitScore(this.score);
+            console.log(`[GameEngine] Score submitted to Hub: ${this.score}`);
+        } else if (window.parent && window.parent !== window) {
+            // Fallback: send postMessage directly if HubSDK not available
+            window.parent.postMessage({
+                type: 'SUBMIT_SCORE',
+                payload: {
+                    gameId: this.gameId,
+                    score: this.score,
+                    duration: playTime,
+                    completed: isWin
+                }
+            }, '*');
+            console.log(`[GameEngine] Score submitted via postMessage: ${this.score}`);
+        }
 
         eventBus.emit(GameEvents.GAME_OVER, {
             gameId: this.gameId,
