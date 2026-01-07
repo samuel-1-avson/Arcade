@@ -45,8 +45,8 @@ class LeaderboardService {
         }
 
         try {
-            // Try to fetch from Firebase - only check if DB is available
-            if (firebaseService.db) {
+            // Try to fetch from Firebase - only if DB is available AND user is signed in
+            if (firebaseService.db && firebaseService.isSignedIn()) {
                 const scores = await firebaseService.getLeaderboard(gameId, limit);
                 this.cache[cacheKey] = scores;
                 this.lastFetch[cacheKey] = Date.now();
@@ -73,9 +73,9 @@ class LeaderboardService {
         }
 
         try {
-            // Only check if DB is available - reading leaderboards doesn't require user sign-in
-            // (Firestore rules allow any signed-in user to read user profiles)
-            if (firebaseService.db) {
+            // Only fetch if DB is available AND user is signed in
+            // (Firestore rules require authentication for reading user profiles/scores)
+            if (firebaseService.db && firebaseService.isSignedIn()) {
                 const db = firebaseService.db;
                 const currentUserId = firebaseService.getCurrentUser()?.uid;
                 
