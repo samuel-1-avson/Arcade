@@ -565,106 +565,143 @@ class ArcadeHub {
     }
 
     setupPartyUI() {
-        // UI Elements
-        const widget = document.getElementById('party-widget');
-        const statusEl = document.getElementById('party-status');
-        const contentEl = document.getElementById('party-content');
-        const actionsEl = document.getElementById('party-actions');
-        const membersEl = document.getElementById('party-members');
-        const codeEl = document.getElementById('party-code');
-        const createBtn = document.getElementById('create-party-btn');
-        const joinTrigger = document.getElementById('join-party-btn-trigger');
-        const leaveBtn = document.getElementById('leave-party-btn');
-        const joinArea = document.getElementById('join-party-input-area');
-        const joinInput = document.getElementById('join-party-input');
-        const confirmJoin = document.getElementById('confirm-join-party');
-        const cancelJoin = document.getElementById('cancel-join-party');
-        const copyBtn = document.getElementById('copy-party-code');
+    // UI Elements
+    const widget = document.getElementById('party-widget');
+    const statusEl = document.getElementById('party-status');
+    const contentEl = document.getElementById('party-content');
+    const actionsEl = document.getElementById('party-actions');
+    const membersEl = document.getElementById('party-members');
+    const codeEl = document.getElementById('party-code');
+    const createBtn = document.getElementById('create-party-btn');
+    const joinTrigger = document.getElementById('join-party-btn-trigger');
+    const leaveBtn = document.getElementById('leave-party-btn');
+    const joinArea = document.getElementById('join-party-input-area');
+    const joinInput = document.getElementById('join-party-input');
+    const confirmJoin = document.getElementById('confirm-join-party');
+    const cancelJoin = document.getElementById('cancel-join-party');
+    const copyBtn = document.getElementById('copy-party-code');
 
-        if (!widget) return;
+    // Chat Elements
+    const chatInput = document.getElementById('party-chat-input');
+    const chatSendBtn = document.getElementById('party-chat-send');
+    const chatMessages = document.getElementById('party-chat-messages');
 
-        // --- Render Function ---
-        const render = () => {
-            const partyId = partyService.partyId;
-            const members = partyService.members;
-            const isLeader = partyService.isLeader;
-            
-            if (partyId) {
-                // In Party
-                statusEl.textContent = isLeader ? 'Leader' : 'Member';
-                statusEl.style.color = '#00ffaa';
-                
-                contentEl.classList.remove('hidden');
-                actionsEl.classList.add('hidden');
-                joinArea.classList.add('hidden');
-                
-                codeEl.textContent = partyId;
-                
-                membersEl.innerHTML = members.map(m => `
-                    <div class="party-member">
-                        <div class="member-avatar">${m.avatar}</div>
-                        <span class="member-name">${m.name}</span>
-                        ${m.isLeader ? '<span class="member-leader-icon">👑</span>' : ''}
-                    </div>
-                `).join('');
-            } else {
-                // Solo
-                statusEl.textContent = 'Solo';
-                statusEl.style.color = 'var(--color-text-muted)';
-                
-                contentEl.classList.add('hidden');
-                actionsEl.classList.remove('hidden');
-            }
-        };
+    if (!widget) return;
 
-        // --- Event Listeners ---
+    // --- Render Function ---
+    const render = () => {
+        const partyId = partyService.partyId;
+        const members = partyService.members;
+        const isLeader = partyService.isLeader;
         
-        createBtn?.addEventListener('click', () => {
-            partyService.createParty();
-            render();
-            audioService.playSFX('success');
-        });
-
-        joinTrigger?.addEventListener('click', () => {
+        if (partyId) {
+            // In Party
+            statusEl.textContent = isLeader ? 'Leader' : 'Member';
+            statusEl.style.color = '#00ffaa';
+            
+            contentEl.classList.remove('hidden');
             actionsEl.classList.add('hidden');
-            joinArea.classList.remove('hidden');
-        });
+            joinArea.classList.add('hidden');
+            
+            codeEl.textContent = partyId;
+            
+            membersEl.innerHTML = members.map(m => `
+                <div class="party-member">
+                    <div class="member-avatar">${m.avatar}</div>
+                    <span class="member-name">${m.name}</span>
+                    ${m.isLeader ? '<span class="member-leader-icon">👑</span>' : ''}
+                </div>
+            `).join('');
+        } else {
+            // Solo
+            statusEl.textContent = 'Solo';
+            statusEl.style.color = 'var(--color-text-muted)';
+            
+            contentEl.classList.add('hidden');
+            actionsEl.classList.remove('hidden');
+            
+            // Clear chat when leaving
+            if (chatMessages) chatMessages.innerHTML = '';
+        }
+    };
 
-        cancelJoin?.addEventListener('click', () => {
+    // --- Chat Functions ---
+    const handleSendChat = () => {
+        if (!chatInput) return;
+        const msg = chatInput.value.trim();
+        if (msg) {
+            partyService.sendChat(msg);
+            chatInput.value = '';
+        }
+    };
+
+    const appendChatMessage = (data) => {
+        if (!chatMessages) return;
+        const isMe = data.playerId === partyService.myPeerId;
+        const div = document.createElement('div');
+        div.className = `party-chat-message ${isMe ? 'me' : ''}`;
+        div.innerHTML = `
+            <span class="chat-author">${data.playerName}:</span>
+            <span class="chat-text">${data.message}</span>
+        `;
+        chatMessages.appendChild(div);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    };
+
+    // --- Event Listeners ---
+    
+    createBtn?.addEventListener('click', () => {
+        partyService.createParty();
+        render();
+        audioService.playSFX('success');
+    });
+
+    joinTrigger?.addEventListener('click', () => {
+        actionsEl.classList.add('hidden');
+        joinArea.classList.remove('hidden');
+    });
+
+    cancelJoin?.addEventListener('click', () => {
+        joinArea.classList.add('hidden');
+        actionsEl.classList.remove('hidden');
+    });
+
+    confirmJoin?.addEventListener('click', () => {
+        const code = joinInput.value.trim().toUpperCase();
+        if (code.length === 6) {
+            partyService.joinParty(code);
+            joinInput.value = '';
             joinArea.classList.add('hidden');
             actionsEl.classList.remove('hidden');
-        });
+        } else {
+            notificationService.error('Invalid Code');
+            audioService.playSFX('error');
+        }
+    });
 
-        confirmJoin?.addEventListener('click', () => {
-            const code = joinInput.value.trim().toUpperCase();
-            if (code.length === 6) {
-                partyService.joinParty(code);
-                joinInput.value = '';
-                joinArea.classList.add('hidden');
-                actionsEl.classList.remove('hidden');
-            } else {
-                notificationService.error('Invalid Code');
-                audioService.playSFX('error');
-            }
-        });
+    leaveBtn?.addEventListener('click', () => {
+        partyService.leaveParty();
+        render();
+        audioService.playSFX('notification');
+    });
 
-        leaveBtn?.addEventListener('click', () => {
-            partyService.leaveParty();
-            render();
-            audioService.playSFX('notification');
-        });
+    copyBtn?.addEventListener('click', () => {
+        if (partyService.partyId) {
+            navigator.clipboard.writeText(partyService.partyId);
+            notificationService.success('Code copied!');
+        }
+    });
 
-        copyBtn?.addEventListener('click', () => {
-            if (partyService.partyId) {
-                navigator.clipboard.writeText(partyService.partyId);
-                notificationService.success('Code copied!');
-            }
-        });
+    // Chat Listeners
+    chatSendBtn?.addEventListener('click', handleSendChat);
+    chatInput?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handleSendChat();
+    });
 
-        // Listen for updates from service
-        eventBus.on('partyStateChange', render);
-    }
-
+    // Listen for updates from service
+    eventBus.on('partyStateChange', render);
+    eventBus.on('partyChatUpdate', appendChatMessage);
+}
     setupLeaderboards() {
         const viewBtn = document.getElementById('view-leaderboard-btn');
         const modal = document.getElementById('leaderboard-modal');

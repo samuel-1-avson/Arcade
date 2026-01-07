@@ -246,6 +246,14 @@ class PartyService {
                 this.handleRemovedFromParty();
             }
         });
+
+        // Listen for chat messages (Limit to last 50)
+        const chatRef = this.partyRef.child('chat').limitToLast(50);
+        const chatListener = chatRef.on('child_added', (snapshot) => {
+            const message = snapshot.val();
+            eventBus.emit('partyChatUpdate', message);
+        });
+        this.listeners.push({ ref: chatRef, event: 'child_added', callback: chatListener });
     }
 
     removeListeners() {
