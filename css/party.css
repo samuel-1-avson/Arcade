@@ -8,23 +8,35 @@
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
     padding: var(--space-md);
-    margin-top: var(--space-lg);
+    margin-top: 0;
     box-shadow: none;
     transition: all var(--transition-normal);
 }
 
 .party-widget:hover {
-    border-color: var(--color-primary);
-    box-shadow: var(--glow-primary);
+    border-color: rgba(255, 107, 107, 0.3);
+    box-shadow: 0 4px 20px rgba(255, 107, 107, 0.1);
 }
 
 .party-header {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-sm);
+    justify-content: space-between;
+    margin-bottom: var(--space-md);
     padding-bottom: var(--space-sm);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.party-header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.party-icon svg {
+    width: 20px;
+    height: 20px;
+    stroke: var(--primary); /* Assuming primary is used, or hardcode color */
 }
 
 .party-icon {
@@ -132,14 +144,59 @@
 
 .party-actions {
     display: flex;
-    gap: var(--space-sm);
+    flex-direction: column;
+    gap: var(--space-md);
 }
 
-.join-area {
-    margin-top: var(--space-sm);
+.join-input-wrapper {
     display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-md);
+    padding: 0;
+    overflow: hidden;
+    transition: border-color 0.2s;
+}
+
+.join-input-wrapper:focus-within {
+    border-color: var(--primary);
+}
+
+.join-input-wrapper input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: white;
+    padding: 8px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+}
+
+.join-input-wrapper input:focus {
+    outline: none;
+}
+
+.btn-icon-only {
+    width: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-left: 1px solid rgba(255,255,255,0.1);
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.btn-icon-only:hover {
+    background: rgba(255,255,255,0.05);
+    color: var(--text-bright);
+}
+
+/* Hide legacy join area */
+.join-area {
+    display: none;
 }
 
 .join-area .input-group {

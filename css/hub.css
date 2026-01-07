@@ -485,7 +485,22 @@
     flex-direction: column;
     gap: var(--space-lg);
     overflow-y: auto;
-    transition: width 0.3s ease, padding 0.3s ease;
+    transition: transform 0.3s ease, right 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+/* Mobile Sidebar Slide-in */
+.hub-sidebar-right.open {
+    transform: translateX(0);
+}
+
+@media (max-width: 1280px) {
+    .hub-sidebar-right {
+        transform: translateX(100%); /* Slide out by default on mobile/tablet */
+        background: rgba(18, 18, 18, 0.95);
+        width: 320px;
+        box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+    }
 }
 
 .hub-sidebar-right.minimized {
@@ -572,11 +587,49 @@ body.sidebar-minimized .hub-main .container {
     justify-content: center;
 }
 
+.sidebar-widget {
+    background: rgba(26, 26, 26, 0.6);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    margin-bottom: var(--space-md);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    transition: transform 0.2s ease, border-color 0.2s;
+}
+
+.sidebar-widget:hover {
+    border-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.social-hub-divider {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin: var(--space-lg) 0 var(--space-sm);
+    padding-left: var(--space-xs);
+}
+
+.social-hub-divider span {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+.social-hub-divider::after {
+    content: '';
+    height: 1px;
+    flex: 1;
+    background: linear-gradient(90deg, rgba(255,255,255,0.1), transparent);
+}
+
 .party-widget {
-    background: var(--bg-main);
-    border-radius: var(--radius-md);
-    padding: var(--space-lg);
-    border: 1px solid var(--glass-border);
+    padding: var(--space-md); /* Reset special padding */
+    background: linear-gradient(160deg, rgba(255, 107, 107, 0.05), rgba(26, 26, 26, 0.8));
+    border-color: rgba(255, 107, 107, 0.1);
 }
 
 .party-header {
@@ -760,17 +813,29 @@ body.sidebar-minimized .hub-main .container {
 
 /* Responsive Right Sidebar */
 @media (max-width: 1280px) {
-    /* Hide right sidebar on smaller desktops/tablets */
-    .hub-sidebar-right {
-        display: none;
-    }
-    
+    /* Instead of hiding, we rely on the transform defined above.
+       We just need to adjust the main container padding */
     .hub-main .container {
         padding-right: var(--space-lg);
     }
     
     .hub-nav {
         padding-right: 0;
+    }
+    
+    /* Reveal Toggle Button for mobile/tablet if not already visible */
+    #toggle-right-sidebar {
+        display: flex; /* Ensure it's visible to toggle */
+        position: fixed;
+        top: 80px;
+        right: 0;
+        left: auto;
+        border-radius: 8px 0 0 8px;
+        background: var(--primary);
+        color: white;
+        border: none;
+        width: 24px;
+        height: 48px;
     }
 }
 
