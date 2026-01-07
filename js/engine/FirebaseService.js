@@ -100,6 +100,36 @@ class FirebaseService {
     }
 
     /**
+     * Check if Firebase is ready for operations
+     * @returns {Object} { ready: boolean, reason: string }
+     */
+    isReady() {
+        if (!this.initialized) {
+            return { ready: false, reason: 'Firebase not initialized' };
+        }
+        if (!this.db) {
+            return { ready: false, reason: 'Firestore not available' };
+        }
+        if (!this.user) {
+            return { ready: false, reason: 'User not signed in' };
+        }
+        return { ready: true, reason: 'Ready' };
+    }
+
+    /**
+     * Log connection status for debugging
+     */
+    logStatus() {
+        const status = this.isReady();
+        console.log('[FirebaseService] Status:', status.reason);
+        console.log('[FirebaseService] Initialized:', this.initialized);
+        console.log('[FirebaseService] User:', this.user?.email || 'None');
+        console.log('[FirebaseService] Firestore:', !!this.db);
+        console.log('[FirebaseService] RTDB:', !!this.rtdb);
+        return status;
+    }
+
+    /**
      * Auth state change handler (override in app)
      */
     onAuthStateChanged(user) {

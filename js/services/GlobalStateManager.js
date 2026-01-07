@@ -197,7 +197,15 @@ class GlobalStateManager {
             ...this.userProfile.preferences,
             ...prefs
         };
-        this.updateProfile({ preferences: newPrefs });
+        this.userProfile.preferences = newPrefs;
+        this._saveToStorage();
+        
+        // Emit specific preferences event to trigger cloud sync
+        this._emitChange('preferences', newPrefs);
+        
+        if (this.onProfileUpdate) {
+            this.onProfileUpdate(this.userProfile);
+        }
     }
 
     // ============ STATISTICS ============

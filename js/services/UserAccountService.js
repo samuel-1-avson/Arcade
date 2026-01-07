@@ -44,16 +44,19 @@ class UserAccountService {
 
         // Listen for profile/stats changes and sync to cloud
         eventBus.on('globalStateChange', ({ type }) => {
-            // Sync on profile/stats changes AND game session completion
+            // Sync on profile/stats changes, game session completion, preferences, and achievements
             // 'session' type is emitted by recordGameSession (Game Over)
+            // 'preferences' type is emitted when settings change
+            // 'achievement' type is emitted when achievements unlock
             // Add debounce to prevent sync loops if cloud is pushing back
             // Only sync if sufficient time passed since our last cloud save
             const timeSinceLastSave = Date.now() - this._lastCloudSaveTime;
             const isDebounced = timeSinceLastSave > this._syncDebounceMs;
+            
+            const syncableTypes = ['profile', 'stats', 'statistics', 'session', 'preferences', 'achievement'];
 
-            if ((type === 'profile' || type === 'stats' || type === 'statistics' || type === 'session') && 
-                !this._isSyncing && 
-                isDebounced) {
+            if (syncableTypes.includes(type) && !this._isSyncing && isDebounced) {
+                console.log(`[UserAccountService] Triggering cloud sync for type: ${type}`);
                 this.saveToCloud();
             }
         });
@@ -430,6 +433,9 @@ class UserAccountService {
                 totalScore: localStats.totalScore,
                 longestStreak: localStats.longestStreak,
                 gameStats: localStats.gameStats,
+                // Include achievements for cross-device sync
+                achievements: this._getAchievementsForSync(),
+                totalAchievements: localProfile.totalAchievements || 0,
                 lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
                 lastModified: firebase.firestore.FieldValue.serverTimestamp(),
                 localModifiedAt: now // Client timestamp for conflict resolution
@@ -491,6 +497,27 @@ class UserAccountService {
         } catch (e) {
             console.warn('[UserAccountService] Failed to queue offline save:', e);
         }
+    }
+
+    /**
+     * Get achievements in a format suitable for cloud sync
+     * @private
+     */
+    _getAchievementsForSync() {
+        const achievements = globalStateManager.gameAchievements || {};
+        const syncableAchievements = [];
+        
+        for (const [gameId, achievementIds] of Object.entries(achievements)) {
+            for (const achievementId of achievementIds) {
+                syncableAchievements.push({
+                    gameId,
+                    id: achievementId,
+                    // Don't include timestamp here - Firestore will add serverTimestamp on first save
+                });
+            }
+        }
+        
+        return syncableAchievements;
     }
 
     /**

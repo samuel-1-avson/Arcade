@@ -19,13 +19,14 @@ service cloud.firestore {
     
     // Users collection
     match /users/{userId} {
-      // Users can read their own profile
-      allow read: if isSignedIn() && isOwner(userId);
+      // Allow any signed-in user to read profiles (needed for leaderboards)
+      // This enables cross-user leaderboard display
+      allow read: if isSignedIn();
       
-      // Users can create their own profile
+      // Users can only create their own profile
       allow create: if isSignedIn() && isOwner(userId);
       
-      // Users can update their own profile
+      // Users can only update their own profile
       allow update: if isSignedIn() && isOwner(userId);
       
       // No delete (soft delete only via admin)

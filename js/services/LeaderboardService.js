@@ -75,25 +75,35 @@ class LeaderboardService {
         try {
             if (firebaseService.isSignedIn() && firebaseService.db) {
                 const db = firebaseService.db;
+                
+                // Query users by totalScore (stored at root level, not nested in stats)
                 const snapshot = await db.collection('users')
-                    .orderBy('stats.totalScore', 'desc')
+                    .orderBy('totalScore', 'desc')
                     .limit(limit)
                     .get();
 
-                const scores = snapshot.docs.map((doc, index) => ({
-                    rank: index + 1,
-                    name: doc.data().displayName || 'Player',
-                    score: doc.data().stats?.totalScore || 0,
-                    level: doc.data().stats?.level || 1,
-                    userId: doc.id
-                }));
+                const scores = snapshot.docs.map((doc, index) => {
+                    const data = doc.data();
+                    return {
+                        rank: index + 1,
+                        name: data.displayName || 'Player',
+                        photoURL: data.photoURL || null,
+                        score: data.totalScore || 0,
+                        level: data.level || 1,
+                        userId: doc.id,
+                        isCurrentUser: doc.id === firebaseService.getCurrentUser()?.uid
+                    };
+                });
 
+                console.log(`[LeaderboardService] Fetched ${scores.length} players for global leaderboard`);
                 this.cache[cacheKey] = scores;
                 this.lastFetch[cacheKey] = Date.now();
                 return scores;
+            } else {
+                console.log('[LeaderboardService] Not signed in or DB not ready, using local data');
             }
         } catch (e) {
-            console.warn('Failed to fetch global leaderboard:', e);
+            console.warn('[LeaderboardService] Failed to fetch global leaderboard:', e.message);
         }
 
         // Fallback to local only
@@ -289,15 +299,15 @@ class LeaderboardService {
             const user = firebaseService.getCurrentUser();
             const stats = globalStateManager.getStatistics();
             
-            // Count users with higher score
+            // Count users with higher score (field is at root level, not nested)
             const db = firebaseService.db;
             const snapshot = await db.collection('users')
-                .where('stats.totalScore', '>', stats.totalScore)
+                .where('totalScore', '>', stats.totalScore)
                 .get();
 
             return snapshot.size + 1;
         } catch (e) {
-            console.warn('Failed to get user rank:', e);
+            console.warn('[LeaderboardService] Failed to get user rank:', e.message);
             return null;
         }
     }
