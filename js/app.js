@@ -839,19 +839,14 @@ class ArcadeHub {
         });
 
         // Listen for friends list updates
-        eventBus.on('friendsListUpdated', (friends) => {
-            this.renderFriendsList(friends);
+        // Listen for friends list updates
+        eventBus.on('friendsListUpdated', () => {
+            this.renderFriendsList();
         });
 
-        eventBus.on('friendRequestsUpdated', ({ incoming, outgoing }) => {
-            this.renderFriendRequests(incoming);
-            
-            // Update badge
-            const badge = document.getElementById('request-badge');
-            if (badge) {
-                badge.textContent = incoming.length;
-                badge.style.display = incoming.length > 0 ? 'inline-flex' : 'none';
-            }
+        eventBus.on('friendRequestsUpdated', ({ incoming }) => {
+            this.renderFriendRequests();
+            this.updateBadgeCount(incoming.length);
         });
 
         eventBus.on('friendStatusChanged', (friend) => {
@@ -904,106 +899,63 @@ class ArcadeHub {
                 searchResults.style.display = 'none';
             }
         });
-    }
 
-    renderFriendsList(friends) {
-        const container = document.getElementById('friends-list');
-        if (!container) return;
-
-        if (friends.length === 0) {
-            container.innerHTML = `
-                <div class="friends-empty">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                        <circle cx="9" cy="7" r="4"/>
-                        <line x1="19" y1="8" x2="19" y2="14"/>
-                        <line x1="22" y1="11" x2="16" y2="11"/>
-                    </svg>
-                    <p>No friends yet</p>
-                </div>`;
-            return;
-        }
-
-        container.innerHTML = friends.map(friend => `
-            <div class="friend-item" data-friend-id="${friend.id}">
-                <div class="friend-avatar">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        ${AVATAR_ICONS[friend.avatar] || '<circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/>'}
-                    </svg>
-                    <span class="friend-status-dot ${friend.status || 'offline'}"></span>
-                </div>
-                <div class="friend-info">
-                    <div class="friend-name">${friend.name}</div>
-                    <div class="friend-status ${friend.status || ''}">${friend.currentGame || friend.status || 'Offline'}</div>
-                </div>
-                <div class="friend-actions">
-                    <button class="friend-action-btn" title="Message" onclick="arcadeHub.openDM('${friend.id}', '${friend.name}')">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                    </button>
-                </div>
-            </div>
-        `).join('');
-
-        // Update count
-        const countEl = document.getElementById('friend-count');
-        if (countEl) {
-            countEl.textContent = friends.length;
-            countEl.style.display = friends.length > 0 ? 'inline-flex' : 'none';
-        }
-    }
-
-    renderFriendRequests(requests) {
-        const container = document.getElementById('friend-requests');
-        if (!container) return;
-
-        if (requests.length === 0) {
-            container.innerHTML = `<div class="friends-empty"><p>No pending requests</p></div>`;
-            return;
-        }
-
-        container.innerHTML = requests.map(req => `
-            <div class="friend-item" data-request-id="${req.id}">
-                <div class="friend-avatar">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        ${AVATAR_ICONS[req.avatar] || '<circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/>'}
-                    </svg>
-                </div>
-                <div class="friend-info">
-                    <div class="friend-name">${req.name}</div>
-                    <div class="friend-status">Sent request</div>
-                </div>
-                <div class="friend-actions" style="opacity:1;">
-                    <button class="friend-action-btn accept" title="Accept" onclick="friendsService.acceptFriendRequest('${req.id}')">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20,6 9,17 4,12"/></svg>
-                    </button>
-                    <button class="friend-action-btn decline" title="Decline" onclick="friendsService.declineFriendRequest('${req.id}')">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                    </button>
-                </div>
-            </div>
-        `).join('');
+        // Initial render with any existing data
+        this.renderFriendsList();
+        this.renderFriendRequests();
+        this.updateBadgeCount(friendsService.getIncomingRequests().length);
     }
 
     renderSearchResults(results, container) {
         if (!container) return;
 
-        if (results.length === 0) {
+        if (!results || results.length === 0) {
             container.innerHTML = `<div class="search-result-item">No users found</div>`;
             container.style.display = 'block';
+            container.style.opacity = '1';
             return;
         }
 
         container.innerHTML = results.map(user => `
-            <div class="search-result-item" onclick="friendsService.sendFriendRequest('${user.id}')">
+            <div class="search-result-item" data-userid="${user.id}">
                 <div class="friend-avatar" style="width:28px;height:28px;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
                         ${AVATAR_ICONS[user.avatar] || '<circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/>'}
                     </svg>
                 </div>
-                <span class="friend-name">${user.displayName}</span>
+                <div class="friend-info">
+                    <div class="friend-name">${user.displayName || 'Player'}</div>
+                </div>
+                <button class="friend-action-btn add-btn" title="Add Friend">
+                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
             </div>
         `).join('');
+        
         container.style.display = 'block';
+        container.style.opacity = '1';
+
+        // Add event listeners
+        container.querySelectorAll('.add-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const item = btn.closest('.search-result-item');
+                const userId = item.dataset.userid;
+                await friendsService.sendFriendRequest(userId);
+                btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>';
+                btn.classList.add('success');
+            });
+        });
+    }
+
+    // Old duplicate methods removed
+    
+    updateBadgeCount(count) {
+        const badge = document.getElementById('request-badge');
+        if (badge) {
+            badge.textContent = count;
+            badge.style.display = count > 0 ? 'inline-flex' : 'none';
+        }
     }
 
     openDM(friendId, friendName) {
