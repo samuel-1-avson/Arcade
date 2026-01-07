@@ -556,9 +556,14 @@
     color: var(--text-bright);
 }
 
-/* Hide legacy join area */
+/* Join Area Visibility */
 .join-area {
-    display: none;
+    margin-top: var(--space-md);
+    animation: fadeIn 0.3s ease;
+}
+
+.join-area.hidden {
+    display: none !important;
 }
 
 .join-area .input-group {
@@ -568,10 +573,21 @@
     width: 100%;
 }
 
+
+.join-actions {
+    display: flex;
+    gap: 8px; /* var(--space-sm) */
+    margin-top: 8px;
+}
+
+.join-actions button {
+    flex: 1;
+}
+
 #join-party-input {
     width: 100%;
-    background: var(--bg-input);
-    border: 1px solid var(--glass-border);
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
     color: white;
     padding: 8px 10px;
     border-radius: var(--radius-sm);
@@ -581,7 +597,7 @@
 }
 
 #join-party-input:focus {
-    border-color: var(--color-primary);
+    border-color: var(--accent-color, #ff6b6b);
     outline: none;
 }
 
