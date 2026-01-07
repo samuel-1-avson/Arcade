@@ -3,7 +3,13 @@
  * Defines different brick types with unique behaviors and properties
  */
 
-import { ICONS } from './Icons.js';
+// Simple text symbols for canvas rendering (SVG cannot be drawn with fillText)
+const BRICK_SYMBOLS = {
+    EXPLOSION: '💥',
+    STAR: '★',
+    SKULL: '☠',
+    REFRESH: '↻'
+};
 
 // Brick type definitions
 export const BRICK_TYPES = {
@@ -40,7 +46,7 @@ export const BRICK_TYPES = {
         hits: 1,
         points: 15,
         color: '#ff4400',
-        symbol: ICONS.EXPLOSION,
+        symbol: BRICK_SYMBOLS.EXPLOSION,
         canDrop: true,
         explosionRadius: 1, // Destroys adjacent bricks
         description: 'Explodes and damages nearby bricks'
@@ -61,7 +67,7 @@ export const BRICK_TYPES = {
         hits: 1,
         points: 100,
         color: '#ffd700',
-        symbol: ICONS.STAR,
+        symbol: BRICK_SYMBOLS.STAR,
         canDrop: true,
         guaranteedPowerup: true,
         description: 'Bonus points and guaranteed power-up'
@@ -92,7 +98,7 @@ export const BRICK_TYPES = {
         hits: 1,
         points: 12,
         color: '#88ff88',
-        symbol: ICONS.REFRESH,
+        symbol: BRICK_SYMBOLS.REFRESH,
         canDrop: true,
         regenTime: 10000, // ms until respawn
         description: 'Respawns after 10 seconds'
@@ -114,7 +120,7 @@ export const BRICK_TYPES = {
         hits: 1,
         points: -50, // Penalty
         color: '#000000',
-        symbol: ICONS.SKULL,
+        symbol: BRICK_SYMBOLS.SKULL,
         canDrop: false,
         dangerous: true, // Costs a life if hit
         description: 'Avoid! Costs a life if hit'
