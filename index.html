@@ -148,7 +148,7 @@
                 </span>
                 <span class="nav-label">Home</span>
             </button>
-            <button class="nav-item" data-section="tournaments" id="nav-tournaments">
+            <button class="nav-item" id="nav-tournaments">
                 <span class="nav-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
@@ -161,7 +161,7 @@
                 </span>
                 <span class="nav-label">Tournaments</span>
             </button>
-            <button class="nav-item" data-section="challenges" id="nav-challenges">
+            <button class="nav-item" id="nav-challenges">
                 <span class="nav-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"/>
@@ -741,6 +741,51 @@
             </div>
         </div>
     </div>
+    
+    <!-- Tournaments Modal (New) -->
+    <div class="modal hidden" id="tournaments-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content tournament-modal-view">
+            <div class="modal-header">
+                <div class="modal-title-row">
+                    <svg class="modal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                        <path d="M4 22h16"/>
+                        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+                    </svg>
+                    <h2>Active Tournaments</h2>
+                </div>
+                <button class="btn btn-primary btn-sm" id="modal-create-tournament-btn">+ Create</button>
+            </div>
+            <div id="tournament-section">
+                <!-- Content will be populated here by TournamentService -->
+            </div>
+            <button class="btn btn-ghost gallery-close" id="tournaments-close-btn">Close</button>
+        </div>
+    </div>
+    
+    <!-- Challenges Modal (New) -->
+    <div class="modal hidden" id="challenges-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content challenges-modal-view">
+            <div class="modal-header">
+                <div class="modal-title-row">
+                    <svg class="modal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <circle cx="12" cy="12" r="6"/>
+                        <circle cx="12" cy="12" r="2"/>
+                    </svg>
+                    <h2>Daily Challenges</h2>
+                </div>
+            </div>
+            <div id="challenge-section">
+                <!-- Content will be populated here by DailyChallengeService -->
+            </div>
+            <button class="btn btn-ghost gallery-close" id="challenges-close-btn">Close</button>
+        </div>
+    </div>
+
 
     <!-- Bracket Modal -->
     <div class="modal hidden" id="bracket-modal">
@@ -766,45 +811,7 @@
         <button id="toggle-right-sidebar" class="sidebar-toggle-btn" title="Toggle Sidebar">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
-        <!-- Challenges Widget -->
-        <div class="sidebar-widget challenges-widget">
-            <div class="widget-header">
-                <span class="widget-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"/>
-                        <circle cx="12" cy="12" r="6"/>
-                        <circle cx="12" cy="12" r="2"/>
-                    </svg>
-                </span>
-                <span class="widget-title">Challenges</span>
-            </div>
-            <div class="widget-content" id="challenge-section">
-                <!-- Challenges populated by JS -->
-            </div>
-        </div>
-
-        <!-- Tournaments Widget -->
-        <div class="sidebar-widget tournaments-widget">
-            <div class="widget-header">
-                <span class="widget-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
-                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
-                        <path d="M4 22h16"/>
-                        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
-                    </svg>
-                </span>
-                <span class="widget-title">Tournaments</span>
-                <button class="btn btn-primary btn-xs" id="create-tournament-btn">
-                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    New
-                </button>
-            </div>
-            <div class="widget-content" id="tournament-section">
-                <!-- Populated by JS -->
-                <div class="tournament-empty-mini">No active tournaments</div>
-            </div>
-        </div>
+        <!-- Social Hub Only -->
 
         <!-- Social Hub Section -->
         <div class="social-hub-divider">

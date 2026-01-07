@@ -185,6 +185,8 @@ class ArcadeHub {
         this.setupSettings();
         this.setupShop();
         this.setupTournaments();
+        this.setupTournamentsModal();
+        this.setupChallengesModal(); // New setup for refactored modal
 
         // Register Service Worker
         if ('serviceWorker' in navigator) {
@@ -227,7 +229,7 @@ class ArcadeHub {
             }
 
             // Handle Specific Buttons
-            if (id === 'nav-leaderboard' || id === 'nav-achievements' || id === 'nav-shop' || id === 'nav-settings') {
+            if (id === 'nav-leaderboard' || id === 'nav-achievements' || id === 'nav-shop' || id === 'nav-settings' || id === 'nav-tournaments' || id === 'nav-challenges') {
                 const modalId = id.replace('nav-', '') + (id.includes('gallery') ? '' : (id === 'nav-achievements' ? '-gallery' : '-modal'));
                 const modal = document.getElementById(modalId);
                 if (modal) {
@@ -235,11 +237,13 @@ class ArcadeHub {
                     // Trigger specific loads if needed
                     if (id === 'nav-leaderboard') this.loadLeaderboard('global');
                     if (id === 'nav-achievements') this.renderAchievementGallery();
+                    // Tournaments and Challenges are auto-populated by their services observing state
                 }
             }
             
             // Mobile Specifics
             if (id === 'mobile-nav-shop') document.getElementById('shop-modal')?.classList.remove('hidden');
+            if (id === 'mobile-nav-tournaments') document.getElementById('tournaments-modal')?.classList.remove('hidden');
             if (id === 'mobile-play-btn') {
                 // Scroll to games
                 document.getElementById('games-grid')?.scrollIntoView({ behavior: 'smooth' });
@@ -777,6 +781,41 @@ class ArcadeHub {
         if (closeBtn) {
             closeBtn.addEventListener('click', () => modal?.classList.add('hidden'));
         }
+        
+        modal?.addEventListener('click', (e) => {
+            if (e.target === modal || e.target.classList.contains('modal-backdrop')) {
+                modal.classList.add('hidden');
+            }
+        });
+    }
+
+    setupTournamentsModal() {
+        const modal = document.getElementById('tournaments-modal');
+        const closeBtn = document.getElementById('tournaments-close-btn');
+        const createBtn = document.getElementById('modal-create-tournament-btn');
+        const newBtn = document.getElementById('create-tournament-btn'); // Sidebar button reference may be gone, but keeping just in case
+
+        if (closeBtn) closeBtn.addEventListener('click', () => modal?.classList.add('hidden'));
+        
+        modal?.addEventListener('click', (e) => {
+            if (e.target === modal || e.target.classList.contains('modal-backdrop')) {
+                modal.classList.add('hidden');
+            }
+        });
+
+        // Re-bind create button if inside modal
+        if (createBtn) {
+            createBtn.addEventListener('click', () => {
+                document.getElementById('create-tournament-modal')?.classList.remove('hidden');
+            });
+        }
+    }
+
+    setupChallengesModal() {
+        const modal = document.getElementById('challenges-modal');
+        const closeBtn = document.getElementById('challenges-close-btn');
+
+        if (closeBtn) closeBtn.addEventListener('click', () => modal?.classList.add('hidden'));
         
         modal?.addEventListener('click', (e) => {
             if (e.target === modal || e.target.classList.contains('modal-backdrop')) {
