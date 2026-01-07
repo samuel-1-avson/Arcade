@@ -45,15 +45,15 @@ class LeaderboardService {
         }
 
         try {
-            // Try to fetch from Firebase
-            if (firebaseService.isSignedIn()) {
+            // Try to fetch from Firebase - only check if DB is available
+            if (firebaseService.db) {
                 const scores = await firebaseService.getLeaderboard(gameId, limit);
                 this.cache[cacheKey] = scores;
                 this.lastFetch[cacheKey] = Date.now();
                 return scores;
             }
         } catch (e) {
-            console.warn('Failed to fetch leaderboard:', e);
+            console.warn('[LeaderboardService] Failed to fetch game leaderboard:', e.message);
         }
 
         // Fallback to local data
@@ -73,8 +73,11 @@ class LeaderboardService {
         }
 
         try {
-            if (firebaseService.isSignedIn() && firebaseService.db) {
+            // Only check if DB is available - reading leaderboards doesn't require user sign-in
+            // (Firestore rules allow any signed-in user to read user profiles)
+            if (firebaseService.db) {
                 const db = firebaseService.db;
+                const currentUserId = firebaseService.getCurrentUser()?.uid;
                 
                 // Query users by totalScore (stored at root level, not nested in stats)
                 const snapshot = await db.collection('users')
@@ -91,7 +94,7 @@ class LeaderboardService {
                         score: data.totalScore || 0,
                         level: data.level || 1,
                         userId: doc.id,
-                        isCurrentUser: doc.id === firebaseService.getCurrentUser()?.uid
+                        isCurrentUser: currentUserId ? doc.id === currentUserId : false
                     };
                 });
 
@@ -100,7 +103,7 @@ class LeaderboardService {
                 this.lastFetch[cacheKey] = Date.now();
                 return scores;
             } else {
-                console.log('[LeaderboardService] Not signed in or DB not ready, using local data');
+                console.log('[LeaderboardService] Firebase DB not ready, using local data');
             }
         } catch (e) {
             console.warn('[LeaderboardService] Failed to fetch global leaderboard:', e.message);
