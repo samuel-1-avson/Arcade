@@ -194,84 +194,132 @@
             </div>
             
             <div class="mp-options" id="mp-options">
-                <button id="btn-create-room" class="mp-option-btn">
-                    <span class="mp-icon">
+                <div class="mp-option-card" id="btn-create-room">
+                    <div class="mp-card-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="12" y1="5" x2="12" y2="19"/>
                             <line x1="5" y1="12" x2="19" y2="12"/>
                         </svg>
-                    </span>
-                    <span class="mp-label">Create Room</span>
-                    <span class="mp-desc">Host a game and invite a friend</span>
-                </button>
-                <button id="btn-join-room" class="mp-option-btn">
-                    <span class="mp-icon">
+                    </div>
+                    <div class="mp-card-content">
+                        <h3>Create Room</h3>
+                        <p>Host a private game session and invite a friend using a code.</p>
+                    </div>
+                    <div class="mp-card-action">
+                        <span>Create</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </div>
+                </div>
+
+                <div class="mp-option-card join" id="btn-join-room">
+                    <div class="mp-card-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                            <polyline points="10 17 15 12 10 7"/>
+                            <line x1="15" y1="12" x2="3" y2="12"/>
                         </svg>
-                    </span>
-                    <span class="mp-label">Join Room</span>
-                    <span class="mp-desc">Enter a room code</span>
-                </button>
+                    </div>
+                    <div class="mp-card-content">
+                        <h3>Join Room</h3>
+                        <p>Enter an existing room code to join a friend's game.</p>
+                    </div>
+                    <div class="mp-card-action">
+                        <span>Join</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </div>
+                </div>
             </div>
 
             <!-- Join Room Input -->
             <div id="join-panel" class="mp-panel hidden">
-                <h3>Enter Room Code</h3>
-                <input type="text" id="input-room-code" class="room-code-input" placeholder="ABC123" maxlength="6">
+                <h3>Enter Access Code</h3>
+                <div class="code-input-wrapper">
+                    <input type="text" id="input-room-code" class="room-code-input" placeholder="ABC123" maxlength="6">
+                    <div class="code-glow"></div>
+                </div>
                 <div class="mp-panel-btns">
                     <button id="btn-cancel-join" class="btn ghost">Cancel</button>
-                    <button id="btn-confirm-join" class="btn primary">Join</button>
+                    <button id="btn-confirm-join" class="btn primary">Connect</button>
                 </div>
             </div>
 
             <!-- Lobby -->
             <div id="mp-lobby" class="mp-lobby hidden">
-                <div class="lobby-header">
-                    <span>Room Code:</span>
-                    <span id="lobby-code" class="room-code">ABC123</span>
-                </div>
+                <div class="lobby-grid">
+                    <!-- Left Column: Players -->
+                    <div class="lobby-col-left">
+                        <div class="lobby-header-plain">
+                            <span>Room Code</span>
+                            <span id="lobby-code" class="code-display">ABC123</span>
+                        </div>
+                        
+                        <div class="player-slots">
+                            <!-- Helper: You -->
+                            <div class="lobby-player you">
+                                <div class="player-avatar">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="12" cy="7" r="4"/>
+                                    </svg>
+                                </div>
+                                <div class="player-info">
+                                    <span class="p-label">PLAYER 1 (HOST)</span>
+                                    <span class="p-name">You</span>
+                                </div>
+                                <span id="your-status" class="player-status-badge">Not Ready</span>
+                            </div>
 
-                <div class="lobby-players">
-                    <div class="lobby-player you">
-                        <span class="player-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                                <circle cx="12" cy="7" r="4"/>
-                            </svg>
-                        </span>
-                        <span class="player-name">You (Host)</span>
-                        <span id="your-status" class="player-status">Not Ready</span>
+                            <!-- Helper: Opponent -->
+                            <div class="lobby-player opponent" id="opponent-slot">
+                                <div class="player-avatar">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="9" cy="7" r="4"/>
+                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                    </svg>
+                                </div>
+                                <div class="player-info">
+                                    <span class="p-label">PLAYER 2</span>
+                                    <span class="p-name" id="opponent-name">Waiting for player...</span>
+                                </div>
+                                <span id="opponent-status" class="player-status-badge"></span>
+                            </div>
+                        </div>
+
+                        <div class="lobby-actions-row">
+                            <button id="btn-leave-room" class="btn ghost danger">Leave Room</button>
+                            <button id="btn-ready" class="btn primary large pulse-ready">READY UP</button>
+                        </div>
                     </div>
-                    <div class="lobby-player opponent" id="opponent-slot">
-                        <span class="player-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"/>
-                                <polyline points="12,6 12,12 16,14"/>
-                            </svg>
-                        </span>
-                        <span class="player-name" id="opponent-name">Waiting...</span>
-                        <span id="opponent-status" class="player-status"></span>
+
+                    <!-- Right Column: Context (Song/Chat) -->
+                    <div class="lobby-col-right">
+                        <!-- Song Selection (Visible only for host, or displaying selected song for guest) -->
+                        <div class="lobby-panel song-panel" id="lobby-song-select">
+                            <div class="panel-header">
+                                <span>Operation Track</span>
+                            </div>
+                            <div id="mp-song-list" class="mp-song-scroller">
+                                <!-- Songs injected here -->
+                            </div>
+                        </div>
+
+                        <!-- Chat Terminal -->
+                        <div class="lobby-panel chat-panel">
+                            <div class="panel-header">
+                                <span>Secure Comms</span>
+                            </div>
+                            <div id="chat-messages" class="chat-terminal"></div>
+                            <div class="chat-input-row">
+                                <span class="prompt">></span>
+                                <input type="text" id="chat-input" placeholder="Transmit message...">
+                                <button id="btn-send-chat" class="btn-icon-tiny">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-
-                <div class="lobby-song" id="lobby-song-select">
-                    <h4>Select Song</h4>
-                    <div id="mp-song-list" class="mp-song-list"></div>
-                </div>
-
-                <div class="lobby-chat">
-                    <div id="chat-messages" class="chat-messages"></div>
-                    <div class="chat-input-row">
-                        <input type="text" id="chat-input" placeholder="Type a message...">
-                        <button id="btn-send-chat" class="btn small">Send</button>
-                    </div>
-                </div>
-
-                <div class="lobby-actions">
-                    <button id="btn-ready" class="btn primary large">Ready</button>
-                    <button id="btn-leave-room" class="btn ghost danger">Leave</button>
                 </div>
             </div>
         </div>
