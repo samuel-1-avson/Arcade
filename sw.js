@@ -48,6 +48,11 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
     
+    // Exclude external resources (Google, Firebase, etc.) from SW handling
+    if (url.origin !== self.location.origin) {
+        return; // Allow the browser to handle external requests directly
+    }
+
     // Network-first for JS files (always get latest)
     const isNetworkFirst = NETWORK_FIRST.some(path => url.pathname.includes(path));
     

@@ -9,7 +9,7 @@ import { storageManager } from '../engine/StorageManager.js';
 // Game IDs for tracking
 export const GAME_IDS = [
     'snake', '2048', 'breakout', 'minesweeper',
-    'tetris', 'pacman', 'asteroids', 'tower-defense', 'rhythm', 'roguelike'
+    'tetris', 'pacman', 'asteroids', 'tower-defense', 'rhythm', 'roguelike', 'toonshooter'
 ];
 
 // Player titles earned through achievements
