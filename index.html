@@ -396,25 +396,6 @@
                             <div class="xp-fill" id="xp-fill" style="width: 0%"></div>
                         </div>
                     </div>
-                    <button class="create-party-card-btn" id="create-party-btn">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"/>
-                            <line x1="12" y1="8" x2="12" y2="16"/>
-                            <line x1="8" y1="12" x2="16" y2="12"/>
-                        </svg>
-                        <span class="create-party-text">Create Party</span>
-                    </button>
-                    
-                    <div class="join-section">
-                        <div class="join-input-wrapper">
-                            <input type="text" id="join-party-input" placeholder="JOIN CODE" maxlength="6">
-                            <button class="btn-icon-only" id="confirm-join-party">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="9 18 15 12 9 6"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
                     <div class="profile-stats">
                         <div class="mini-stat">
                             <span class="mini-stat-value" id="games-played">0</span>
@@ -838,7 +819,8 @@
         </div>
 
         <!-- Party Widget -->
-        <div id="party-widget" class="sidebar-widget party-widget">
+        <!-- Party Widget (Compact Refactor) -->
+        <div id="party-widget" class="party-widget">
             <div class="party-header">
                 <div class="party-header-left">
                     <span class="party-icon">
@@ -851,102 +833,115 @@
                     </span>
                     <span class="party-title">Party</span>
                 </div>
-                <span id="party-status" class="party-status">Solo</span>
+                <span id="party-status" class="party-status">SOLO</span>
             </div>
-            
+
+            <!-- Active Party Content -->
             <div id="party-content" class="party-content hidden">
                 <div class="party-code-display">
-                    <span class="code-label">CODE</span>
-                    <span id="party-code" class="code-value">---</span>
-                    <button id="copy-party-code" class="icon-btn-sm" title="Copy Code">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                        </svg>
+                    <span class="code-label">CODE:</span>
+                    <span id="party-code" class="code-value">ABCD</span>
+                    <button class="icon-btn-sm" id="copy-party-code" title="Copy Code">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                     </button>
                 </div>
-                <div id="party-members" class="party-members">
-                    <!-- Members populated via JS -->
+                
+                <div class="party-members" id="party-members">
+                    <!-- Members populated by JS -->
                 </div>
-                <!-- Party Chat (shown when in party) -->
-                 <div id="party-chat" class="party-chat">
-                    <div id="party-chat-messages" class="party-chat-messages">
-                        <!-- Messages populated by JS -->
+
+                <div class="party-chat" id="party-chat-mini">
+                    <div class="party-chat-messages" id="party-chat-messages">
+                        <!-- Chat messages -->
                     </div>
                     <div class="party-chat-input">
-                        <input type="text" id="party-chat-input" placeholder="Chat..." maxlength="200">
+                        <input type="text" id="party-chat-input" placeholder="Message party...">
                         <button id="party-chat-send">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="22" y1="2" x2="11" y2="13"/>
-                                <polygon points="22,2 15,22 11,13 2,9"/>
-                            </svg>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                         </button>
                     </div>
                 </div>
-                <button id="leave-party-btn" class="btn btn-danger-ghost btn-sm btn-full">Leave Party</button>
+
+                <button id="leave-party-btn" class="btn btn-danger btn-sm btn-full" style="margin-top: var(--space-md);">Leave Party</button>
             </div>
 
+            <!-- Join/Create Actions -->
             <div id="party-actions" class="party-actions">
-                <button id="create-party-btn" class="btn btn-primary btn-sm btn-full">
-                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
-                    Create Party
+                <button id="create-party-btn" class="btn-primary btn-full party-create-card">
+                    <div class="party-create-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </div>
+                    <div class="party-create-text">
+                        <span class="action-title">Create</span>
+                        <span class="action-subtitle">Party</span>
+                    </div>
                 </button>
-                <div class="join-input-wrapper">
-                    <input type="text" id="join-party-input" placeholder="Join Code" maxlength="6">
-                    <button id="confirm-join-party" class="btn btn-secondary btn-icon-only">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                    </button>
+                
+                <button id="join-party-btn-trigger" class="btn-ghost btn-full join-trigger-btn">
+                    <span>HAVE A CODE?</span>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+
+                <div id="join-party-input-area" class="join-area hidden">
+                    <div class="input-group">
+                        <input type="text" id="join-party-input" placeholder="CODE" maxlength="6">
+                    </div>
+                    <div class="join-actions">
+                        <button id="confirm-join-party" class="btn btn-primary btn-sm">JOIN</button>
+                        <button id="cancel-join-party" class="btn btn-ghost btn-sm">CANCEL</button>
+                    </div>
                 </div>
-                <!-- Hidden legacy input area kept if logic depends on it, but visually replaced above -->
-                <div id="join-party-input-area" class="join-area hidden" style="display: none !important;"></div>
             </div>
         </div>
 
-        <!-- Friends Widget -->
-        <div id="friends-widget" class="sidebar-widget friends-panel">
+        <!-- Friends Widget (Expanded Refactor) -->
+        <div id="friends-widget" class="friends-panel">
             <div class="friends-header">
-                <h3>
-                    <span class="header-icon-wrapper">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                            <circle cx="9" cy="7" r="4"/>
-                            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                        </svg>
-                    </span>
-                    Friends
-                </h3>
-                <span id="friend-count" class="friend-count-badge" style="display:none;">0</span>
+                <h3>Friends <span id="online-friends-count" class="friend-count">0</span></h3>
             </div>
             
             <div class="friends-tabs-container">
                 <div class="friends-tabs">
                     <button class="friends-tab active" data-tab="friends">Friends</button>
-                    <button class="friends-tab" data-tab="requests">Requests <span id="request-badge" class="badge" style="display:none;">0</span></button>
+                    <button class="friends-tab" data-tab="requests">Requests <span id="request-badge" class="badge-mini hidden">0</span></button>
                 </div>
             </div>
 
-            <div class="friends-content-area">
-                <div id="friends-list" class="friends-list">
-                    <div class="friends-empty">
-                        <p>No friends yet</p>
-                    </div>
-                </div>
-                <div id="friend-requests" class="friends-list hidden">
-                    <div class="friends-empty">
-                        <p>No pending requests</p>
-                    </div>
+            <div id="friends-list" class="friends-list">
+                <!-- Friends populated by JS -->
+                <div class="friends-empty">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M16 12l-4-4-4 4"/>
+                        <path d="M12 16V8"/>
+                    </svg>
+                    <p>No friends online</p>
                 </div>
             </div>
-            
+
+            <!-- Friend Requests List (Hidden by default) -->
+            <div id="friend-requests-list" class="friends-list hidden">
+                <!-- Populated by JS -->
+            </div>
+
             <div class="add-friend-section">
                 <div class="add-friend-input-group">
-                    <svg class="search-icon-input" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <svg class="search-icon-input" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
                     <input type="text" id="add-friend-input" placeholder="Find friends...">
                     <button id="add-friend-btn" class="btn-icon-only" title="Add Friend">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
                     </button>
                 </div>
+                <!-- Search Results Dropdown -->
                 <div id="friend-search-results" class="search-results hidden"></div>
             </div>
         </div>
