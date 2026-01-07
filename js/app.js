@@ -603,7 +603,7 @@ class ArcadeHub {
                 membersEl.innerHTML = members.map(m => `
                     <div class="party-member">
                         <div class="member-avatar">${m.avatar}</div>
-                        <span>${m.name}</span>
+                        <span class="member-name">${m.name}</span>
                         ${m.isLeader ? '<span class="member-leader-icon">👑</span>' : ''}
                     </div>
                 `).join('');
