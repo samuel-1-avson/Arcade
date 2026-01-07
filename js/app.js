@@ -619,34 +619,28 @@ class ArcadeHub {
 
         // --- Event Listeners ---
         
+
         createBtn?.addEventListener('click', () => {
             partyService.createParty();
             render();
             audioService.playSFX('success');
         });
 
-        joinTrigger?.addEventListener('click', () => {
-            actionsEl.classList.add('hidden');
-            joinArea.classList.remove('hidden');
-        });
-
-        cancelJoin?.addEventListener('click', () => {
-            joinArea.classList.add('hidden');
-            actionsEl.classList.remove('hidden');
-        });
-
+        // Join is now direct input, no toggle needed
+        
         confirmJoin?.addEventListener('click', () => {
             const code = joinInput.value.trim().toUpperCase();
             if (code.length === 6) {
                 partyService.joinParty(code);
                 joinInput.value = '';
-                joinArea.classList.add('hidden');
-                actionsEl.classList.remove('hidden');
+                // No need to hide anything
+                audioService.playSFX('success');
             } else {
                 notificationService.error('Invalid Code');
                 audioService.playSFX('error');
             }
         });
+
 
         leaveBtn?.addEventListener('click', () => {
             partyService.leaveParty();

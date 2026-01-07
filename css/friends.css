@@ -91,24 +91,27 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    min-height: 200px; /* Ensure minimum height */
 }
 
 .friends-list {
     flex: 1;
-    min-height: 150px;
-    max-height: 300px;
     overflow-y: auto;
     padding: var(--space-xs);
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
 }
 
 .friends-list::-webkit-scrollbar {
-    width: 6px;
+    width: 4px; /* Thinner scrollbar */
 }
 
 .friends-list::-webkit-scrollbar-thumb {
-    background: var(--border-color, #333);
-    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
 }
+
 
 .friend-item {
     display: flex;

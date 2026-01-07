@@ -11,6 +11,222 @@
     margin-top: 0;
     box-shadow: none;
     transition: all var(--transition-normal);
+    display: flex;
+    flex-direction: column;
+}
+
+.party-widget:hover {
+    border-color: rgba(255, 107, 107, 0.3);
+    box-shadow: 0 4px 20px rgba(255, 107, 107, 0.1);
+}
+
+.party-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.party-icon svg {
+    width: 20px;
+    height: 20px;
+    stroke: var(--primary); /* Assuming primary is used, or hardcode color */
+}
+
+.party-icon {
+    font-size: 1.25rem;
+}
+
+.party-title {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 600;
+    color: var(--color-text-bright);
+    flex: 1;
+}
+
+.party-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.party-content {
+    margin-bottom: var(--space-md);
+}
+
+.party-content.hidden {
+    display: none;
+}
+
+/* Big Create Button */
+.create-party-card-btn {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: linear-gradient(135deg, #ff4d4d, #f9cb28);
+    border: none;
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+    color: white;
+    font-weight: bold;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.create-party-card-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 77, 77, 0.4);
+}
+
+.create-party-card-btn svg {
+    width: 48px;
+    height: 48px;
+    stroke: white;
+    stroke-width: 2;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+
+.create-party-text {
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Join Input Area */
+.join-section {
+    margin-top: var(--space-md);
+}
+
+.join-input-wrapper {
+    display: flex;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-md);
+    padding: 0;
+    overflow: hidden;
+    transition: border-color 0.2s;
+}
+
+.join-input-wrapper:focus-within {
+    border-color: var(--primary);
+}
+
+.join-input-wrapper input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: white;
+    padding: 10px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+}
+
+.join-input-wrapper input:focus {
+    outline: none;
+}
+
+.btn-icon-only {
+    width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-left: 1px solid rgba(255,255,255,0.1);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-icon-only:hover {
+    background: rgba(255,255,255,0.1);
+    color: var(--text-bright);
+}
+
+/* Active Party Styles */
+.party-code-display {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-input);
+    border: 1px solid var(--glass-border);
+    padding: var(--space-sm);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-sm);
+}
+
+.code-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.1rem;
+    color: var(--color-primary);
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.party-members {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: var(--space-md);
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.party-member {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.03);
+    transition: background 0.2s;
+}
+
+.party-member:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.member-avatar {
+    width: 28px;
+    height: 28px;
+    background: var(--accent-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.member-name {
+    font-size: 0.85rem;
+    flex: 1;
+    font-weight: 500;
+}
+
+.party-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.btn-full {
+    width: 100%;
+}
+
+/* Hide legacy elements */
+.join-area {
+    display: none;
 }
 
 .party-widget:hover {
