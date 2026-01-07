@@ -259,6 +259,21 @@
     font-size: 0.9rem;
 }
 
+/* Request Section Labels */
+.request-section {
+    padding: 0 0.5rem;
+}
+
+.request-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-secondary, #888);
+    padding: 0.5rem 0.5rem 0.25rem;
+    letter-spacing: 0.05em;
+}
+
+
 /* Add Friend Section */
 .add-friend-section {
     padding: 1rem;

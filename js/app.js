@@ -1879,7 +1879,443 @@ class ArcadeHub {
     getGameTitle(id) {
         return this.games.find(g => g.id === id)?.title || id;
     }
+
+    // ============ FRIENDS SYSTEM UI ============
+    setupFriendsUI() {
+        const friendsWidget = document.getElementById('friends-widget');
+        if (!friendsWidget) return;
+
+        const friendsTabs = friendsWidget.querySelectorAll('.friends-tab');
+        const friendsList = document.getElementById('friends-list');
+        const friendRequests = document.getElementById('friend-requests');
+        const addFriendInput = document.getElementById('add-friend-input');
+        const addFriendBtn = document.getElementById('add-friend-btn');
+        const searchResults = document.getElementById('friend-search-results');
+        const requestBadge = document.getElementById('request-badge');
+        const friendCount = document.getElementById('friend-count');
+
+        // Tab switching
+        friendsTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                friendsTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                const tabName = tab.dataset.tab;
+                if (tabName === 'friends') {
+                    friendsList.style.display = 'block';
+                    friendRequests.style.display = 'none';
+                } else {
+                    friendsList.style.display = 'none';
+                    friendRequests.style.display = 'block';
+                    this.renderFriendRequests();
+                }
+            });
+        });
+
+        // Search with debounce
+        let searchTimeout;
+        addFriendInput.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            const query = e.target.value.trim();
+            if (query.length < 2) {
+                searchResults.style.display = 'none';
+                return;
+            }
+            searchTimeout = setTimeout(async () => {
+                const results = await friendsService.searchUsers(query);
+                this.renderSearchResults(results, searchResults);
+            }, 300);
+        });
+
+        // Hide search results on blur (with delay for click)
+        addFriendInput.addEventListener('blur', () => {
+            setTimeout(() => searchResults.style.display = 'none', 200);
+        });
+
+        // Add friend button click
+        addFriendBtn.addEventListener('click', async () => {
+            const query = addFriendInput.value.trim();
+            if (!query) return;
+            const results = await friendsService.searchUsers(query);
+            if (results.length === 1) {
+                await this.sendFriendRequest(results[0].id);
+                addFriendInput.value = '';
+            } else if (results.length > 1) {
+                this.renderSearchResults(results, searchResults);
+            } else {
+                notificationService.showAchievement('No users found', 'Try a different name');
+            }
+        });
+
+        // Subscribe to friends updates
+        eventBus.on('friendsListChanged', () => this.renderFriendsList());
+        eventBus.on('friendRequestsChanged', () => {
+            this.renderFriendRequests();
+            this.updateRequestBadge();
+        });
+
+        // Initial render
+        this.renderFriendsList();
+        this.updateRequestBadge();
+    }
+
+    renderSearchResults(results, container) {
+        if (!results || results.length === 0) {
+            container.style.display = 'none';
+            return;
+        }
+        container.innerHTML = results.map(user => `
+            <div class="search-result-item" data-userid="${user.id}">
+                <div class="friend-avatar">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+                </div>
+                <div class="friend-info">
+                    <div class="friend-name">${user.displayName || 'Player'}</div>
+                    <div class="friend-status">Level ${user.level || 1}</div>
+                </div>
+                <button class="friend-action-btn add-btn" title="Add Friend">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+            </div>
+        `).join('');
+        container.style.display = 'block';
+
+        // Add click handlers
+        container.querySelectorAll('.search-result-item').forEach(item => {
+            item.querySelector('.add-btn')?.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const userId = item.dataset.userid;
+                await this.sendFriendRequest(userId);
+                container.style.display = 'none';
+                document.getElementById('add-friend-input').value = '';
+            });
+        });
+    }
+
+    async sendFriendRequest(userId) {
+        try {
+            await friendsService.sendFriendRequest(userId);
+            notificationService.showAchievement('Friend Request Sent', 'Waiting for them to accept');
+        } catch (err) {
+            console.error('Failed to send friend request:', err);
+            notificationService.showAchievement('Error', err.message || 'Could not send request');
+        }
+    }
+
+    renderFriendsList() {
+        const container = document.getElementById('friends-list');
+        const friendCount = document.getElementById('friend-count');
+        if (!container) return;
+
+        const friends = friendsService.getFriendsList();
+        
+        if (friendCount) {
+            friendCount.textContent = friends.length;
+            friendCount.style.display = friends.length > 0 ? 'inline' : 'none';
+        }
+
+        if (friends.length === 0) {
+            container.innerHTML = `
+                <div class="friends-empty">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <line x1="19" y1="8" x2="19" y2="14"/>
+                        <line x1="22" y1="11" x2="16" y2="11"/>
+                    </svg>
+                    <p>No friends yet</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = friends.map(friend => `
+            <div class="friend-item" data-friendid="${friend.id}">
+                <div class="friend-avatar">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+                    <span class="friend-status-dot ${friend.status || 'offline'}"></span>
+                </div>
+                <div class="friend-info">
+                    <div class="friend-name">${friend.name || 'Player'}</div>
+                    <div class="friend-status ${friend.status || ''}">${this.getFriendStatusText(friend)}</div>
+                </div>
+                <div class="friend-actions">
+                    <button class="friend-action-btn chat-btn" title="Chat">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    </button>
+                    <button class="friend-action-btn remove-btn" title="Remove">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+        // Add event listeners
+        container.querySelectorAll('.friend-item').forEach(item => {
+            const friendId = item.dataset.friendid;
+            item.querySelector('.chat-btn')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.openDMChat(friendId);
+            });
+            item.querySelector('.remove-btn')?.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                await friendsService.removeFriend(friendId);
+                this.renderFriendsList();
+            });
+        });
+    }
+
+    getFriendStatusText(friend) {
+        if (friend.status === 'in-game') return `Playing ${friend.game || 'a game'}`;
+        if (friend.status === 'online') return 'Online';
+        return 'Offline';
+    }
+
+    renderFriendRequests() {
+        const container = document.getElementById('friend-requests');
+        if (!container) return;
+
+        const incoming = friendsService.getIncomingRequests();
+        const outgoing = friendsService.getOutgoingRequests();
+
+        if (incoming.length === 0 && outgoing.length === 0) {
+            container.innerHTML = `<div class="friends-empty"><p>No pending requests</p></div>`;
+            return;
+        }
+
+        let html = '';
+        
+        if (incoming.length > 0) {
+            html += '<div class="request-section"><div class="request-label">Incoming</div>';
+            html += incoming.map(req => `
+                <div class="friend-item request-item" data-requestid="${req.id}">
+                    <div class="friend-avatar">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+                    </div>
+                    <div class="friend-info">
+                        <div class="friend-name">${req.fromName || 'Player'}</div>
+                        <div class="friend-status">Wants to be friends</div>
+                    </div>
+                    <div class="friend-actions" style="opacity:1;">
+                        <button class="friend-action-btn accept" title="Accept">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20,6 9,17 4,12"/></svg>
+                        </button>
+                        <button class="friend-action-btn decline" title="Decline">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            html += '</div>';
+        }
+
+        if (outgoing.length > 0) {
+            html += '<div class="request-section"><div class="request-label" style="margin-top:1rem;">Sent</div>';
+            html += outgoing.map(req => `
+                <div class="friend-item request-item" data-requestid="${req.id}">
+                    <div class="friend-avatar">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+                    </div>
+                    <div class="friend-info">
+                        <div class="friend-name">${req.toName || 'Player'}</div>
+                        <div class="friend-status">Pending...</div>
+                    </div>
+                    <div class="friend-actions" style="opacity:1;">
+                        <button class="friend-action-btn decline cancel-btn" title="Cancel">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            html += '</div>';
+        }
+
+        container.innerHTML = html;
+
+        // Add event listeners
+        container.querySelectorAll('.request-item').forEach(item => {
+            const requestId = item.dataset.requestid;
+            item.querySelector('.accept')?.addEventListener('click', async () => {
+                await friendsService.acceptFriendRequest(requestId);
+                this.renderFriendRequests();
+                this.renderFriendsList();
+            });
+            item.querySelector('.decline')?.addEventListener('click', async () => {
+                await friendsService.declineFriendRequest(requestId);
+                this.renderFriendRequests();
+            });
+            item.querySelector('.cancel-btn')?.addEventListener('click', async () => {
+                await friendsService.cancelFriendRequest(requestId);
+                this.renderFriendRequests();
+            });
+        });
+    }
+
+    updateRequestBadge() {
+        const badge = document.getElementById('request-badge');
+        if (!badge) return;
+        const count = friendsService.getIncomingRequests().length;
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'inline' : 'none';
+    }
+
+    // ============ DM CHAT MODAL ============
+    openDMChat(friendId) {
+        const friend = friendsService.getFriendsList().find(f => f.id === friendId);
+        if (!friend) return;
+
+        // Remove existing DM modal if any
+        document.querySelector('.dm-modal')?.remove();
+
+        const modal = document.createElement('div');
+        modal.className = 'dm-modal';
+        modal.innerHTML = `
+            <div class="dm-modal-header">
+                <div class="friend-avatar">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+                    <span class="friend-status-dot ${friend.status || 'offline'}"></span>
+                </div>
+                <div class="friend-info">
+                    <div class="friend-name">${friend.name || 'Player'}</div>
+                    <div class="friend-status ${friend.status || ''}">${this.getFriendStatusText(friend)}</div>
+                </div>
+                <button class="dm-modal-close">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="chat-messages" id="dm-messages-${friendId}"></div>
+            <div class="chat-input-container">
+                <div class="chat-input-group">
+                    <input type="text" class="chat-input" id="dm-input-${friendId}" placeholder="Type a message...">
+                    <button class="chat-send-btn" id="dm-send-${friendId}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        // Close button
+        modal.querySelector('.dm-modal-close').addEventListener('click', () => {
+            modal.remove();
+            this.dmUnsubscribe?.();
+        });
+
+        // Load chat history
+        this.loadDMMessages(friendId);
+
+        // Subscribe to real-time messages
+        this.dmUnsubscribe = chatService.listenToConversation(friendId, (messages) => {
+            this.renderDMMessages(friendId, messages);
+        });
+
+        // Send message
+        const sendMessage = async () => {
+            const input = document.getElementById(`dm-input-${friendId}`);
+            const text = input.value.trim();
+            if (!text) return;
+            input.value = '';
+            await chatService.sendDirectMessage(friendId, text);
+        };
+
+        document.getElementById(`dm-send-${friendId}`).addEventListener('click', sendMessage);
+        document.getElementById(`dm-input-${friendId}`).addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    }
+
+    async loadDMMessages(friendId) {
+        const messages = await chatService.getConversationHistory(friendId, 50);
+        this.renderDMMessages(friendId, messages);
+    }
+
+    renderDMMessages(friendId, messages) {
+        const container = document.getElementById(`dm-messages-${friendId}`);
+        if (!container) return;
+
+        const currentUserId = globalStateManager.getProfile()?.id;
+
+        container.innerHTML = messages.map(msg => `
+            <div class="chat-message ${msg.senderId === currentUserId ? 'own' : ''}">
+                <div class="chat-message-avatar">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+                </div>
+                <div class="chat-message-content">
+                    <div class="chat-message-name">${msg.senderName || 'Player'}</div>
+                    <div class="chat-message-text">${this.escapeHtml(msg.text)}</div>
+                    <div class="chat-message-time">${this.formatMessageTime(msg.timestamp)}</div>
+                </div>
+            </div>
+        `).join('');
+
+        container.scrollTop = container.scrollHeight;
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    formatMessageTime(timestamp) {
+        if (!timestamp) return '';
+        const date = new Date(timestamp);
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // ============ PARTY CHAT UI ============
+    setupPartyChatUI() {
+        const chatContainer = document.getElementById('party-chat');
+        const chatMessages = document.getElementById('party-chat-messages');
+        const chatInput = document.getElementById('party-chat-input');
+        const chatSend = document.getElementById('party-chat-send');
+        
+        if (!chatContainer || !chatInput || !chatSend) return;
+
+        // Send party message
+        const sendMessage = async () => {
+            const partyId = partyService.getCurrentPartyId?.();
+            if (!partyId) return;
+            const text = chatInput.value.trim();
+            if (!text) return;
+            chatInput.value = '';
+            await chatService.sendPartyMessage(partyId, text);
+        };
+
+        chatSend.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // Listen for party changes to subscribe to chat
+        eventBus.on('partyUpdated', (party) => {
+            if (party && party.id) {
+                chatContainer.classList.remove('hidden');
+                this.partyChatUnsubscribe?.();
+                this.partyChatUnsubscribe = chatService.listenToPartyChat(party.id, (messages) => {
+                    this.renderPartyChatMessages(messages);
+                });
+            } else {
+                chatContainer.classList.add('hidden');
+                this.partyChatUnsubscribe?.();
+            }
+        });
+    }
+
+    renderPartyChatMessages(messages) {
+        const container = document.getElementById('party-chat-messages');
+        if (!container) return;
+
+        container.innerHTML = messages.slice(-20).map(msg => `
+            <div class="party-chat-message">
+                <span class="sender">${msg.senderName || 'Player'}:</span>
+                <span class="text">${this.escapeHtml(msg.text)}</span>
+            </div>
+        `).join('');
+
+        container.scrollTop = container.scrollHeight;
+    }
 }
+
 
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', () => {
