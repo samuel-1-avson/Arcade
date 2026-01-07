@@ -34,6 +34,9 @@ import { analyticsService } from './services/AnalyticsService.js';
 import { friendsService } from './services/FriendsService.js';
 import { chatService } from './services/ChatService.js';
 
+// Import Zen Mode
+import { zenModeService } from './services/ZenModeService.js';
+
 // Game catalog
 // Minimal SVG Icons for games
 const GAME_ICONS = {
@@ -311,6 +314,12 @@ class ArcadeHub {
         await chatService.init();
         this.setupFriendsUI();
         this.setupPartyChatUI();
+
+        // Initialize Zen Mode
+        zenModeService.init();
+        document.getElementById('nav-zen-mode')?.addEventListener('click', () => {
+            zenModeService.enter();
+        });
 
         // Listen for sync status changes
         eventBus.on('syncStatusChanged', ({ status }) => {
