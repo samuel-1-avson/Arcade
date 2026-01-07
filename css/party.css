@@ -269,24 +269,31 @@
 }
 
 .member-avatar {
-    width: 24px;
-    height: 24px;
-    background: #333;
+    width: 28px;
+    height: 28px;
+    min-width: 28px; /* Prevent shrinking */
+    background: rgba(255,255,255,0.1);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.1);
 }
 
 .member-name {
-    font-size: 0.85rem;
-    color: var(--text-main);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: white;
     flex: 1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    min-width: 0; /* Important for flex child to shrink */
+    min-width: 0;
+    line-height: normal;
+    padding-left: 4px;
 }
 
 .host-badge {
@@ -639,3 +646,9 @@
     width: 100%;
 }
 
+
+.member-leader-icon {
+    font-size: 0.9rem;
+    margin-left: 4px;
+    flex-shrink: 0;
+}
