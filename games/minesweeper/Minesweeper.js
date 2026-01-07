@@ -358,6 +358,9 @@ class Minesweeper {
         const score = Math.floor(10000 / time * DIFFICULTIES[this.difficulty].mines);
         storageManager.addXP(Math.floor(score / 10));
         
+        // Submit score to Hub
+        this.submitScoreToHub(score, true);
+        
         // Flag all remaining mines
         for (let row = 0; row < this.rows; row++) {
             for (let col = 0; col < this.cols; col++) {
@@ -381,6 +384,11 @@ class Minesweeper {
         this.gameOver = true;
         this.stopTimer();
         
+        // Submit score to Hub (score based on revealed squares)
+        const revealedCount = this.grid.flat().filter(c => c.revealed && !c.mine).length;
+        const score = Math.floor(revealedCount * 10);
+        this.submitScoreToHub(score, false);
+        
         // Mark clicked mine as exploded
         const clickedElement = this.board.children[clickedRow * this.cols + clickedCol];
         clickedElement.classList.add('exploded');
@@ -402,6 +410,21 @@ class Minesweeper {
         }
         
         this.showOverlay(false, this.getElapsedTime());
+    }
+    
+    // Submit score to the Hub via postMessage
+    submitScoreToHub(score, completed) {
+        if (window.parent && window.parent !== window) {
+            window.parent.postMessage({
+                type: 'SUBMIT_SCORE',
+                payload: {
+                    gameId: 'minesweeper',
+                    score: score,
+                    completed: completed
+                }
+            }, '*');
+            console.log('[Minesweeper] Score submitted to Hub:', score);
+        }
     }
     
     showOverlay(isWin, time) {
