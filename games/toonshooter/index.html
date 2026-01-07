@@ -3875,6 +3875,32 @@
         }
       }
       updateBestTimeUI();
+      
+      // Submit score to Hub
+      submitScoreToHub(winner, elapsed);
+    }
+    
+    // Submit score to the Hub via postMessage
+    function submitScoreToHub(winner, matchTime) {
+      if (window.parent && window.parent !== window) {
+        // Calculate score based on: wins, match time, and player performance
+        // Player wins = 1000 pts, faster wins = bonus points (max 500)
+        const didWin = winner === 'p1';
+        const baseScore = didWin ? 1000 : 100;
+        const timeBonus = didWin ? Math.max(0, Math.floor((CONFIG.match.totalTime - matchTime) * 5)) : 0;
+        const winsBonus = state.wins.p1 * 200;
+        const score = baseScore + timeBonus + winsBonus;
+        
+        window.parent.postMessage({
+          type: 'SUBMIT_SCORE',
+          payload: {
+            gameId: 'toonshooter',
+            score: score,
+            completed: didWin
+          }
+        }, '*');
+        console.log('[ToonShooter] Score submitted to Hub:', score, didWin ? '(WIN)' : '(LOSS)');
+      }
     }
 
     function togglePause() {
