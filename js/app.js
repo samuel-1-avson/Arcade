@@ -321,6 +321,9 @@ class ArcadeHub {
             zenModeService.enter();
         });
 
+        // Setup Sidebar Toggle
+        this.setupSidebarToggle();
+
         // Listen for sync status changes
         eventBus.on('syncStatusChanged', ({ status }) => {
             this.updateSyncIndicator(status);
@@ -2274,6 +2277,36 @@ class ArcadeHub {
         `).join('');
 
         container.scrollTop = container.scrollHeight;
+    }
+
+    setupSidebarToggle() {
+        const toggleBtn = document.getElementById('toggle-right-sidebar');
+        const sidebar = document.getElementById('right-sidebar');
+        
+        if (!toggleBtn || !sidebar) return;
+
+        // Load saved state
+        const savedState = localStorage.getItem('sidebar-minimized');
+        if (savedState === 'true') {
+            this.setSidebarState(true);
+        }
+
+        toggleBtn.addEventListener('click', () => {
+            const isMinimized = sidebar.classList.contains('minimized');
+            this.setSidebarState(!isMinimized);
+        });
+    }
+
+    setSidebarState(minimized) {
+        const sidebar = document.getElementById('right-sidebar');
+        if (minimized) {
+            sidebar.classList.add('minimized');
+            document.body.classList.add('sidebar-minimized');
+        } else {
+            sidebar.classList.remove('minimized');
+            document.body.classList.remove('sidebar-minimized');
+        }
+        localStorage.setItem('sidebar-minimized', minimized);
     }
 }
 
