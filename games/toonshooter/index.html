@@ -24,7 +24,7 @@
         </div>
 
 	        <div id="bottomBar">
-		          <div id="controls" class="panel">WASD Move · Mouse Aim · Click/Hold Fire · 1/2/3 Switch · E Kick · Space Dash · R Reload · G Grenade · Tab Leaderboard · P Pause · V Visuals</div>
+		          <div id="controls" class="panel">WASD Move · Mouse Aim · Click Fire · 1-5 Switch · E Kick · Space Dash · R Reload · G Grenade · O Settings · P Pause</div>
 	          <div id="dash">Dash<div class="cooldown"></div></div>
 	        </div>
 
@@ -59,15 +59,41 @@
 	        </div>
 
         <div id="pauseOverlay" class="overlay">
-          <h1>Paused</h1>
-          <div class="subtitle">Press P / Esc to resume</div>
+          <div class="pause-panel">
+            <h1>PAUSED</h1>
+            <div class="pause-menu">
+              <button class="pause-btn" id="btnResume" type="button">Resume</button>
+              <button class="pause-btn" id="btnPauseSettings" type="button">Settings</button>
+              <button class="pause-btn" id="btnControls" type="button">Controls</button>
+              <button class="pause-btn" id="btnMainMenu" type="button">Main Menu</button>
+              <button class="pause-btn danger" id="btnHub" type="button">Return to Hub</button>
+            </div>
+          </div>
         </div>
 
         <div id="matchOverlay" class="overlay">
-          <h1 id="matchTitle">Player 1 Wins!</h1>
-          <div class="subtitle" id="matchStats">Match time: 00:00</div>
-          <div class="rules">Press Enter to Rematch</div>
-          <div id="bestTimeEnd">Best win time: --</div>
+          <div class="match-panel">
+            <h1 id="matchTitle">Player 1 Wins!</h1>
+            <div class="subtitle" id="matchStats">Match time: 00:00</div>
+            <div id="matchStatsDetail"></div>
+            <div id="bestTimeEnd">Best win time: --</div>
+            <div class="match-menu">
+              <button class="pause-btn" id="btnRematch" type="button">Rematch</button>
+              <button class="pause-btn" id="btnMatchMainMenu" type="button">Main Menu</button>
+              <button class="pause-btn danger" id="btnMatchHub" type="button">Return to Hub</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="controlsOverlay">
+          <div class="controls-panel">
+            <div class="settings-title">Controls</div>
+            <div class="controls-list" id="controlsList"></div>
+            <div class="controls-actions">
+              <button class="pause-btn" id="btnResetControls" type="button">Reset to Defaults</button>
+              <button class="settings-close" id="controlsClose" type="button">Close</button>
+            </div>
+          </div>
         </div>
 
         <div id="leaderboardOverlay" class="overlay">
@@ -83,6 +109,35 @@
         <div id="dramaticOverlay"></div>
         <div id="popups"></div>
         <div id="killCamText">ELIMINATED</div>
+        
+        <div id="settingsOverlay">
+          <div class="settings-panel">
+            <div class="settings-title">Settings</div>
+            <div class="settings-group">
+              <div class="setting-row">
+                <span class="setting-label">Master Volume</span>
+                <input type="range" class="setting-slider" id="settingMasterVol" min="0" max="100" value="70">
+              </div>
+              <div class="setting-row">
+                <span class="setting-label">SFX Volume</span>
+                <input type="range" class="setting-slider" id="settingSfxVol" min="0" max="100" value="80">
+              </div>
+              <div class="setting-row">
+                <span class="setting-label">Show Damage Numbers</span>
+                <button class="setting-toggle active" id="settingDamageNumbers" type="button"></button>
+              </div>
+              <div class="setting-row">
+                <span class="setting-label">Auto Reload</span>
+                <button class="setting-toggle" id="settingAutoReload" type="button"></button>
+              </div>
+              <div class="setting-row">
+                <span class="setting-label">Colorblind Mode</span>
+                <button class="setting-toggle" id="settingColorblind" type="button"></button>
+              </div>
+            </div>
+            <button class="settings-close" id="settingsClose" type="button">Close</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -284,7 +339,474 @@
       gameModes: {
         duel: { name: '1v1 Duel', playerCount: 2, arenaScale: 1.0, aiCount: 1 },
         deathmatch: { name: '4-Player FFA', playerCount: 4, arenaScale: 1.3, aiCount: 3, lives: 3 }
+      },
+      powerups: {
+        types: {
+          health: { name: 'Health Pack', color: 0x00ff00, effect: { hp: 50 }, duration: 0 },
+          speed: { name: 'Speed Boost', color: 0x00bcd4, effect: { speedMul: 1.5 }, duration: 8 },
+          damage: { name: 'Damage Up', color: 0xff4d00, effect: { damageMul: 1.5 }, duration: 8 },
+          shield: { name: 'Shield', color: 0xffcc00, effect: { shield: 30 }, duration: 0 }
+        },
+        spawnInterval: 20,
+        spawnVariance: 8,
+        collectRadius: 1.0,
+        floatHeight: 0.6,
+        bobAmount: 0.2,
+        bobSpeed: 2.5
+      },
+      audio: {
+        masterVolume: 0.7,
+        sfxVolume: 0.8,
+        musicVolume: 0.5
       }
+    };
+
+    // ==================== AUDIO SYSTEM ====================
+    const AudioManager = {
+      ctx: null,
+      masterGain: null,
+      sfxGain: null,
+      musicGain: null,
+      initialized: false,
+
+      init() {
+        if (this.initialized) return;
+        try {
+          this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+          this.masterGain = this.ctx.createGain();
+          this.sfxGain = this.ctx.createGain();
+          this.musicGain = this.ctx.createGain();
+          this.sfxGain.connect(this.masterGain);
+          this.musicGain.connect(this.masterGain);
+          this.masterGain.connect(this.ctx.destination);
+          this.setVolumes();
+          this.initialized = true;
+        } catch (e) {
+          console.warn('AudioContext not available:', e);
+        }
+      },
+
+      setVolumes() {
+        if (!this.masterGain) return;
+        this.masterGain.gain.value = CONFIG.audio.masterVolume;
+        this.sfxGain.gain.value = CONFIG.audio.sfxVolume;
+        this.musicGain.gain.value = CONFIG.audio.musicVolume;
+      },
+
+      resume() {
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      },
+
+      // Synth sound generators
+      playPistol() {
+        this.playSynth({ type: 'square', freq: 800, attack: 0.01, decay: 0.08, volume: 0.3 });
+        this.playSynth({ type: 'noise', freq: 0, attack: 0.01, decay: 0.05, volume: 0.15 });
+      },
+
+      playSMG() {
+        this.playSynth({ type: 'square', freq: 1200, attack: 0.005, decay: 0.04, volume: 0.2 });
+        this.playSynth({ type: 'noise', freq: 0, attack: 0.005, decay: 0.03, volume: 0.1 });
+      },
+
+      playShotgun() {
+        this.playSynth({ type: 'sawtooth', freq: 150, attack: 0.01, decay: 0.15, volume: 0.4 });
+        this.playSynth({ type: 'noise', freq: 0, attack: 0.01, decay: 0.12, volume: 0.35 });
+      },
+
+      playSniper() {
+        this.playSynth({ type: 'sine', freq: 2000, attack: 0.005, decay: 0.02, volume: 0.25 });
+        this.playSynth({ type: 'square', freq: 400, attack: 0.01, decay: 0.2, volume: 0.35 });
+        this.playSynth({ type: 'noise', freq: 0, attack: 0.01, decay: 0.15, volume: 0.2 });
+      },
+
+      playRocket() {
+        this.playSynth({ type: 'sawtooth', freq: 80, attack: 0.02, decay: 0.3, volume: 0.3 });
+        this.playSynth({ type: 'noise', freq: 0, attack: 0.02, decay: 0.25, volume: 0.2 });
+      },
+
+      playExplosion() {
+        this.playSynth({ type: 'sawtooth', freq: 60, attack: 0.01, decay: 0.4, volume: 0.5 });
+        this.playSynth({ type: 'noise', freq: 0, attack: 0.01, decay: 0.35, volume: 0.4 });
+        this.playSynth({ type: 'sine', freq: 40, attack: 0.05, decay: 0.5, volume: 0.3 });
+      },
+
+      playHit() {
+        this.playSynth({ type: 'sine', freq: 1800, attack: 0.005, decay: 0.06, volume: 0.25 });
+      },
+
+      playDeath() {
+        this.playSynth({ type: 'sawtooth', freq: 400, attack: 0.01, decay: 0.3, freqEnd: 80, volume: 0.35 });
+      },
+
+      playReload() {
+        this.playSynth({ type: 'square', freq: 600, attack: 0.01, decay: 0.05, volume: 0.15 });
+        setTimeout(() => this.playSynth({ type: 'square', freq: 800, attack: 0.01, decay: 0.05, volume: 0.15 }), 100);
+      },
+
+      playDash() {
+        this.playSynth({ type: 'sine', freq: 300, attack: 0.01, decay: 0.1, freqEnd: 600, volume: 0.2 });
+      },
+
+      playPickup() {
+        this.playSynth({ type: 'sine', freq: 800, attack: 0.01, decay: 0.1, volume: 0.25 });
+        setTimeout(() => this.playSynth({ type: 'sine', freq: 1200, attack: 0.01, decay: 0.1, volume: 0.25 }), 80);
+      },
+
+      playAchievement() {
+        this.playSynth({ type: 'sine', freq: 600, attack: 0.01, decay: 0.15, volume: 0.3 });
+        setTimeout(() => this.playSynth({ type: 'sine', freq: 900, attack: 0.01, decay: 0.15, volume: 0.3 }), 100);
+        setTimeout(() => this.playSynth({ type: 'sine', freq: 1200, attack: 0.01, decay: 0.2, volume: 0.3 }), 200);
+      },
+
+      playMenuClick() {
+        this.playSynth({ type: 'sine', freq: 1000, attack: 0.005, decay: 0.05, volume: 0.15 });
+      },
+
+      playRoundStart() {
+        this.playSynth({ type: 'square', freq: 400, attack: 0.01, decay: 0.2, volume: 0.3 });
+        setTimeout(() => this.playSynth({ type: 'square', freq: 600, attack: 0.01, decay: 0.3, volume: 0.35 }), 200);
+      },
+
+      playGrenade() {
+        this.playSynth({ type: 'sine', freq: 500, attack: 0.01, decay: 0.1, freqEnd: 300, volume: 0.2 });
+      },
+
+      playNearMiss() {
+        this.playSynth({ type: 'sine', freq: 1500, attack: 0.01, decay: 0.15, freqEnd: 800, volume: 0.2 });
+      },
+
+      playSynth(opts) {
+        if (!this.ctx || !this.initialized) return;
+        this.resume();
+        const { type, freq, attack, decay, volume, freqEnd } = opts;
+        const now = this.ctx.currentTime;
+
+        if (type === 'noise') {
+          const bufferSize = this.ctx.sampleRate * decay;
+          const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+          }
+          const noise = this.ctx.createBufferSource();
+          noise.buffer = buffer;
+          const gain = this.ctx.createGain();
+          gain.gain.setValueAtTime(volume, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + decay);
+          noise.connect(gain);
+          gain.connect(this.sfxGain);
+          noise.start(now);
+          noise.stop(now + decay);
+        } else {
+          const osc = this.ctx.createOscillator();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, now);
+          if (freqEnd) {
+            osc.frequency.exponentialRampToValueAtTime(freqEnd, now + decay);
+          }
+          const gain = this.ctx.createGain();
+          gain.gain.setValueAtTime(0, now);
+          gain.gain.linearRampToValueAtTime(volume, now + attack);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + attack + decay);
+          osc.connect(gain);
+          gain.connect(this.sfxGain);
+          osc.start(now);
+          osc.stop(now + attack + decay + 0.01);
+        }
+      }
+    };
+
+    // ==================== KEY BINDINGS SYSTEM ====================
+    const DEFAULT_KEYBINDS = {
+      moveUp: 'KeyW',
+      moveDown: 'KeyS',
+      moveLeft: 'KeyA',
+      moveRight: 'KeyD',
+      dash: 'Space',
+      reload: 'KeyR',
+      kick: 'KeyE',
+      grenade: 'KeyG',
+      weapon1: 'Digit1',
+      weapon2: 'Digit2',
+      weapon3: 'Digit3',
+      weapon4: 'Digit4',
+      weapon5: 'Digit5',
+      pause: 'KeyP',
+      settings: 'KeyO'
+    };
+
+    const KEYBIND_LABELS = {
+      moveUp: 'Move Up',
+      moveDown: 'Move Down',
+      moveLeft: 'Move Left',
+      moveRight: 'Move Right',
+      dash: 'Dash',
+      reload: 'Reload',
+      kick: 'Kick / Interact',
+      grenade: 'Throw Grenade',
+      weapon1: 'Weapon 1 (Pistol)',
+      weapon2: 'Weapon 2 (SMG)',
+      weapon3: 'Weapon 3 (Shotgun)',
+      weapon4: 'Weapon 4 (Sniper)',
+      weapon5: 'Weapon 5 (Rocket)',
+      pause: 'Pause Game',
+      settings: 'Settings Menu'
+    };
+
+    const KeyBinds = {
+      binds: { ...DEFAULT_KEYBINDS },
+      
+      load() {
+        const stored = localStorage.getItem('tinyToonDuel_keybinds');
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            this.binds = { ...DEFAULT_KEYBINDS, ...parsed };
+          } catch {}
+        }
+      },
+      
+      save() {
+        localStorage.setItem('tinyToonDuel_keybinds', JSON.stringify(this.binds));
+      },
+      
+      reset() {
+        this.binds = { ...DEFAULT_KEYBINDS };
+        this.save();
+      },
+      
+      getAction(keyCode) {
+        for (const [action, key] of Object.entries(this.binds)) {
+          if (key === keyCode) return action;
+        }
+        return null;
+      },
+      
+      getKey(action) {
+        return this.binds[action] || null;
+      },
+      
+      rebind(action, newKey) {
+        // Remove any existing binding for this key
+        for (const [existingAction, key] of Object.entries(this.binds)) {
+          if (key === newKey && existingAction !== action) {
+            this.binds[existingAction] = null;
+          }
+        }
+        this.binds[action] = newKey;
+        this.save();
+      },
+      
+      keyCodeToDisplayName(code) {
+        if (!code) return '---';
+        const keyNames = {
+          'Space': 'SPACE',
+          'ShiftLeft': 'L-SHIFT',
+          'ShiftRight': 'R-SHIFT',
+          'ControlLeft': 'L-CTRL',
+          'ControlRight': 'R-CTRL',
+          'AltLeft': 'L-ALT',
+          'AltRight': 'R-ALT',
+          'ArrowUp': '↑',
+          'ArrowDown': '↓',
+          'ArrowLeft': '←',
+          'ArrowRight': '→',
+          'Escape': 'ESC',
+          'Enter': 'ENTER',
+          'Tab': 'TAB',
+          'Backspace': 'BACK'
+        };
+        if (keyNames[code]) return keyNames[code];
+        if (code.startsWith('Key')) return code.slice(3);
+        if (code.startsWith('Digit')) return code.slice(5);
+        if (code.startsWith('Numpad')) return 'NUM' + code.slice(6);
+        return code;
+      }
+    };
+
+    // ==================== ACHIEVEMENTS SYSTEM ====================
+    const ACHIEVEMENTS = {
+      first_blood: { name: 'First Blood', desc: 'Win your first match' },
+      headhunter: { name: 'Headhunter', desc: 'Get 10 kills in a single match' },
+      untouchable: { name: 'Untouchable', desc: 'Win a round without taking damage' },
+      speedrunner: { name: 'Speedrunner', desc: 'Win a match in under 30 seconds' },
+      demolition: { name: 'Demolition Expert', desc: 'Get 3 kills with a single explosion' },
+      sharpshooter: { name: 'Sharpshooter', desc: 'Achieve 80% accuracy in a match' },
+      domination: { name: 'Domination', desc: 'Win 3-0 in a duel' },
+      survivor: { name: 'Survivor', desc: 'Win with less than 10 HP' },
+      weapon_master: { name: 'Weapon Master', desc: 'Get kills with all weapons in one match' },
+      close_call: { name: 'Close Call', desc: 'Survive 5 near misses in a match' }
+    };
+
+    // ==================== PERSISTENT STATS ====================
+    const PlayerStats = {
+      data: {
+        totalKills: 0,
+        totalDeaths: 0,
+        matchesPlayed: 0,
+        matchesWon: 0,
+        totalDamageDealt: 0,
+        bestAccuracy: 0,
+        bestWinStreak: 0,
+        currentWinStreak: 0,
+        achievements: [],
+        weaponKills: { pistol: 0, smg: 0, shotgun: 0, sniper: 0, rocket: 0 }
+      },
+
+      load() {
+        const stored = localStorage.getItem('tinyToonDuel_playerStats');
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            this.data = { ...this.data, ...parsed };
+          } catch {}
+        }
+      },
+
+      save() {
+        localStorage.setItem('tinyToonDuel_playerStats', JSON.stringify(this.data));
+      },
+
+      addKill(weaponId) {
+        this.data.totalKills++;
+        if (this.data.weaponKills[weaponId] !== undefined) {
+          this.data.weaponKills[weaponId]++;
+        }
+        this.save();
+      },
+
+      addDeath() {
+        this.data.totalDeaths++;
+        this.save();
+      },
+
+      recordMatch(won, accuracy) {
+        this.data.matchesPlayed++;
+        if (won) {
+          this.data.matchesWon++;
+          this.data.currentWinStreak++;
+          this.data.bestWinStreak = Math.max(this.data.bestWinStreak, this.data.currentWinStreak);
+        } else {
+          this.data.currentWinStreak = 0;
+        }
+        if (accuracy > this.data.bestAccuracy) {
+          this.data.bestAccuracy = accuracy;
+        }
+        this.save();
+      },
+
+      unlockAchievement(id) {
+        if (!this.data.achievements.includes(id) && ACHIEVEMENTS[id]) {
+          this.data.achievements.push(id);
+          this.save();
+          return true;
+        }
+        return false;
+      },
+
+      hasAchievement(id) {
+        return this.data.achievements.includes(id);
+      }
+    };
+
+    // ==================== GAME SETTINGS ====================
+    const GameSettings = {
+      data: {
+        masterVolume: 0.7,
+        sfxVolume: 0.8,
+        musicVolume: 0.5,
+        autoReload: false,
+        colorblindMode: false,
+        showDamageNumbers: true,
+        showKillFeed: true
+      },
+
+      load() {
+        const stored = localStorage.getItem('tinyToonDuel_settings');
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            this.data = { ...this.data, ...parsed };
+          } catch {}
+        }
+        this.apply();
+      },
+
+      save() {
+        localStorage.setItem('tinyToonDuel_settings', JSON.stringify(this.data));
+        this.apply();
+      },
+
+      apply() {
+        CONFIG.audio.masterVolume = this.data.masterVolume;
+        CONFIG.audio.sfxVolume = this.data.sfxVolume;
+        CONFIG.audio.musicVolume = this.data.musicVolume;
+        if (AudioManager.initialized) {
+          AudioManager.setVolumes();
+        }
+      }
+    };
+
+    // ==================== SVG ICONS ====================
+    const ICONS = {
+      health: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>',
+      speed: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>',
+      damage: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
+      shield: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>',
+      star: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>',
+      trophy: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/></svg>',
+      target: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="2"/></svg>',
+      skull: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12v8h4v-2h2v2h4v-2h2v2h4v-2h2v-8c0-5.52-4.48-10-10-10zm-3 11c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm6 0c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>',
+      rocket: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5s-5 3-5 10c0 3.5 1.5 6 1.5 6h7s1.5-2.5 1.5-6c0-7-5-10-5-10zm0 11.5c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/><path d="M5.5 16L3 22l4-2-1.5-4zm13 0L22 22l-4-2 1.5-4z"/></svg>',
+      crosshair: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>',
+      settings: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>'
+    };
+
+    // Add new weapons to CONFIG
+    CONFIG.weapons.sniper = {
+      name: 'Sniper',
+      fireRate: 0.8,
+      fireRateAI: 0.6,
+      damage: 85,
+      magSize: 5,
+      reserveMax: 15,
+      reserveStart: 0,
+      dropChance: 0.15,
+      reload: 1.8,
+      reloadType: 'mag',
+      spreadPlayer: THREE.MathUtils.degToRad(0.2),
+      spreadAI: THREE.MathUtils.degToRad(0.8),
+      range: 60,
+      auto: false,
+      knockback: 2.0,
+      muzzleSize: 0.38,
+      tracer: 0x00ff88
+    };
+
+    CONFIG.weapons.rocket = {
+      name: 'Rocket',
+      fireRate: 0.6,
+      fireRateAI: 0.5,
+      damage: 0,
+      magSize: 2,
+      reserveMax: 6,
+      reserveStart: 0,
+      dropChance: 0.1,
+      reload: 2.2,
+      reloadType: 'mag',
+      spreadPlayer: THREE.MathUtils.degToRad(0.5),
+      spreadAI: THREE.MathUtils.degToRad(1.5),
+      range: 40,
+      auto: false,
+      projectile: true,
+      explosionRadius: 4.0,
+      explosionDamage: 90,
+      projectileSpeed: 18,
+      knockback: 0,
+      muzzleSize: 0.5,
+      tracer: 0xff6600
     };
 
     const COLORS = {
@@ -444,19 +966,37 @@
 	    init();
 
 	    async function init() {
-	      setupRenderer();
-	      setupScene();
-	      setupCamera();
-	      setupLights();
-	      bindInput();
-	      await loadAssets();
-	      setupVisualToggle();
-	      setupMenuModes();
-	      applyGameMode(state.gameMode);
-	      createReticle();
-	      setMode('menu');
-	      animate();
-	    }
+      // Load persistent data
+      GameSettings.load();
+      PlayerStats.load();
+      KeyBinds.load();
+      
+      setupRenderer();
+      setupScene();
+      setupCamera();
+      setupLights();
+      bindInput();
+      await loadAssets();
+      setupVisualToggle();
+      setupMenuModes();
+      setupSettingsPanel();
+      setupNavigationButtons();
+      setupControlsPanel();
+      applyColorblindMode();
+      applyGameMode(state.gameMode);
+      createReticle();
+      setMode('menu');
+      animate();
+      
+      // Initialize audio on first user interaction
+      const initAudio = () => {
+        AudioManager.init();
+        document.removeEventListener('click', initAudio);
+        document.removeEventListener('keydown', initAudio);
+      };
+      document.addEventListener('click', initAudio);
+      document.addEventListener('keydown', initAudio);
+    }
 
 	    function setupVisualToggle() {
 	      if (!visualToggleBtn || !visualToggleLabel) return;
@@ -526,6 +1066,257 @@
       world.scene.add(ambient, hemi, dir);
     }
 
+    // ==================== SETTINGS PANEL ====================
+    function setupSettingsPanel() {
+      const overlay = document.getElementById('settingsOverlay');
+      const masterVol = document.getElementById('settingMasterVol');
+      const sfxVol = document.getElementById('settingSfxVol');
+      const damageNumbers = document.getElementById('settingDamageNumbers');
+      const autoReload = document.getElementById('settingAutoReload');
+      const colorblind = document.getElementById('settingColorblind');
+      const closeBtn = document.getElementById('settingsClose');
+      
+      if (!overlay) return;
+      
+      // Initialize values from GameSettings
+      if (masterVol) {
+        masterVol.value = GameSettings.data.masterVolume * 100;
+        masterVol.addEventListener('input', () => {
+          GameSettings.data.masterVolume = masterVol.value / 100;
+          GameSettings.save();
+        });
+      }
+      
+      if (sfxVol) {
+        sfxVol.value = GameSettings.data.sfxVolume * 100;
+        sfxVol.addEventListener('input', () => {
+          GameSettings.data.sfxVolume = sfxVol.value / 100;
+          GameSettings.save();
+        });
+      }
+      
+      if (damageNumbers) {
+        damageNumbers.classList.toggle('active', GameSettings.data.showDamageNumbers);
+        damageNumbers.addEventListener('click', () => {
+          GameSettings.data.showDamageNumbers = !GameSettings.data.showDamageNumbers;
+          damageNumbers.classList.toggle('active', GameSettings.data.showDamageNumbers);
+          GameSettings.save();
+          AudioManager.playMenuClick();
+        });
+      }
+      
+      if (autoReload) {
+        autoReload.classList.toggle('active', GameSettings.data.autoReload);
+        autoReload.addEventListener('click', () => {
+          GameSettings.data.autoReload = !GameSettings.data.autoReload;
+          autoReload.classList.toggle('active', GameSettings.data.autoReload);
+          GameSettings.save();
+          AudioManager.playMenuClick();
+        });
+      }
+      
+      if (colorblind) {
+        colorblind.classList.toggle('active', GameSettings.data.colorblindMode);
+        colorblind.addEventListener('click', () => {
+          GameSettings.data.colorblindMode = !GameSettings.data.colorblindMode;
+          colorblind.classList.toggle('active', GameSettings.data.colorblindMode);
+          GameSettings.save();
+          AudioManager.playMenuClick();
+          applyColorblindMode();
+        });
+      }
+      
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          overlay.classList.remove('visible');
+          AudioManager.playMenuClick();
+        });
+      }
+    }
+    
+    function toggleSettings() {
+      const overlay = document.getElementById('settingsOverlay');
+      if (!overlay) return;
+      overlay.classList.toggle('visible');
+      AudioManager.playMenuClick();
+    }
+    
+    function applyColorblindMode() {
+      // Apply colorblind-friendly color scheme
+      if (GameSettings.data.colorblindMode) {
+        document.documentElement.style.setProperty('--p1', '#0077bb'); // Blue instead of green
+        document.documentElement.style.setProperty('--p2', '#ee7733'); // Orange instead of red
+      } else {
+        document.documentElement.style.setProperty('--p1', '#00ff00');
+        document.documentElement.style.setProperty('--p2', '#ff0000');
+      }
+    }
+
+    // ==================== NAVIGATION BUTTONS ====================
+    function setupNavigationButtons() {
+      // Pause menu buttons
+      const btnResume = document.getElementById('btnResume');
+      const btnPauseSettings = document.getElementById('btnPauseSettings');
+      const btnControls = document.getElementById('btnControls');
+      const btnMainMenu = document.getElementById('btnMainMenu');
+      const btnHub = document.getElementById('btnHub');
+      
+      if (btnResume) {
+        btnResume.addEventListener('click', () => {
+          AudioManager.playMenuClick();
+          togglePause();
+        });
+      }
+      
+      if (btnPauseSettings) {
+        btnPauseSettings.addEventListener('click', () => {
+          AudioManager.playMenuClick();
+          toggleSettings();
+        });
+      }
+      
+      if (btnControls) {
+        btnControls.addEventListener('click', () => {
+          AudioManager.playMenuClick();
+          toggleControlsPanel();
+        });
+      }
+      
+      if (btnMainMenu) {
+        btnMainMenu.addEventListener('click', () => {
+          AudioManager.playMenuClick();
+          returnToMainMenu();
+        });
+      }
+      
+      if (btnHub) {
+        btnHub.addEventListener('click', () => {
+          AudioManager.playMenuClick();
+          returnToHub();
+        });
+      }
+      
+      // Match over buttons
+      const btnRematch = document.getElementById('btnRematch');
+      const btnMatchMainMenu = document.getElementById('btnMatchMainMenu');
+      const btnMatchHub = document.getElementById('btnMatchHub');
+      
+      if (btnRematch) {
+        btnRematch.addEventListener('click', () => {
+          AudioManager.playMenuClick();
+          startMatch();
+        });
+      }
+      
+      if (btnMatchMainMenu) {
+        btnMatchMainMenu.addEventListener('click', () => {
+          AudioManager.playMenuClick();
+          returnToMainMenu();
+        });
+      }
+      
+      if (btnMatchHub) {
+        btnMatchHub.addEventListener('click', () => {
+          AudioManager.playMenuClick();
+          returnToHub();
+        });
+      }
+    }
+    
+    function returnToMainMenu() {
+      state.mode = 'menu';
+      state.matchEnded = false;
+      state.roundEnding = false;
+      setMode('menu');
+    }
+    
+    function returnToHub() {
+      window.location.href = '../../index.html';
+    }
+    
+    function toggleControlsPanel() {
+      const overlay = document.getElementById('controlsOverlay');
+      if (!overlay) return;
+      overlay.classList.toggle('visible');
+      if (overlay.classList.contains('visible')) {
+        renderControlsList();
+      }
+    }
+
+    // ==================== CONTROLS PANEL ====================
+    let rebindingAction = null;
+    
+    function setupControlsPanel() {
+      const closeBtn = document.getElementById('controlsClose');
+      const resetBtn = document.getElementById('btnResetControls');
+      
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          AudioManager.playMenuClick();
+          document.getElementById('controlsOverlay').classList.remove('visible');
+          rebindingAction = null;
+        });
+      }
+      
+      if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+          AudioManager.playMenuClick();
+          KeyBinds.reset();
+          renderControlsList();
+        });
+      }
+      
+      // Listen for key presses when rebinding
+      document.addEventListener('keydown', (e) => {
+        if (!rebindingAction) return;
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Don't allow Escape to be bound
+        if (e.code === 'Escape') {
+          rebindingAction = null;
+          renderControlsList();
+          return;
+        }
+        
+        KeyBinds.rebind(rebindingAction, e.code);
+        AudioManager.playMenuClick();
+        rebindingAction = null;
+        renderControlsList();
+      }, true);
+    }
+    
+    function renderControlsList() {
+      const list = document.getElementById('controlsList');
+      if (!list) return;
+      
+      list.innerHTML = '';
+      
+      for (const [action, label] of Object.entries(KEYBIND_LABELS)) {
+        const row = document.createElement('div');
+        row.className = 'control-row' + (rebindingAction === action ? ' rebinding' : '');
+        
+        const actionEl = document.createElement('span');
+        actionEl.className = 'control-action';
+        actionEl.textContent = label;
+        
+        const keyEl = document.createElement('button');
+        keyEl.className = 'control-key' + (rebindingAction === action ? ' listening' : '');
+        keyEl.textContent = rebindingAction === action 
+          ? 'Press key...' 
+          : KeyBinds.keyCodeToDisplayName(KeyBinds.getKey(action));
+        keyEl.addEventListener('click', () => {
+          AudioManager.playMenuClick();
+          rebindingAction = action;
+          renderControlsList();
+        });
+        
+        row.appendChild(actionEl);
+        row.appendChild(keyEl);
+        list.appendChild(row);
+      }
+    }
+
     function resize() {
       const wrap = document.getElementById('canvasWrap');
       const width = wrap.clientWidth;
@@ -539,7 +1330,14 @@
 
 	    function bindInput() {
 	      window.addEventListener('keydown', (event) => {
+	        // Skip if rebinding controls
+	        if (rebindingAction) return;
+	        
 	        input.keys[event.code] = true;
+	        
+	        // Get action from keybind
+	        const action = KeyBinds.getAction(event.code);
+	        
 	        if (event.code === 'Tab') {
 	          event.preventDefault();
 	          state.showLeaderboard = true;
@@ -547,20 +1345,23 @@
 	        if (event.code === 'KeyV') {
 	          setVisualMode(!settings.usePlaceholders);
 	        }
-	        if (event.code === 'Escape' || event.code === 'KeyP') {
+	        if (event.code === 'Escape' || action === 'pause') {
 	          togglePause();
+	        }
+	        if (action === 'settings') {
+	          toggleSettings();
 	        }
 	        if (event.code === 'Enter') {
 	          if (state.mode === 'menu') startMatch();
           if (state.mode === 'matchOver') startMatch();
         }
-        if (event.code === 'Space') {
+        if (action === 'dash') {
           if (state.mode === 'playing') {
             const player = getPlayer();
             tryDash(player);
           }
         }
-        if (event.code === 'KeyR') {
+        if (action === 'reload') {
           const player = getPlayer();
           if (state.mode === 'playing') {
             startReload(player);
@@ -568,11 +1369,13 @@
         }
 	        if (state.mode === 'playing') {
 	          const player = getPlayer();
-	          if (event.code === 'Digit1') requestWeaponSwitch(player, 'pistol');
-	          if (event.code === 'Digit2') requestWeaponSwitch(player, 'smg');
-	          if (event.code === 'Digit3') requestWeaponSwitch(player, 'shotgun');
-	          if (event.code === 'KeyE' || event.code === 'KeyF') tryKick(player);
-	          if (event.code === 'KeyG' && !event.repeat) tryThrowGrenade(player);
+	          if (action === 'weapon1') requestWeaponSwitch(player, 'pistol');
+	          if (action === 'weapon2') requestWeaponSwitch(player, 'smg');
+	          if (action === 'weapon3') requestWeaponSwitch(player, 'shotgun');
+	          if (action === 'weapon4') requestWeaponSwitch(player, 'sniper');
+	          if (action === 'weapon5') requestWeaponSwitch(player, 'rocket');
+	          if (action === 'kick') tryKick(player);
+	          if (action === 'grenade' && !event.repeat) tryThrowGrenade(player);
 	        }
 	      });
 
@@ -1667,7 +2470,27 @@
 	        visualAnimations: {
 	          gltf: clone ? (clone.animations || []) : [],
 	          placeholder: []
-	        }
+	        },
+	        // Match stats for tracking performance
+	        matchStats: {
+	          kills: 0,
+	          deaths: 0,
+	          damageDealt: 0,
+	          damageTaken: 0,
+	          shotsFired: 0,
+	          shotsHit: 0,
+	          grenadesThrown: 0,
+	          powerupsCollected: 0,
+	          nearMisses: 0
+	        },
+	        // Power-up effects
+	        buffs: {
+	          speedMul: 1,
+	          damageMul: 1,
+	          speedTimer: 0,
+	          damageTimer: 0
+	        },
+	        shield: 0
 	      };
 
       syncWeaponVisibility(entity);
@@ -1817,6 +2640,17 @@
         nameTag.textContent = entity.displayName || `Player ${index + 1}`;
         panel.appendChild(nameTag);
 
+        const kdStats = document.createElement('div');
+        kdStats.className = 'kdStats';
+        const kills = document.createElement('span');
+        kills.className = 'kills';
+        kills.textContent = 'K: 0';
+        const deaths = document.createElement('span');
+        deaths.className = 'deaths';
+        deaths.textContent = 'D: 0';
+        kdStats.append(kills, document.createTextNode(' | '), deaths);
+        panel.appendChild(kdStats);
+
         const livesInfo = document.createElement('div');
         livesInfo.className = 'livesInfo';
         livesInfo.textContent = 'Lives: -';
@@ -1834,8 +2668,16 @@
           seg.className = 'hpSeg';
           hpBar.appendChild(seg);
         }
+        const shieldBar = document.createElement('div');
+        shieldBar.className = 'shieldBar';
+        const shieldFill = document.createElement('div');
+        shieldFill.className = 'shieldFill';
+        shieldFill.style.width = '0%';
+        shieldBar.appendChild(shieldFill);
+
         hpWrap.appendChild(hpLabel);
         hpWrap.appendChild(hpBar);
+        hpWrap.appendChild(shieldBar);
         panel.appendChild(hpWrap);
 
         const weaponInfo = document.createElement('div');
@@ -1851,8 +2693,16 @@
         weaponInfo.append(weaponIcon, weaponName, weaponAmmo, weaponReserve);
         panel.appendChild(weaponInfo);
 
+        const buffRow = document.createElement('div');
+        buffRow.className = 'buffRow';
+        panel.appendChild(buffRow);
+
         playerPanelsEl.appendChild(panel);
-        hudPanels.set(entity.id, { panel, hpBar, livesInfo, weaponInfo, weaponIcon, weaponName, weaponAmmo, weaponReserve });
+        hudPanels.set(entity.id, { 
+          panel, hpBar, shieldFill, livesInfo, weaponInfo, 
+          weaponIcon, weaponName, weaponAmmo, weaponReserve,
+          kills, deaths, buffRow 
+        });
       });
     }
 
@@ -2000,10 +2850,12 @@
 	      resetCover();
 	      clearPickups();
 	      clearGrenades();
+	      initPowerups();
 	      world.skyDropTimer = CONFIG.pickups.skyDropInterval;
 	      updateRoundPips();
 	      setMode('roundIntro');
       showBanner(state.gameMode === 'deathmatch' ? 'FREE FOR ALL · FIGHT!' : `ROUND ${state.round} · FIGHT!`);
+      AudioManager.playRoundStart();
       setTimeout(() => {
         if (state.mode === 'roundIntro') {
           setMode('playing');
@@ -2213,6 +3065,7 @@
       updateSkyDrops(scaledDt);
       updateFallingCrates(scaledDt);
 	      updatePickups(scaledDt);
+	      updatePowerups(scaledDt);
 	      updateRollingBarrels(scaledDt);
 	      updateCoverStates(scaledDt);
 	      updateGrenades(scaledDt);
@@ -2226,6 +3079,7 @@
         updateStunVisual(entity, dt);
         updateMuzzleFlash(entity, scaledDt);
         updateCharacterFlash(entity, dt); // Use raw dt for flash timing
+        updateEntityBuffs(entity, scaledDt); // Update power-up buff timers
       });
       updateRespawns(scaledDt);
       updatePopups(dt);
@@ -2729,7 +3583,9 @@
 
     function applyMovement(entity, moveDir, dt) {
       const accel = CONFIG.movement.accel;
-      const maxSpeed = CONFIG.movement.maxSpeed;
+      // Apply speed buff from power-ups
+      const speedMul = entity.buffs?.speedMul || 1;
+      const maxSpeed = CONFIG.movement.maxSpeed * speedMul;
 
       if (entity.dashTimer > 0) {
         entity.dashTimer -= dt;
@@ -2814,10 +3670,12 @@
       const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
 
       const dir = new THREE.Vector3();
-      if (input.keys['KeyW']) dir.add(forward);
-      if (input.keys['KeyS']) dir.sub(forward);
-      if (input.keys['KeyA']) dir.sub(right);
-      if (input.keys['KeyD']) dir.add(right);
+      // Use KeyBinds system for movement keys
+      if (input.keys[KeyBinds.getKey('moveUp')]) dir.add(forward);
+      if (input.keys[KeyBinds.getKey('moveDown')]) dir.sub(forward);
+      if (input.keys[KeyBinds.getKey('moveLeft')]) dir.sub(right);
+      if (input.keys[KeyBinds.getKey('moveRight')]) dir.add(right);
+      
       if (dir.lengthSq() > 0) dir.normalize();
       return dir;
     }
@@ -2927,6 +3785,22 @@
       triggerShootAnimation(attacker);
       attacker.firedRecentlyTimer = 0.25;
 
+      // Play weapon-specific sound
+      if (attacker.isPlayer || !isAI) {
+        const weaponId = attacker.weapon.id;
+        if (weaponId === 'pistol') AudioManager.playPistol();
+        else if (weaponId === 'smg') AudioManager.playSMG();
+        else if (weaponId === 'shotgun') AudioManager.playShotgun();
+        else if (weaponId === 'sniper') AudioManager.playSniper();
+        else if (weaponId === 'rocket') AudioManager.playRocket();
+      }
+
+      // Track match stats
+      if (attacker.matchStats) {
+        attacker.matchStats.shotsFired++;
+        if (didHit) attacker.matchStats.shotsHit++;
+      }
+
       const fireRateBase = isAI ? weapon.fireRateAI : weapon.fireRate;
       const fireRate = fireRateBase * (isAI ? (aiTuning?.aiFireRateMul ?? 1) : 1);
       attacker.fireCooldown = 1 / fireRate;
@@ -2948,6 +3822,7 @@
       if (state.reserve <= 0) return;
       state.reloadTimer = weapon.reload;
       updateAnimationState(entity, 'reload');
+      if (entity.isPlayer) AudioManager.playReload();
     }
 
     function updateReload(entity, dt) {
@@ -2981,18 +3856,57 @@
 
     function applyDamage(target, amount, sourceTeam, attacker = null, weapon = null, shotStart = null, shotEnd = null) {
       if (target.isDead) return;
+      
+      // Apply attacker's damage buff
+      let finalDamage = amount;
+      if (attacker && attacker.buffs?.damageMul) {
+        finalDamage *= attacker.buffs.damageMul;
+      }
+      
+      // Handle shield absorption
+      if (target.shield && target.shield > 0) {
+        const shieldAbsorb = Math.min(target.shield, finalDamage);
+        target.shield -= shieldAbsorb;
+        finalDamage -= shieldAbsorb;
+        if (shieldAbsorb > 0) {
+          // Show shield damage separately
+          const shieldPos = target.position.clone();
+          shieldPos.y = 2.4;
+          spawnPopup('SHIELD', shieldPos, 'close', 0.4);
+        }
+      }
+      
       if (state.suddenDeath) {
         target.hp = 0;
       } else {
-        target.hp = Math.max(0, target.hp - amount);
+        target.hp = Math.max(0, target.hp - finalDamage);
       }
       fx.hitFlashTimer = 0.06;
       fx.hitstopTimer = 0.06;
+      
+      // Play hit sound
+      AudioManager.playHit();
 
       // Spawn hit effect at target position
       spawnHitEffect(target.position, target.team);
       // Flash the character red briefly
       flashCharacter(target, 0.15);
+      
+      // Show damage number if enabled
+      if (GameSettings.data.showDamageNumbers && finalDamage > 0) {
+        const dmgPos = target.position.clone();
+        dmgPos.y = 2.0;
+        const isCrit = finalDamage >= 40;
+        spawnDamageNumber(Math.round(finalDamage), dmgPos, isCrit);
+      }
+      
+      // Track match stats
+      if (target.matchStats) {
+        target.matchStats.damageTaken += finalDamage;
+      }
+      if (attacker && attacker.matchStats) {
+        attacker.matchStats.damageDealt += finalDamage;
+      }
 
       if (target.hp <= 0) {
         handleEntityDeath(target, sourceTeam, attacker, shotStart, shotEnd);
@@ -3006,6 +3920,26 @@
       spawnHitEffect(target.position, target.team, true);
       fx.shakeTime = 0.3;
       fx.shakeIntensity = 0.55;
+      
+      // Play death sound
+      AudioManager.playDeath();
+      
+      // Track match stats
+      if (target.matchStats) {
+        target.matchStats.deaths++;
+      }
+      if (attacker && attacker.matchStats) {
+        attacker.matchStats.kills++;
+      }
+      
+      // Track persistent stats for player
+      if (target.isPlayer) {
+        PlayerStats.addDeath();
+      }
+      if (attacker && attacker.isPlayer && attacker.weapon) {
+        PlayerStats.addKill(attacker.weapon.id);
+      }
+      
       if (attacker) {
         state.lastKill = {
           shooterTeam: attacker.team,
@@ -3309,6 +4243,163 @@
         world.scene.remove(crate.mesh);
       });
       world.fallingCrates = [];
+      // Also clear power-ups
+      if (world.powerups) {
+        world.powerups.forEach((p) => world.scene.remove(p.mesh));
+        world.powerups = [];
+      }
+    }
+
+    // ==================== POWER-UP SYSTEM ====================
+    function initPowerups() {
+      if (!world.powerups) world.powerups = [];
+      state.powerupTimer = CONFIG.powerups.spawnInterval + (Math.random() - 0.5) * CONFIG.powerups.spawnVariance;
+    }
+
+    function updatePowerups(dt) {
+      if (!world.powerups) world.powerups = [];
+      
+      // Spawn timer
+      if (!state.powerupTimer) state.powerupTimer = CONFIG.powerups.spawnInterval;
+      state.powerupTimer -= dt;
+      if (state.powerupTimer <= 0 && world.powerups.length < 3) {
+        spawnRandomPowerup();
+        state.powerupTimer = CONFIG.powerups.spawnInterval + (Math.random() - 0.5) * CONFIG.powerups.spawnVariance;
+      }
+      
+      // Update and collect
+      const bobHeight = CONFIG.powerups.floatHeight;
+      const bobAmt = CONFIG.powerups.bobAmount;
+      const bobSpeed = CONFIG.powerups.bobSpeed;
+      const radius = CONFIG.powerups.collectRadius;
+      
+      world.powerups = world.powerups.filter((powerup) => {
+        powerup.bobTimer = (powerup.bobTimer || 0) + dt * bobSpeed;
+        powerup.mesh.position.y = powerup.basePos.y + bobHeight + Math.sin(powerup.bobTimer) * bobAmt;
+        powerup.mesh.rotation.y += 2 * dt;
+        
+        for (const entity of world.entities) {
+          if (!entity || entity.isDead || entity.eliminated) continue;
+          if (entity.position.distanceTo(powerup.mesh.position) <= radius) {
+            collectPowerup(entity, powerup);
+            world.scene.remove(powerup.mesh);
+            return false;
+          }
+        }
+        return true;
+      });
+    }
+
+    function spawnRandomPowerup() {
+      const types = Object.keys(CONFIG.powerups.types);
+      const typeId = types[Math.floor(Math.random() * types.length)];
+      const bounds = CONFIG.arena.bounds;
+      const x = bounds.minX + 2 + Math.random() * (bounds.maxX - bounds.minX - 4);
+      const z = bounds.minZ + 2 + Math.random() * (bounds.maxZ - bounds.minZ - 4);
+      spawnPowerup(new THREE.Vector3(x, 0, z), typeId);
+    }
+
+    function spawnPowerup(position, typeId) {
+      const cfg = CONFIG.powerups.types[typeId];
+      if (!cfg) return;
+      
+      const group = new THREE.Group();
+      
+      // Glowing outer ring
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(0.4, 0.08, 8, 24),
+        new THREE.MeshStandardMaterial({
+          color: cfg.color,
+          emissive: cfg.color,
+          emissiveIntensity: 0.5,
+          roughness: 0.3,
+          metalness: 0.7
+        })
+      );
+      ring.rotation.x = Math.PI / 2;
+      group.add(ring);
+      
+      // Inner sphere
+      const sphere = new THREE.Mesh(
+        new THREE.SphereGeometry(0.25, 16, 16),
+        new THREE.MeshStandardMaterial({
+          color: cfg.color,
+          emissive: cfg.color,
+          emissiveIntensity: 0.3,
+          roughness: 0.4,
+          metalness: 0.5
+        })
+      );
+      group.add(sphere);
+      
+      group.position.copy(position);
+      group.position.y = CONFIG.powerups.floatHeight;
+      world.scene.add(group);
+      
+      if (!world.powerups) world.powerups = [];
+      world.powerups.push({
+        typeId,
+        mesh: group,
+        basePos: position.clone(),
+        bobTimer: Math.random() * Math.PI * 2
+      });
+    }
+
+    function collectPowerup(entity, powerup) {
+      const cfg = CONFIG.powerups.types[powerup.typeId];
+      if (!cfg) return;
+      
+      AudioManager.playPickup();
+      
+      const effect = cfg.effect;
+      
+      // Apply effect
+      if (effect.hp) {
+        entity.hp = Math.min(100, entity.hp + effect.hp);
+      }
+      if (effect.shield) {
+        entity.shield = Math.min(50, (entity.shield || 0) + effect.shield);
+      }
+      if (effect.speedMul && cfg.duration > 0) {
+        entity.buffs.speedMul = effect.speedMul;
+        entity.buffs.speedTimer = cfg.duration;
+      }
+      if (effect.damageMul && cfg.duration > 0) {
+        entity.buffs.damageMul = effect.damageMul;
+        entity.buffs.damageTimer = cfg.duration;
+      }
+      
+      // Track stats
+      if (entity.matchStats) {
+        entity.matchStats.powerupsCollected++;
+      }
+      
+      // Show popup
+      if (entity.isPlayer) {
+        const popupPos = entity.position.clone();
+        popupPos.y = 2.2;
+        spawnPopup(cfg.name.toUpperCase(), popupPos, 'close', 0.8);
+      }
+    }
+
+    function updateEntityBuffs(entity, dt) {
+      if (!entity || !entity.buffs) return;
+      
+      // Speed buff timer
+      if (entity.buffs.speedTimer > 0) {
+        entity.buffs.speedTimer -= dt;
+        if (entity.buffs.speedTimer <= 0) {
+          entity.buffs.speedMul = 1;
+        }
+      }
+      
+      // Damage buff timer
+      if (entity.buffs.damageTimer > 0) {
+        entity.buffs.damageTimer -= dt;
+        if (entity.buffs.damageTimer <= 0) {
+          entity.buffs.damageMul = 1;
+        }
+      }
     }
 
     function clearGrenades() {
@@ -3559,6 +4650,9 @@
       spawnExplosion(barrel.position);
       fx.shakeTime = 0.22;
       fx.shakeIntensity = 0.35;
+      
+      // Play explosion sound
+      AudioManager.playExplosion();
 
       const sourceTeam = barrel.lastDamagedByTeam || null;
       const attacker = sourceTeam ? getEntityByTeam(sourceTeam) : null;
@@ -3596,6 +4690,9 @@
 
 	      spawnExplosion(pos);
 	      spawnExplosionSparks(pos, 18, 0xffb13d);
+	      
+	      // Play explosion sound
+	      AudioManager.playExplosion();
 
 	      const blast = createSprite(0xffb13d, 2.6);
 	      blast.material.blending = THREE.AdditiveBlending;
@@ -3688,6 +4785,12 @@
 
         // Extra trail to highlight the near-miss bullet.
         spawnTracer(start, end, COLORS.near, CONFIG.nearMissDrama.duration);
+        
+        // Play near miss sound and track stats
+        if (target.isPlayer) {
+          AudioManager.playNearMiss();
+          if (target.matchStats) target.matchStats.nearMisses = (target.matchStats.nearMisses || 0) + 1;
+        }
 
         const popupPos = target.position.clone();
         popupPos.y = 1.9;
@@ -3883,6 +4986,41 @@
       }
       updateBestTimeUI();
       
+      // Check achievements and record stats
+      const player = getPlayer();
+      if (player && winner === 'p1') {
+        // Calculate accuracy
+        const stats = player.matchStats || {};
+        const accuracy = stats.shotsFired > 0 ? (stats.shotsHit / stats.shotsFired) * 100 : 0;
+        
+        // Record match in persistent stats
+        PlayerStats.recordMatch(true, accuracy);
+        
+        // Check achievements
+        if (PlayerStats.unlockAchievement('first_blood')) {
+          spawnAchievementPopup('first_blood');
+        }
+        if (elapsed < 30 && PlayerStats.unlockAchievement('speedrunner')) {
+          spawnAchievementPopup('speedrunner');
+        }
+        if (state.gameMode === 'duel' && state.wins.p1 >= 3 && state.wins.p2 === 0) {
+          if (PlayerStats.unlockAchievement('domination')) {
+            spawnAchievementPopup('domination');
+          }
+        }
+        if (player.hp > 0 && player.hp <= 10 && PlayerStats.unlockAchievement('survivor')) {
+          spawnAchievementPopup('survivor');
+        }
+        if (accuracy >= 80 && stats.shotsFired >= 10 && PlayerStats.unlockAchievement('sharpshooter')) {
+          spawnAchievementPopup('sharpshooter');
+        }
+        if ((stats.nearMisses || 0) >= 5 && PlayerStats.unlockAchievement('close_call')) {
+          spawnAchievementPopup('close_call');
+        }
+      } else if (player) {
+        PlayerStats.recordMatch(false, 0);
+      }
+      
       // Submit score to Hub
       submitScoreToHub(winner, elapsed);
     }
@@ -3937,6 +5075,36 @@
         if (!panel) return;
         updateHpBar(panel.hpBar, entity.hp, entity.team);
         updateWeaponDisplay(panel, entity);
+        
+        // Update Shield
+        if (panel.shieldFill) {
+          const shieldPct = Math.min(100, (entity.shield || 0) * 2); // Max shield 50 -> 100%
+          panel.shieldFill.style.width = `${shieldPct}%`;
+        }
+        
+        // Update Stats
+        if (panel.kills && entity.matchStats) {
+          panel.kills.textContent = `K: ${entity.matchStats.kills || 0}`;
+          panel.deaths.textContent = `D: ${entity.matchStats.deaths || 0}`;
+        }
+        
+        // Update Buffs
+        if (panel.buffRow) {
+          panel.buffRow.innerHTML = '';
+          if (entity.buffs?.speedTimer > 0) {
+            const icon = document.createElement('div');
+            icon.className = 'buffIcon speed';
+            icon.textContent = `SPD ${Math.ceil(entity.buffs.speedTimer)}`;
+            panel.buffRow.appendChild(icon);
+          }
+          if (entity.buffs?.damageTimer > 0) {
+            const icon = document.createElement('div');
+            icon.className = 'buffIcon damage';
+            icon.textContent = `DMG ${Math.ceil(entity.buffs.damageTimer)}`;
+            panel.buffRow.appendChild(icon);
+          }
+        }
+        
         if (panel.livesInfo) {
           panel.livesInfo.style.display = showLives ? 'block' : 'none';
           panel.livesInfo.textContent = `Lives: ${Math.max(0, entity.lives ?? 0)}`;
@@ -4044,6 +5212,43 @@
         life: duration,
         maxLife: duration
       });
+    }
+
+    function spawnDamageNumber(amount, worldPos, isCrit = false) {
+      if (!popupsEl) return;
+      const el = document.createElement('div');
+      el.className = 'damage-number' + (isCrit ? ' crit' : '');
+      el.textContent = amount;
+      popupsEl.appendChild(el);
+      world.popups.push({
+        el,
+        pos: worldPos.clone(),
+        life: 0.6,
+        maxLife: 0.6,
+        isDamageNumber: true
+      });
+    }
+
+    function spawnAchievementPopup(achievementId) {
+      const ach = ACHIEVEMENTS[achievementId];
+      if (!ach) return;
+      AudioManager.playAchievement();
+      const popup = document.createElement('div');
+      popup.className = 'achievement-popup';
+      popup.innerHTML = `
+        <div class="achievement-icon">${ICONS.trophy}</div>
+        <div class="achievement-text">
+          <div class="achievement-title">ACHIEVEMENT UNLOCKED</div>
+          <div class="achievement-name">${ach.name}</div>
+          <div class="achievement-desc">${ach.desc}</div>
+        </div>
+      `;
+      document.body.appendChild(popup);
+      setTimeout(() => popup.classList.add('show'), 50);
+      setTimeout(() => {
+        popup.classList.remove('show');
+        setTimeout(() => popup.remove(), 500);
+      }, 3000);
     }
 
     function updatePopups(dt) {
@@ -4316,6 +5521,9 @@
       entity.dashTimer = CONFIG.movement.dashDuration;
       entity.dashCooldown = CONFIG.movement.dashCooldown;
       fx.fovPulse = 1;
+      
+      // Play dash sound for player
+      if (entity.isPlayer) AudioManager.playDash();
     }
 
     function getDashDirection(entity) {
@@ -4358,6 +5566,12 @@
       entity.grenadeAmmo = Math.max(0, (entity.grenadeAmmo ?? 0) - 1);
       entity.grenadeCooldown = CONFIG.grenade.cooldown;
       if (!aiInitiated) fx.fovPulse = Math.max(fx.fovPulse, 0.45);
+      
+      // Play grenade throw sound and track stats
+      if (entity.isPlayer) {
+        AudioManager.playGrenade();
+        if (entity.matchStats) entity.matchStats.grenadesThrown++;
+      }
     }
 
     function spawnGrenade(position, velocity, sourceTeam) {

@@ -478,3 +478,541 @@ button.active {
   height: 18px;
   stroke: currentColor;
 }
+
+/* --- Damage Numbers --- */
+.damage-number {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--text-bright);
+  text-shadow: 2px 2px 0 #000, -1px -1px 0 #000;
+  pointer-events: none;
+  animation: damage-float 0.6s ease-out forwards;
+  z-index: 100;
+}
+
+.damage-number.crit {
+  font-size: 22px;
+  color: var(--p2);
+  text-shadow: 2px 2px 0 #000, 0 0 8px var(--p2);
+}
+
+@keyframes damage-float {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1.2);
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.8);
+  }
+}
+
+/* --- Achievement Popup --- */
+.achievement-popup {
+  position: fixed;
+  top: 20px;
+  right: -350px;
+  width: 320px;
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--bg-panel) 0%, #1a1a1a 100%);
+  border: 2px solid var(--primary);
+  box-shadow: 0 0 20px rgba(255, 77, 0, 0.3), var(--shadow-block);
+  z-index: 9999;
+  transition: right 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.achievement-popup.show {
+  right: 20px;
+}
+
+.achievement-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary);
+  color: #000;
+}
+
+.achievement-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.achievement-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.achievement-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.achievement-name {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-bright);
+}
+
+.achievement-desc {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-main);
+}
+
+/* --- Settings Overlay --- */
+#settingsOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  pointer-events: auto;
+}
+
+#settingsOverlay.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.settings-panel {
+  background: var(--bg-panel);
+  border: 2px solid var(--bg-panel-border);
+  box-shadow: var(--shadow-block);
+  padding: 24px 32px;
+  min-width: 360px;
+}
+
+.settings-title {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-bright);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--bg-panel-border);
+}
+
+.settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.setting-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-main);
+  text-transform: uppercase;
+}
+
+.setting-slider {
+  width: 120px;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--bg-panel-border);
+  outline: none;
+}
+
+.setting-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--primary);
+  cursor: pointer;
+}
+
+.setting-toggle {
+  width: 44px;
+  height: 22px;
+  background: var(--bg-panel-border);
+  border: none;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.2s ease;
+}
+
+.setting-toggle.active {
+  background: var(--p1);
+}
+
+.setting-toggle::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  background: var(--text-bright);
+  transition: left 0.2s ease;
+}
+
+.setting-toggle.active::after {
+  left: 25px;
+}
+
+.settings-close {
+  margin-top: 24px;
+  width: 100%;
+  padding: 12px;
+  background: var(--primary);
+  border: none;
+  color: #000;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.settings-close:hover {
+  background: var(--text-bright);
+}
+
+/* --- Kill/Death Stats in HUD --- */
+.player-stats {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-main);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.player-stats .kills {
+  color: var(--p1);
+}
+
+.player-stats .deaths {
+  color: var(--p2);
+}
+
+/* --- Buff Indicators --- */
+.buff-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  animation: buff-pulse 1s ease-in-out infinite;
+}
+
+.buff-indicator.speed {
+  background: rgba(0, 188, 212, 0.3);
+  border: 1px solid var(--secondary);
+  color: var(--secondary);
+}
+
+.buff-indicator.damage {
+  background: rgba(255, 77, 0, 0.3);
+  border: 1px solid var(--primary);
+  color: var(--primary);
+}
+
+.buff-indicator.shield {
+  background: rgba(255, 204, 0, 0.3);
+  border: 1px solid var(--warn);
+  color: var(--warn);
+}
+
+@keyframes buff-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* --- Pause Menu Panel --- */
+.pause-panel,
+.match-panel {
+  background: var(--bg-panel);
+  border: 2px solid var(--bg-panel-border);
+  box-shadow: var(--shadow-block);
+  padding: 32px 48px;
+  text-align: center;
+  min-width: 300px;
+}
+
+.pause-panel h1,
+.match-panel h1 {
+  margin: 0 0 24px 0;
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-bright);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.pause-menu,
+.match-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.pause-btn {
+  padding: 14px 28px;
+  background: transparent;
+  border: 2px solid var(--bg-panel-border);
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pause-btn:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #000;
+}
+
+.pause-btn.danger {
+  border-color: var(--p2);
+  color: var(--p2);
+}
+
+.pause-btn.danger:hover {
+  background: var(--p2);
+  border-color: var(--p2);
+  color: #000;
+}
+
+/* --- Match Stats Detail --- */
+#matchStatsDetail {
+  margin: 16px 0;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--bg-panel-border);
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-main);
+}
+
+.stat-row .label {
+  text-transform: uppercase;
+}
+
+.stat-row .value {
+  color: var(--text-bright);
+  font-weight: 700;
+}
+
+/* --- Controls Overlay --- */
+#controlsOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 600;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  pointer-events: auto;
+}
+
+#controlsOverlay.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.controls-panel {
+  background: var(--bg-panel);
+  border: 2px solid var(--bg-panel-border);
+  box-shadow: var(--shadow-block);
+  padding: 24px 32px;
+  min-width: 440px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.controls-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.control-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--bg-panel-border);
+  transition: background 0.15s ease;
+}
+
+.control-row:hover {
+  background: rgba(255, 77, 0, 0.1);
+}
+
+.control-row.rebinding {
+  border-color: var(--primary);
+  background: rgba(255, 77, 0, 0.2);
+}
+
+.control-action {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-main);
+  text-transform: uppercase;
+}
+
+.control-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 60px;
+  padding: 6px 12px;
+  background: var(--bg-main);
+  border: 1px solid var(--bg-panel-border);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-bright);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.control-key:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.control-key.listening {
+  background: var(--primary);
+  color: #000;
+  animation: key-pulse 0.8s ease-in-out infinite;
+}
+
+@keyframes key-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.controls-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.controls-actions .pause-btn {
+  flex: 1;
+}
+
+/* --- Shield Bar --- */
+.shieldBar {
+  height: 4px;
+  background: var(--bg-panel-border);
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.shieldBar .shieldFill {
+  height: 100%;
+  background: var(--warn);
+  transition: width 0.2s ease;
+}
+
+/* --- Kill/Death Stats --- */
+.kdStats {
+  display: flex;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  margin-top: 6px;
+}
+
+.kdStats .kills {
+  color: var(--p1);
+}
+
+.kdStats .deaths {
+  color: var(--p2);
+}
+
+/* --- HUD Buff Icons --- */
+.buffRow {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.buffIcon {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  animation: buff-pulse 1s ease-in-out infinite;
+}
+
+.buffIcon.speed {
+  background: rgba(0, 188, 212, 0.3);
+  border: 1px solid var(--secondary);
+  color: var(--secondary);
+}
+
+.buffIcon.damage {
+  background: rgba(255, 77, 0, 0.3);
+  border: 1px solid var(--primary);
+  color: var(--primary);
+}
+
+.buffIcon.shield {
+  background: rgba(255, 204, 0, 0.3);
+  border: 1px solid var(--warn);
+  color: var(--warn);
+}
+
+
