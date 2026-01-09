@@ -5,6 +5,9 @@
 
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
+const { checkRateLimit, cleanupRateLimits } = require('./rateLimiter');
+const antiCheat = require('./antiCheat');
+const { logger, LogCategory } = require('./logger');
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -23,17 +26,74 @@ exports.onScoreSubmit = functions.firestore
     .onCreate(async (snap, context) => {
         const scoreData = snap.data();
         const scoreId = context.params.scoreId;
+        const startTime = logger.startTimer();
 
-        console.log(`Processing score submission: ${scoreId}`);
+        logger.info(LogCategory.SCORE, 'Score submission received', {
+            scoreId,
+            userId: scoreData.userId,
+            gameId: scoreData.gameId,
+            score: scoreData.score
+        });
 
         try {
-            // Validate score data
-            const validationResult = validateScore(scoreData);
+            // Check if user is banned
+            const isBanned = await antiCheat.isUserBanned(scoreData.userId);
+            if (isBanned) {
+                logger.warn(LogCategory.SECURITY, 'Score from banned user rejected', {
+                    userId: scoreData.userId,
+                    scoreId
+                });
+                await snap.ref.update({
+                    verified: false,
+                    invalidReason: 'User banned',
+                    processedAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+                return null;
+            }
+
+            // Rate limit check
+            const rateLimitResult = await checkRateLimit(scoreData.userId, 'score');
+            if (!rateLimitResult.allowed) {
+                logger.warn(LogCategory.SECURITY, 'Rate limit exceeded', {
+                    userId: scoreData.userId,
+                    remaining: rateLimitResult.remaining
+                });
+                await snap.ref.update({
+                    verified: false,
+                    invalidReason: 'Rate limit exceeded',
+                    processedAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+                return null;
+            }
+
+            // Enhanced anti-cheat validation
+            const validationResult = antiCheat.validateScore({
+                ...scoreData,
+                sessionId: scoreData.sessionId,
+                duration: scoreData.duration,
+                checksum: scoreData.checksum
+            });
             
             if (!validationResult.valid) {
-                console.warn(`Invalid score rejected: ${validationResult.reason}`);
-                
-                // Mark as invalid but don't delete (for audit)
+                logger.logScoreRejected(
+                    scoreData.userId, 
+                    scoreData.gameId, 
+                    scoreData.score, 
+                    validationResult.reason,
+                    { severity: validationResult.severity, details: validationResult.details }
+                );
+
+                // Log suspicious activity for critical issues
+                if (validationResult.severity === 'critical') {
+                    await antiCheat.logSuspiciousActivity({
+                        userId: scoreData.userId,
+                        gameId: scoreData.gameId,
+                        score: scoreData.score,
+                        reason: validationResult.reason,
+                        details: validationResult.details
+                    });
+                }
+
                 await snap.ref.update({
                     verified: false,
                     invalidReason: validationResult.reason,
@@ -63,11 +123,22 @@ exports.onScoreSubmit = functions.firestore
                 verified: true
             });
 
-            console.log(`Score ${scoreId} verified and processed`);
+            logger.logScoreSubmission(
+                scoreData.userId, 
+                scoreData.gameId, 
+                scoreData.score, 
+                'verified'
+            );
+            logger.endTimer(startTime, 'onScoreSubmit', { scoreId });
+            
             return null;
 
         } catch (error) {
-            console.error('Score processing error:', error);
+            logger.error(LogCategory.SCORE, 'Score processing error', {
+                scoreId,
+                error: error.message,
+                stack: error.stack
+            });
             return null;
         }
     });
@@ -98,7 +169,7 @@ function validateScore(scoreData) {
         'tower-defense': (s) => s.score <= 10000000,
         'rhythm': (s) => s.score <= 1000000,
         'roguelike': (s) => s.score <= 500000,
-        'dino-runner': (s) => s.score <= 100000
+        'toonshooter': (s) => s.score <= 1000000
     };
 
     const validator = gameValidators[scoreData.gameId];
@@ -192,15 +263,15 @@ async function checkScoreAchievements(scoreData) {
 // ==================== LEADERBOARD AGGREGATION ====================
 
 /**
- * Aggregate leaderboards every 5 minutes
+ * Aggregate leaderboards every 15 minutes (reduced from 5 for performance)
  */
 exports.aggregateLeaderboards = functions.pubsub
-    .schedule('every 5 minutes')
+    .schedule('every 15 minutes')
     .onRun(async (context) => {
         console.log('Running leaderboard aggregation');
 
         const games = ['snake', '2048', 'breakout', 'tetris', 'minesweeper', 
-                       'pacman', 'asteroids', 'tower-defense', 'rhythm', 'roguelike', 'dino-runner'];
+                       'pacman', 'asteroids', 'tower-defense', 'rhythm', 'roguelike', 'toonshooter'];
 
         for (const gameId of games) {
             try {
@@ -613,5 +684,18 @@ exports.healthCheck = functions.https.onRequest((req, res) => {
         version: '1.0.0'
     });
 });
+
+// ==================== RATE LIMIT CLEANUP ====================
+
+/**
+ * Clean up stale rate limit documents hourly
+ */
+exports.cleanupRateLimits = functions.pubsub
+    .schedule('every 1 hours')
+    .onRun(async (context) => {
+        console.log('Cleaning up stale rate limit documents');
+        await cleanupRateLimits();
+        return null;
+    });
 
 console.log('Arcade Hub Cloud Functions loaded');

@@ -16,7 +16,7 @@ export const TIME_PERIODS = {
 class LeaderboardService {
     constructor() {
         this.cache = {};
-        this.cacheExpiry = 60000; // 1 minute cache
+        this.cacheExpiry = 300000; // 5 minute cache (increased from 1 min for performance)
         this.lastFetch = {};
     }
 

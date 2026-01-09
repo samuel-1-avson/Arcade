@@ -96,8 +96,10 @@ service cloud.firestore {
       // Only signed in users can create
       allow create: if isSignedIn();
       
-      // Participants can update (join)
-      allow update: if isSignedIn();
+      // Participants can only join (modify participants array) - not change other fields
+      allow update: if isSignedIn() 
+        && request.resource.data.diff(resource.data).affectedKeys()
+           .hasOnly(['participants', 'updatedAt']);
       
       allow delete: if false;
       

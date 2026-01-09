@@ -1,11 +1,14 @@
 /**
  * TournamentService - Hub-Wide Tournament System
  * Manages tournament creation, brackets, matchmaking, and rewards
+ * Now with Firestore persistence for cross-device sync
  */
 import { eventBus } from '../engine/EventBus.js';
 import { globalStateManager, GAME_IDS } from './GlobalStateManager.js';
 import { notificationService } from './NotificationService.js';
 import { economyService, CURRENCY } from './EconomyService.js';
+import { firebaseService } from '../engine/FirebaseService.js';
+import { schemaVersionService } from './SchemaVersionService.js';
 
 // Tournament types
 export const TOURNAMENT_TYPES = {
@@ -35,16 +38,36 @@ const REWARD_TIERS = {
 
 class TournamentService {
     constructor() {
-        this.tournaments = this._loadTournaments();
+        this.tournaments = [];
         this.activeTournament = null;
+        this.firestoreEnabled = false;
+        this.unsubscribe = null;
     }
 
     /**
      * Initialize the tournament service
+     * Now includes Firestore sync
      */
-    init() {
+    async init() {
+        // Try to enable Firestore persistence
+        if (firebaseService.db && firebaseService.isSignedIn()) {
+            this.firestoreEnabled = true;
+            await this._syncFromFirestore();
+            this._subscribeToUpdates();
+            console.log('TournamentService initialized with Firestore');
+        } else {
+            // Fall back to localStorage
+            this.tournaments = this._loadTournaments();
+            console.log('TournamentService initialized with localStorage');
+        }
+
+        // Run migrations if needed
+        if (schemaVersionService.needsMigration('tournaments')) {
+            this.tournaments = schemaVersionService.migrateData('tournaments', this.tournaments);
+            await this._saveTournaments();
+        }
+
         this._checkActiveTournaments();
-        console.log('TournamentService initialized');
     }
 
     // ============ TOURNAMENT MANAGEMENT ============
@@ -560,7 +583,7 @@ class TournamentService {
     // ============ PERSISTENCE ============
 
     /**
-     * Load tournaments from storage
+     * Load tournaments from localStorage (fallback)
      * @private
      */
     _loadTournaments() {
@@ -574,14 +597,147 @@ class TournamentService {
     }
 
     /**
-     * Save tournaments to storage
+     * Save tournaments to storage (Firestore or localStorage)
      * @private
      */
-    _saveTournaments() {
+    async _saveTournaments() {
+        // Always save to localStorage as backup
         try {
             localStorage.setItem('arcadeHub_tournaments', JSON.stringify(this.tournaments));
         } catch (e) {
-            console.warn('Failed to save tournaments:', e);
+            console.warn('Failed to save tournaments locally:', e);
+        }
+
+        // Also save to Firestore if enabled
+        if (this.firestoreEnabled && firebaseService.db) {
+            try {
+                const db = firebaseService.db;
+                const batch = db.batch();
+
+                for (const tournament of this.tournaments) {
+                    const docRef = db.collection('tournaments').doc(tournament.id);
+                    batch.set(docRef, {
+                        ...tournament,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
+                }
+
+                await batch.commit();
+                console.log('[Tournaments] Saved to Firestore');
+            } catch (e) {
+                console.warn('Failed to save tournaments to Firestore:', e);
+            }
+        }
+    }
+
+    /**
+     * Save a single tournament to Firestore
+     * @private
+     */
+    async _saveTournamentToFirestore(tournament) {
+        if (!this.firestoreEnabled || !firebaseService.db) return;
+
+        try {
+            const docRef = firebaseService.db.collection('tournaments').doc(tournament.id);
+            await docRef.set({
+                ...tournament,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+        } catch (e) {
+            console.warn('Failed to save tournament to Firestore:', e);
+        }
+    }
+
+    /**
+     * Sync tournaments from Firestore
+     * @private
+     */
+    async _syncFromFirestore() {
+        if (!firebaseService.db) return;
+
+        try {
+            const db = firebaseService.db;
+            const snapshot = await db.collection('tournaments')
+                .orderBy('createdAt', 'desc')
+                .limit(50)
+                .get();
+
+            const firestoreTournaments = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+
+            // Merge with local tournaments
+            this.tournaments = this._mergeTournaments(firestoreTournaments);
+            
+            console.log(`[Tournaments] Synced ${firestoreTournaments.length} from Firestore`);
+        } catch (e) {
+            console.warn('Failed to sync from Firestore:', e);
+            // Fall back to localStorage
+            this.tournaments = this._loadTournaments();
+        }
+    }
+
+    /**
+     * Merge Firestore and local tournaments
+     * @private
+     */
+    _mergeTournaments(firestoreTournaments) {
+        const localTournaments = this._loadTournaments();
+        const merged = [...firestoreTournaments];
+        
+        // Add local tournaments that aren't in Firestore
+        for (const local of localTournaments) {
+            if (!merged.some(t => t.id === local.id)) {
+                merged.push(local);
+            }
+        }
+
+        return merged.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    }
+
+    /**
+     * Subscribe to real-time tournament updates
+     * @private
+     */
+    _subscribeToUpdates() {
+        if (!firebaseService.db || this.unsubscribe) return;
+
+        try {
+            this.unsubscribe = firebaseService.db.collection('tournaments')
+                .where('status', 'in', ['open', 'in_progress'])
+                .onSnapshot(snapshot => {
+                    snapshot.docChanges().forEach(change => {
+                        const tournament = { id: change.doc.id, ...change.doc.data() };
+                        
+                        if (change.type === 'added' || change.type === 'modified') {
+                            const idx = this.tournaments.findIndex(t => t.id === tournament.id);
+                            if (idx >= 0) {
+                                this.tournaments[idx] = tournament;
+                            } else {
+                                this.tournaments.unshift(tournament);
+                            }
+                        } else if (change.type === 'removed') {
+                            this.tournaments = this.tournaments.filter(t => t.id !== tournament.id);
+                        }
+                    });
+                    
+                    eventBus.emit('tournamentsUpdated', this.tournaments);
+                }, error => {
+                    console.warn('Tournament subscription error:', error);
+                });
+        } catch (e) {
+            console.warn('Failed to subscribe to tournament updates:', e);
+        }
+    }
+
+    /**
+     * Unsubscribe from updates
+     */
+    destroy() {
+        if (this.unsubscribe) {
+            this.unsubscribe();
+            this.unsubscribe = null;
         }
     }
 
@@ -599,10 +755,56 @@ class TournamentService {
     /**
      * Clear all tournaments (for testing)
      */
-    clearAll() {
+    async clearAll() {
         this.tournaments = [];
         this.activeTournament = null;
         localStorage.removeItem('arcadeHub_tournaments');
+        
+        // Also clear from Firestore if enabled
+        if (this.firestoreEnabled && firebaseService.db) {
+            // Note: This would need admin permissions in production
+            console.warn('Firestore tournaments not cleared - requires admin');
+        }
+    }
+
+    /**
+     * Migrate local tournaments to Firestore
+     * Call this once to move existing data to cloud
+     */
+    async migrateToFirestore() {
+        if (!firebaseService.db || !firebaseService.isSignedIn()) {
+            console.warn('Cannot migrate: Firestore not available');
+            return false;
+        }
+
+        const localTournaments = this._loadTournaments();
+        if (localTournaments.length === 0) {
+            console.log('No local tournaments to migrate');
+            return true;
+        }
+
+        console.log(`Migrating ${localTournaments.length} tournaments to Firestore...`);
+
+        try {
+            const db = firebaseService.db;
+            const batch = db.batch();
+
+            for (const tournament of localTournaments) {
+                const docRef = db.collection('tournaments').doc(tournament.id);
+                batch.set(docRef, {
+                    ...tournament,
+                    migratedFromLocal: true,
+                    migratedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+
+            await batch.commit();
+            console.log('Migration complete!');
+            return true;
+        } catch (e) {
+            console.error('Migration failed:', e);
+            return false;
+        }
     }
 }
 

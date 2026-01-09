@@ -5,12 +5,10 @@
  */
 import { eventBus, GameEvents } from '../engine/EventBus.js';
 import { storageManager } from '../engine/StorageManager.js';
+import { GAME_IDS } from '../config/gameRegistry.js';
 
-// Game IDs for tracking
-export const GAME_IDS = [
-    'snake', '2048', 'breakout', 'minesweeper',
-    'tetris', 'pacman', 'asteroids', 'tower-defense', 'rhythm', 'roguelike', 'toonshooter'
-];
+// Re-export GAME_IDS for backward compatibility
+export { GAME_IDS } from '../config/gameRegistry.js';
 
 // Player titles earned through achievements
 export const PLAYER_TITLES = [

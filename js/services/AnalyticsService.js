@@ -62,6 +62,7 @@ class AnalyticsService {
         this.pageViewTime = Date.now();
         this.initialized = false;
         this.debugMode = false;
+        this.batchSize = 10; // Flush when this many events queued (optimized batch size)
     }
 
     /**
@@ -149,8 +150,8 @@ class AnalyticsService {
         // Emit local event
         eventBus.emit('analyticsEvent', event);
 
-        // Flush if queue is large
-        if (this.eventQueue.length >= 20) {
+        // Flush if queue reaches batch size (optimized batching)
+        if (this.eventQueue.length >= this.batchSize) {
             this.flush();
         }
     }

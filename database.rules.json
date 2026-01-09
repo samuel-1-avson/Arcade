@@ -50,10 +50,10 @@
     "notifications": {
       "$userId": {
         ".read": "$userId === auth.uid",
-        ".write": true,
+        ".write": "$userId === auth.uid",
         "$notificationId": {
           ".read": "$userId === auth.uid",
-          ".write": "$userId === auth.uid || auth != null"
+          ".write": "$userId === auth.uid"
         }
       }
     },

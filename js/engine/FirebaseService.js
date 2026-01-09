@@ -3,17 +3,9 @@
  * Handles authentication and Firestore for leaderboards
  */
 
-// Firebase configuration for Arcade Hub
-const firebaseConfig = {
-  apiKey: "AIzaSyCumtfvMCnSRXMHtOghgLv87PdvmwD3yjA",
-  authDomain: "arcade-7f03c.firebaseapp.com",
-  projectId: "arcade-7f03c",
-  storageBucket: "arcade-7f03c.firebasestorage.app",
-  messagingSenderId: "883884342768",
-  appId: "1:883884342768:web:8c6a43c1c3c01790d2f135",
-  measurementId: "G-NCQBGH5RR3",
-  databaseURL: "https://arcade-7f03c-default-rtdb.firebaseio.com"
-};
+// Import Firebase configuration from centralized config module
+import { firebaseConfig } from '../config/firebase-config.js';
+
 
 class FirebaseService {
     constructor() {
