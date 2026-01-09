@@ -436,6 +436,43 @@ class FirebaseService {
             return null;
         }
     }
+
+    /**
+     * Get Firestore server timestamp
+     * Use this instead of firebase.firestore.FieldValue.serverTimestamp()
+     * @returns {Object} Firestore server timestamp
+     */
+    serverTimestamp() {
+        if (typeof firebase !== 'undefined' && firebase.firestore) {
+            return firebase.firestore.FieldValue.serverTimestamp();
+        }
+        // Fallback to client timestamp if Firebase not available
+        return new Date();
+    }
+
+    /**
+     * Get Firestore array union
+     * @param {...any} elements Elements to add
+     * @returns {Object} Firestore array union
+     */
+    arrayUnion(...elements) {
+        if (typeof firebase !== 'undefined' && firebase.firestore) {
+            return firebase.firestore.FieldValue.arrayUnion(...elements);
+        }
+        return elements;
+    }
+
+    /**
+     * Get Firestore array remove
+     * @param {...any} elements Elements to remove
+     * @returns {Object} Firestore array remove
+     */
+    arrayRemove(...elements) {
+        if (typeof firebase !== 'undefined' && firebase.firestore) {
+            return firebase.firestore.FieldValue.arrayRemove(...elements);
+        }
+        return [];
+    }
 }
 
 // Singleton instance

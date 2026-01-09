@@ -618,7 +618,7 @@ class TournamentService {
                     const docRef = db.collection('tournaments').doc(tournament.id);
                     batch.set(docRef, {
                         ...tournament,
-                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        updatedAt: firebaseService.serverTimestamp()
                     }, { merge: true });
                 }
 
@@ -641,7 +641,7 @@ class TournamentService {
             const docRef = firebaseService.db.collection('tournaments').doc(tournament.id);
             await docRef.set({
                 ...tournament,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                updatedAt: firebaseService.serverTimestamp()
             }, { merge: true });
         } catch (e) {
             console.warn('Failed to save tournament to Firestore:', e);
@@ -794,7 +794,7 @@ class TournamentService {
                 batch.set(docRef, {
                     ...tournament,
                     migratedFromLocal: true,
-                    migratedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    migratedAt: firebaseService.serverTimestamp()
                 });
             }
 
