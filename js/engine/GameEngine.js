@@ -182,8 +182,10 @@ class GameEngine {
      * Reset and restart the game
      */
     reset() {
-        cancelAnimationFrame(this.animationId);
-        this.animationId = null;
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+        }
+        this.animationFrameId = null;
 
         this.state = GameState.MENU;
         this.score = 0;
@@ -201,7 +203,9 @@ class GameEngine {
      * Clean up resources
      */
     destroy() {
-        cancelAnimationFrame(this.animationId);
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+        }
         document.removeEventListener('visibilitychange', this._onVisibilityChange);
         document.removeEventListener('keydown', this._onKeyDown);
         inputManager.destroy();
@@ -292,10 +296,38 @@ class GameEngine {
 
     // ============ PRIVATE METHODS ============
 
+    _setupCanvas() {
+        // Set canvas size
+        this.canvas.width = this.config.width;
+        this.canvas.height = this.config.height;
+
+        // Pixel art mode
+        if (this.config.pixelPerfect) {
+            this.ctx.imageSmoothingEnabled = false;
+        }
+
+        // Set initial styles
+        this.canvas.style.display = 'block';
+    }
+
+    _bindEvents() {
+        this._gameLoop = this._gameLoop.bind(this);
+        this._onVisibilityChange = this._onVisibilityChange.bind(this);
+        this._onKeyDown = this._onKeyDown.bind(this);
+
+        document.addEventListener('visibilitychange', this._onVisibilityChange);
+        document.addEventListener('keydown', this._onKeyDown);
+    }
+
+    _loadHighScore() {
+        this.highScore = storageManager.getHighScore(this.config.gameId) || 0;
+    }
+
     _gameLoop(timestamp) {
         if (this.state !== GameState.PLAYING) return;
 
         // Calculate delta time
+        if (this.lastTime === 0) this.lastTime = timestamp;
         this.deltaTime = (timestamp - this.lastTime) / 1000;
         this.lastTime = timestamp;
 
@@ -313,7 +345,7 @@ class GameEngine {
         this.render();
 
         // Continue loop
-        this.animationId = requestAnimationFrame(this._gameLoop);
+        this.animationFrameId = requestAnimationFrame(this._gameLoop);
     }
 
     _onVisibilityChange() {
