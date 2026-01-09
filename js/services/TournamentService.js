@@ -46,19 +46,33 @@ class TournamentService {
 
     /**
      * Initialize the tournament service
-     * Now includes Firestore sync
+     * Now includes Firestore sync and auth state listener
      */
     async init() {
-        // Try to enable Firestore persistence
+        // Always load from localStorage first
+        this.tournaments = this._loadTournaments();
+        
+        // Try to enable Firestore if already signed in
         if (firebaseService.db && firebaseService.isSignedIn()) {
             this.firestoreEnabled = true;
             await this._syncFromFirestore();
             this._subscribeToUpdates();
             console.log('TournamentService initialized with Firestore');
         } else {
-            // Fall back to localStorage
-            this.tournaments = this._loadTournaments();
             console.log('TournamentService initialized with localStorage');
+            
+            // Listen for auth state changes to sync when user signs in later
+            if (firebaseService.auth) {
+                firebaseService.auth.onAuthStateChanged(async (user) => {
+                    if (user && !this.firestoreEnabled && firebaseService.db) {
+                        this.firestoreEnabled = true;
+                        await this._syncFromFirestore();
+                        this._subscribeToUpdates();
+                        console.log('TournamentService: Firestore enabled after sign-in');
+                        eventBus.emit('tournamentsUpdated', this.tournaments);
+                    }
+                });
+            }
         }
 
         // Run migrations if needed

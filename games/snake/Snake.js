@@ -2095,7 +2095,7 @@ class SnakeGame extends GameEngine {
         // Use smooth positions if available
         const useSmooth = this.enableSmoothMovement && this.physics.visualPositions.length > 0;
 
-        // Draw segments from tail to head
+        // Draw segments from tail to head for proper layering
         for (let i = this.snake.length - 1; i >= 0; i--) {
             const segment = this.snake[i];
             let x, y;
@@ -2104,109 +2104,85 @@ class SnakeGame extends GameEngine {
                 const vis = this.physics.visualPositions[i];
                 x = vis.x - cellSize / 2;
                 y = vis.y - cellSize / 2;
-                
-                // Wiggle effect
-                if (i > 0) {
-                    const wiggle = this.physics.calculateWiggle(i, time, this.snake.length);
-                    x += wiggle.x;
-                    y += wiggle.y;
-                }
             } else {
                 x = segment.x * cellSize;
                 y = segment.y * cellSize;
             }
 
             const isHead = (i === 0);
-            const isTail = (i === this.snake.length - 1);
 
-            // Base Color & Glow
+            // Colors
             let color = this.theme.snake;
             let glowColor = this.theme.snake;
-            let shadowBlur = 10;
 
+            // Invincible rainbow effect
             if (this.activePowerUps.invincible) {
-                const hue = (time * 500 + i * 20) % 360;
-                color = `hsl(${hue}, 100%, 60%)`;
+                const hue = (time * 200 + i * 25) % 360;
+                color = `hsl(${hue}, 100%, 55%)`;
                 glowColor = `hsl(${hue}, 100%, 50%)`;
-                shadowBlur = 20;
             }
 
-            // Head Styles
-            if (isHead) {
-                ctx.shadowColor = glowColor;
-                ctx.shadowBlur = shadowBlur + 5;
-                ctx.fillStyle = this.activePowerUps.invincible ? '#fff' : '#ffffff'; // White core for head
-                
-                // Draw Head (Slightly larger)
-                const headSize = cellSize * 0.9;
-                const offset = (cellSize - headSize) / 2;
-                this.roundRect(x + offset, y + offset, headSize, headSize, 6);
-                ctx.fill();
-
-                // Cyber Eyes
-                this.drawEyes(x + offset, y + offset, headSize);
-            } 
-            // Body Styles
-            else {
-                ctx.shadowColor = glowColor;
-                ctx.shadowBlur = isTail ? 5 : shadowBlur;
-                
-                // Segment size shrinks towards tail
-                const sizeRatio = 0.85 - (i / this.snake.length) * 0.2;
-                const segSize = cellSize * sizeRatio;
-                const offset = (cellSize - segSize) / 2;
-
-                // Inner core
-                ctx.fillStyle = color;
-                this.roundRect(x + offset, y + offset, segSize, segSize, 4);
-                ctx.fill();
-                
-                // Bright center dot for "tech" feel
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-                const dotSize = segSize * 0.4;
-                const dotOffset = (segSize - dotSize) / 2;
-                ctx.fillRect(x + offset + dotOffset, y + offset + dotOffset, dotSize, dotSize);
-            }
+            // Glow
+            ctx.shadowColor = glowColor;
+            ctx.shadowBlur = isHead ? 15 : 8;
             
+            // Consistent sizing with slight shrink for tail segments
+            const sizeReduction = i / this.snake.length * 0.15;
+            const segSize = cellSize * (0.85 - sizeReduction);
+            const offset = (cellSize - segSize) / 2;
+
+            ctx.fillStyle = color;
+            this.roundRect(x + offset, y + offset, segSize, segSize, 5);
+            ctx.fill();
+            
+            // Draw eyes on head
+            if (isHead) {
+                this.drawEyes(x, y, cellSize);
+            }
+
             ctx.shadowBlur = 0;
         }
         
         ctx.globalAlpha = 1;
     }
 
-    drawEyes(x, y, size) {
+    drawEyes(x, y, cellSize) {
         const ctx = this.ctx;
-        const eyeSize = size * 0.25;
-        const offset = size * 0.15;
+        const eyeSize = cellSize * 0.15;
+        const eyeInset = cellSize * 0.25;
         
-        let lx, ly, rx, ry; // Left/Right eye positions relative to x,y
+        let e1x, e1y, e2x, e2y;
 
-        // Position eyes based on direction
         switch (this.direction) {
             case 'UP':
-                lx = x + offset; ly = y + offset;
-                rx = x + size - offset - eyeSize; ry = y + offset;
+                e1x = x + eyeInset; e1y = y + eyeInset;
+                e2x = x + cellSize - eyeInset - eyeSize; e2y = y + eyeInset;
                 break;
             case 'DOWN':
-                lx = x + offset; ly = y + size - offset - eyeSize;
-                rx = x + size - offset - eyeSize; ry = y + size - offset - eyeSize;
+                e1x = x + eyeInset; e1y = y + cellSize - eyeInset - eyeSize;
+                e2x = x + cellSize - eyeInset - eyeSize; e2y = y + cellSize - eyeInset - eyeSize;
                 break;
             case 'LEFT':
-                lx = x + offset; ly = y + offset;
-                rx = x + offset; ry = y + size - offset - eyeSize;
+                e1x = x + eyeInset; e1y = y + eyeInset;
+                e2x = x + eyeInset; e2y = y + cellSize - eyeInset - eyeSize;
                 break;
             case 'RIGHT':
-                lx = x + size - offset - eyeSize; ly = y + offset;
-                rx = x + size - offset - eyeSize; ry = y + size - offset - eyeSize;
-                break;
-            default: // Default right
-                lx = x + size - offset - eyeSize; ly = y + offset;
-                rx = x + size - offset - eyeSize; ry = y + size - offset - eyeSize;
+            default:
+                e1x = x + cellSize - eyeInset - eyeSize; e1y = y + eyeInset;
+                e2x = x + cellSize - eyeInset - eyeSize; e2y = y + cellSize - eyeInset - eyeSize;
         }
 
+        // White eye sockets
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(e1x, e1y, eyeSize, eyeSize);
+        ctx.fillRect(e2x, e2y, eyeSize, eyeSize);
+        
+        // Black pupils
+        const pupilSize = eyeSize * 0.5;
+        const pupilOffset = (eyeSize - pupilSize) / 2;
         ctx.fillStyle = '#000';
-        ctx.fillRect(lx, ly, eyeSize, eyeSize);
-        ctx.fillRect(rx, ry, eyeSize, eyeSize);
+        ctx.fillRect(e1x + pupilOffset, e1y + pupilOffset, pupilSize, pupilSize);
+        ctx.fillRect(e2x + pupilOffset, e2y + pupilOffset, pupilSize, pupilSize);
     }
 
     drawFood() {

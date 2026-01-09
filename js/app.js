@@ -13,6 +13,7 @@ import { achievementService } from './services/AchievementService.js';
 import { dailyChallengeService } from './services/DailyChallengeService.js';
 import { leaderboardService } from './services/LeaderboardService.js';
 import { tournamentService, TOURNAMENT_TYPES } from './services/TournamentService.js';
+import { tournamentRecommender } from './services/TournamentRecommender.js';
 import { economyService, SHOP_ITEMS } from './services/EconomyService.js';
 import { audioService } from './services/AudioService.js';
 import { backgroundService } from './services/BackgroundService.js';
@@ -831,7 +832,9 @@ class ArcadeHub {
         // Re-bind create button if inside modal
         if (createBtn) {
             createBtn.addEventListener('click', () => {
+                document.getElementById('tournaments-modal')?.classList.add('hidden');
                 document.getElementById('create-tournament-modal')?.classList.remove('hidden');
+                this.renderTournamentGameSelect();
             });
         }
     }
@@ -1712,7 +1715,10 @@ class ArcadeHub {
 
     setupTournaments() {
         const createBtn = document.getElementById('create-tournament-btn');
+        const modalCreateBtn = document.getElementById('modal-create-tournament-btn');
         const modal = document.getElementById('create-tournament-modal');
+        const tournamentsModal = document.getElementById('tournaments-modal');
+        const tournamentsCloseBtn = document.getElementById('tournaments-close-btn');
         const startBtn = document.getElementById('start-tournament-btn');
         const cancelBtn = document.getElementById('cancel-tournament-btn');
         
@@ -1723,7 +1729,7 @@ class ArcadeHub {
         eventBus.on('tournamentStarted', () => this.renderTournaments());
         eventBus.on('tournamentCompleted', () => this.renderTournaments());
 
-        // Open create modal
+        // Open create modal (main nav button)
         if (createBtn) {
             createBtn.addEventListener('click', () => {
                 modal?.classList.remove('hidden');
@@ -1731,7 +1737,21 @@ class ArcadeHub {
             });
         }
 
-        // Close modal
+        // Open create modal from tournaments modal
+        if (modalCreateBtn) {
+            modalCreateBtn.addEventListener('click', () => {
+                tournamentsModal?.classList.add('hidden');
+                modal?.classList.remove('hidden');
+                this.renderTournamentGameSelect();
+            });
+        }
+
+        // Close tournaments modal
+        if (tournamentsCloseBtn) {
+            tournamentsCloseBtn.addEventListener('click', () => tournamentsModal?.classList.add('hidden'));
+        }
+
+        // Close create modal
         if (cancelBtn) {
             cancelBtn.addEventListener('click', () => modal?.classList.add('hidden'));
         }
@@ -1768,46 +1788,81 @@ class ArcadeHub {
         if (!container) return;
 
         const tournaments = tournamentService.getOpenTournaments();
+        const recommendations = tournamentRecommender.getRecommendations(2);
         
-        if (tournaments.length === 0) {
-            container.innerHTML = '<div class="tournament-empty">No active tournaments. Create one to compete!</div>';
-            return;
-        }
-
-        container.innerHTML = tournaments.map(t => {
-            const isJoined = tournamentService.isParticipant(t.id);
-            const progress = (t.participants.length / t.size) * 100;
-            
-            return `
-                <div class="tournament-card ${isJoined ? 'active' : ''}">
-                    <div class="tournament-status ${t.status}">${t.status.replace('_', ' ').toUpperCase()}</div>
-                    <div class="tournament-info">
-                        <h3>${t.name}</h3>
-                        <div class="tournament-meta">
-                            <span>🎮 ${this.getGameTitle(t.gameId)}</span>
-                            <span>🏆 ${t.size} Players</span>
-                        </div>
-                        <div class="tournament-participants">
-                            <div class="participant-count">${t.participants.length} / ${t.size} Joined</div>
-                            <div class="participant-bar">
-                                <div class="participant-fill" style="width: ${progress}%"></div>
-                            </div>
-                        </div>
-                        <div class="tournament-actions">
-                            ${isJoined ? `
-                                <button class="btn btn-sm btn-ghost leave-tourney" data-id="${t.id}">Leave</button>
-                            ` : `
-                                <button class="btn btn-sm btn-primary join-tourney" data-id="${t.id}" 
-                                    ${t.participants.length >= t.size ? 'disabled' : ''}>
-                                    Join
-                                </button>
-                            `}
-                            <button class="btn btn-sm btn-ghost view-bracket" data-id="${t.id}">View Bracket</button>
-                        </div>
+        let html = '';
+        
+        // Recommendations section
+        if (recommendations.length > 0) {
+            html += `
+                <div class="tournament-recommendations">
+                    <div class="recommendations-header">
+                        <span class="rec-icon">✨</span>
+                        <span class="rec-title">Recommended For You</span>
+                    </div>
+                    <div class="recommendations-grid">
+                        ${recommendations.map(t => {
+                            const isJoined = tournamentService.isParticipant(t.id);
+                            return `
+                                <div class="recommendation-card" data-id="${t.id}">
+                                    <div class="rec-game">${this.getGameTitle(t.gameId)}</div>
+                                    <div class="rec-name">${t.name}</div>
+                                    <div class="rec-reason">${t.reasons[0] || ''}</div>
+                                    ${!isJoined ? `
+                                        <button class="btn btn-sm btn-primary join-tourney" data-id="${t.id}">Quick Join</button>
+                                    ` : `
+                                        <span class="rec-joined">✓ Joined</span>
+                                    `}
+                                </div>
+                            `;
+                        }).join('')}
                     </div>
                 </div>
             `;
-        }).join('');
+        }
+        
+        if (tournaments.length === 0) {
+            html += '<div class="tournament-empty">🏆 No active tournaments. Create one to compete!</div>';
+        } else {
+            // Main tournament list
+            html += `<div class="tournament-list-header">All Open Tournaments</div>`;
+            html += tournaments.map(t => {
+                const isJoined = tournamentService.isParticipant(t.id);
+                const progress = (t.participants.length / t.size) * 100;
+                
+                return `
+                    <div class="tournament-card ${isJoined ? 'active' : ''}">
+                        <div class="tournament-status ${t.status}">${t.status.replace('_', ' ').toUpperCase()}</div>
+                        <div class="tournament-info">
+                            <h3>${t.name}</h3>
+                            <div class="tournament-meta">
+                                <span>🎮 ${this.getGameTitle(t.gameId)}</span>
+                                <span>🏆 ${t.size} Players</span>
+                            </div>
+                            <div class="tournament-participants">
+                                <div class="participant-count">${t.participants.length} / ${t.size} Joined</div>
+                                <div class="participant-bar">
+                                    <div class="participant-fill" style="width: ${progress}%"></div>
+                                </div>
+                            </div>
+                            <div class="tournament-actions">
+                                ${isJoined ? `
+                                    <button class="btn btn-sm btn-ghost leave-tourney" data-id="${t.id}">Leave</button>
+                                ` : `
+                                    <button class="btn btn-sm btn-primary join-tourney" data-id="${t.id}" 
+                                        ${t.participants.length >= t.size ? 'disabled' : ''}>
+                                        Join
+                                    </button>
+                                `}
+                                <button class="btn btn-sm btn-ghost view-bracket" data-id="${t.id}">View Bracket</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        container.innerHTML = html;
 
         // Action listeners
         container.querySelectorAll('.join-tourney').forEach(btn => {

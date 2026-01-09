@@ -1586,6 +1586,87 @@ body.sidebar-minimized .hub-main .container {
     grid-column: 1 / -1;
 }
 
+/* Tournament Recommendations */
+.tournament-recommendations {
+    margin-bottom: var(--space-lg);
+    padding: var(--space-md);
+    background: linear-gradient(135deg, rgba(122, 162, 247, 0.08), rgba(224, 175, 104, 0.05));
+    border: 1px solid rgba(122, 162, 247, 0.2);
+    border-radius: var(--radius-md);
+}
+
+.recommendations-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.rec-icon {
+    font-size: 1rem;
+}
+
+.rec-title {
+    color: var(--primary);
+}
+
+.recommendations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-md);
+}
+
+.recommendation-card {
+    background: var(--bg-panel);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    transition: all 0.2s;
+}
+
+.recommendation-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.rec-game {
+    font-size: 0.75rem;
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.rec-name {
+    font-size: 0.95rem;
+    color: var(--text-bright);
+    font-weight: 600;
+}
+
+.rec-reason {
+    font-size: 0.75rem;
+    color: var(--success);
+    font-style: italic;
+}
+
+.rec-joined {
+    font-size: 0.75rem;
+    color: var(--success);
+    font-weight: 600;
+}
+
+.tournament-list-header {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: var(--space-md);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 /* Modals */
 .modal-content {
     background: var(--bg-panel);
