@@ -1966,20 +1966,99 @@ class SnakeGame extends GameEngine {
 
     drawGrid() {
         const ctx = this.ctx;
-        ctx.strokeStyle = this.theme.grid;
+        
+        // Cyber background gradient
+        const gradient = ctx.createRadialGradient(
+            this.canvas.width / 2, this.canvas.height / 2, 0,
+            this.canvas.width / 2, this.canvas.height / 2, this.canvas.width
+        );
+        gradient.addColorStop(0, '#1a1b2e'); // Deep blue-black center
+        gradient.addColorStop(1, '#050510'); // Dark outer edge
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Grid Lines
+        ctx.strokeStyle = 'rgba(0, 255, 136, 0.08)'; // Very subtle green
         ctx.lineWidth = 1;
 
+        // Draw vertical lines
         for (let i = 0; i <= this.gridSize; i++) {
             const pos = i * this.cellSize;
             ctx.beginPath();
             ctx.moveTo(pos, 0);
             ctx.lineTo(pos, this.canvas.height);
             ctx.stroke();
+        }
+
+        // Draw horizontal lines
+        for (let i = 0; i <= this.gridSize; i++) {
+            const pos = i * this.cellSize;
             ctx.beginPath();
             ctx.moveTo(0, pos);
             ctx.lineTo(this.canvas.width, pos);
             ctx.stroke();
         }
+        
+        // Add a "scanner line" effect periodically
+        const time = (this.elapsedTime || 0) * 0.5;
+        const scanY = (time % 1) * this.canvas.height;
+        ctx.strokeStyle = 'rgba(0, 255, 136, 0.2)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, scanY);
+        ctx.lineTo(this.canvas.width, scanY);
+        ctx.stroke();
+    }
+
+    renderMenuBackground() {
+        const ctx = this.ctx;
+        
+        // Reuse the cyber grid visual logic but animated
+        const time = Date.now() / 2000;
+        
+        // Background
+        const gradient = ctx.createRadialGradient(
+            this.canvas.width / 2, this.canvas.height / 2, 0,
+            this.canvas.width / 2, this.canvas.height / 2, this.canvas.width
+        );
+        gradient.addColorStop(0, '#141420'); 
+        gradient.addColorStop(1, '#000000'); 
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Animated Pulse Grid
+        const pulse = 0.05 + Math.sin(time) * 0.03;
+        ctx.strokeStyle = `rgba(0, 204, 255, ${pulse})`; // Cyan pulse
+        ctx.lineWidth = 1;
+
+        for (let i = 0; i <= this.gridSize; i++) {
+            const pos = i * this.cellSize;
+            
+            // Vertical with offset sine wave
+            ctx.beginPath();
+            ctx.moveTo(pos, 0);
+            ctx.lineTo(pos, this.canvas.height);
+            ctx.stroke();
+
+            // Horizontal
+            ctx.beginPath();
+            ctx.moveTo(0, pos);
+            ctx.lineTo(this.canvas.width, pos);
+            ctx.stroke();
+        }
+        
+        // Floating particles
+        this.ctx.globalAlpha = 0.3;
+        for(let i=0; i<20; i++) {
+             const px = (Math.sin(time + i) * 0.5 + 0.5) * this.canvas.width;
+             const py = (Math.cos(time * 0.5 + i * 2) * 0.5 + 0.5) * this.canvas.height;
+             ctx.fillStyle = i % 2 === 0 ? '#00ff88' : '#00ccff';
+             ctx.beginPath();
+             ctx.arc(px, py, 2, 0, Math.PI*2);
+             ctx.fill();
+        }
+        this.ctx.globalAlpha = 1;
     }
 
     drawObstacles() {
@@ -2008,160 +2087,179 @@ class SnakeGame extends GameEngine {
         const cellSize = this.cellSize;
         const time = this.elapsedTime || 0;
 
-        // Ghost effect
+        // Ghost effect for powerup
         if (this.activePowerUps.ghost) {
             ctx.globalAlpha = 0.6;
         }
-        
-        // Invincible glow effect
-        if (this.activePowerUps.invincible) {
-            ctx.shadowColor = '#ffd700';
-            ctx.shadowBlur = 20 + Math.sin(time * 10) * 10;
-        }
 
-        // Use physics system for smooth positions if enabled
+        // Use smooth positions if available
         const useSmooth = this.enableSmoothMovement && this.physics.visualPositions.length > 0;
 
-        this.snake.forEach((segment, index) => {
+        // Draw segments from tail to head
+        for (let i = this.snake.length - 1; i >= 0; i--) {
+            const segment = this.snake[i];
             let x, y;
-            
-            if (useSmooth && this.physics.visualPositions[index]) {
-                // Use smooth interpolated position
-                const vis = this.physics.visualPositions[index];
+
+            if (useSmooth && this.physics.visualPositions[i]) {
+                const vis = this.physics.visualPositions[i];
                 x = vis.x - cellSize / 2;
                 y = vis.y - cellSize / 2;
                 
-                // Add wiggle effect for body segments
-                if (index > 0) {
-                    const wiggle = this.physics.calculateWiggle(index, time, this.snake.length);
+                // Wiggle effect
+                if (i > 0) {
+                    const wiggle = this.physics.calculateWiggle(i, time, this.snake.length);
                     x += wiggle.x;
                     y += wiggle.y;
                 }
             } else {
-                // Fallback to grid position
                 x = segment.x * cellSize;
                 y = segment.y * cellSize;
             }
 
-            const t = index / this.snake.length;
-            ctx.fillStyle = this.theme.snake;
-            ctx.globalAlpha = this.activePowerUps.ghost ? 0.6 : (1 - t * 0.3);
-            
-            // Invincible rainbow effect
+            const isHead = (i === 0);
+            const isTail = (i === this.snake.length - 1);
+
+            // Base Color & Glow
+            let color = this.theme.snake;
+            let glowColor = this.theme.snake;
+            let shadowBlur = 10;
+
             if (this.activePowerUps.invincible) {
-                const hue = (time * 100 + index * 20) % 360;
-                ctx.fillStyle = `hsl(${hue}, 100%, 60%)`;
+                const hue = (time * 500 + i * 20) % 360;
+                color = `hsl(${hue}, 100%, 60%)`;
+                glowColor = `hsl(${hue}, 100%, 50%)`;
+                shadowBlur = 20;
             }
 
-            if (!this.activePowerUps.invincible) {
-                ctx.shadowColor = this.theme.snake;
-                ctx.shadowBlur = index === 0 ? 15 : 5;
+            // Head Styles
+            if (isHead) {
+                ctx.shadowColor = glowColor;
+                ctx.shadowBlur = shadowBlur + 5;
+                ctx.fillStyle = this.activePowerUps.invincible ? '#fff' : '#ffffff'; // White core for head
+                
+                // Draw Head (Slightly larger)
+                const headSize = cellSize * 0.9;
+                const offset = (cellSize - headSize) / 2;
+                this.roundRect(x + offset, y + offset, headSize, headSize, 6);
+                ctx.fill();
+
+                // Cyber Eyes
+                this.drawEyes(x + offset, y + offset, headSize);
+            } 
+            // Body Styles
+            else {
+                ctx.shadowColor = glowColor;
+                ctx.shadowBlur = isTail ? 5 : shadowBlur;
+                
+                // Segment size shrinks towards tail
+                const sizeRatio = 0.85 - (i / this.snake.length) * 0.2;
+                const segSize = cellSize * sizeRatio;
+                const offset = (cellSize - segSize) / 2;
+
+                // Inner core
+                ctx.fillStyle = color;
+                this.roundRect(x + offset, y + offset, segSize, segSize, 4);
+                ctx.fill();
+                
+                // Bright center dot for "tech" feel
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                const dotSize = segSize * 0.4;
+                const dotOffset = (segSize - dotSize) / 2;
+                ctx.fillRect(x + offset + dotOffset, y + offset + dotOffset, dotSize, dotSize);
             }
-
-            // Get stretch/squash for head
-            const stretch = this.physics.calculateStretchSquash(
-                index, 
-                this.direction, 
-                this.previousDirection, 
-                this.moveProgress
-            );
-
-            const padding = 2;
-            const radius = 4;
-            const width = (cellSize - padding * 2) * stretch.scaleX;
-            const height = (cellSize - padding * 2) * stretch.scaleY;
-            const offsetX = (cellSize - padding * 2 - width) / 2;
-            const offsetY = (cellSize - padding * 2 - height) / 2;
             
-            this.roundRect(x + padding + offsetX, y + padding + offsetY, width, height, radius);
-            ctx.fill();
-
-            if (index === 0) {
-                this.drawEyes(segment);
-            }
-
             ctx.shadowBlur = 0;
-        });
-
+        }
+        
         ctx.globalAlpha = 1;
     }
 
-    drawEyes(head) {
+    drawEyes(x, y, size) {
         const ctx = this.ctx;
-        const cellSize = this.cellSize;
-        const x = head.x * cellSize + cellSize / 2;
-        const y = head.y * cellSize + cellSize / 2;
+        const eyeSize = size * 0.25;
+        const offset = size * 0.15;
+        
+        let lx, ly, rx, ry; // Left/Right eye positions relative to x,y
 
-        const eyeOffset = 4;
-        const eyeSize = 3;
-
-        let leftEye, rightEye;
+        // Position eyes based on direction
         switch (this.direction) {
             case 'UP':
-                leftEye = { x: x - eyeOffset, y: y - eyeOffset };
-                rightEye = { x: x + eyeOffset, y: y - eyeOffset };
+                lx = x + offset; ly = y + offset;
+                rx = x + size - offset - eyeSize; ry = y + offset;
                 break;
             case 'DOWN':
-                leftEye = { x: x - eyeOffset, y: y + eyeOffset };
-                rightEye = { x: x + eyeOffset, y: y + eyeOffset };
+                lx = x + offset; ly = y + size - offset - eyeSize;
+                rx = x + size - offset - eyeSize; ry = y + size - offset - eyeSize;
                 break;
             case 'LEFT':
-                leftEye = { x: x - eyeOffset, y: y - eyeOffset };
-                rightEye = { x: x - eyeOffset, y: y + eyeOffset };
+                lx = x + offset; ly = y + offset;
+                rx = x + offset; ry = y + size - offset - eyeSize;
                 break;
-            default:
-                leftEye = { x: x + eyeOffset, y: y - eyeOffset };
-                rightEye = { x: x + eyeOffset, y: y + eyeOffset };
+            case 'RIGHT':
+                lx = x + size - offset - eyeSize; ly = y + offset;
+                rx = x + size - offset - eyeSize; ry = y + size - offset - eyeSize;
+                break;
+            default: // Default right
+                lx = x + size - offset - eyeSize; ly = y + offset;
+                rx = x + size - offset - eyeSize; ry = y + size - offset - eyeSize;
         }
 
-        ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        ctx.arc(leftEye.x, leftEye.y, eyeSize, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(rightEye.x, rightEye.y, eyeSize, 0, Math.PI * 2);
-        ctx.fill();
-
         ctx.fillStyle = '#000';
-        ctx.beginPath();
-        ctx.arc(leftEye.x, leftEye.y, eyeSize / 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(rightEye.x, rightEye.y, eyeSize / 2, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.fillRect(lx, ly, eyeSize, eyeSize);
+        ctx.fillRect(rx, ry, eyeSize, eyeSize);
     }
 
     drawFood() {
         const ctx = this.ctx;
         const cellSize = this.cellSize;
-        const x = this.food.x * cellSize + cellSize / 2;
-        const y = this.food.y * cellSize + cellSize / 2;
-        const radius = cellSize / 2 - 3;
+        const time = this.elapsedTime || 0;
         
-        // Use physics system for bouncing animation
-        let drawX = x;
-        let drawY = y;
-        if (this.foodVisualPos) {
-            drawX = this.foodVisualPos.x;
-            drawY = this.foodVisualPos.y;
-        }
+        // Determine position
+        const x = (this.foodVisualPos ? this.foodVisualPos.x : this.food.x * cellSize + cellSize / 2);
+        const y = (this.foodVisualPos ? this.foodVisualPos.y : this.food.y * cellSize + cellSize / 2);
+        
+        const baseRadius = cellSize * 0.35;
+        
+        // Pulsing Rings
+        const pulse1 = (Math.sin(time * 8) * 0.5 + 0.5); // 0 to 1
+        const pulse2 = (Math.sin(time * 8 + Math.PI) * 0.5 + 0.5);
 
-        const pulse = 1 + Math.sin((this.elapsedTime || 0) * 5) * 0.1;
-        const pulseRadius = radius * pulse;
-
-        ctx.shadowColor = this.foodType.color;
-        ctx.shadowBlur = 15;
-        ctx.fillStyle = this.foodType.color;
+        // Ring 1
+        ctx.strokeStyle = this.foodType.color;
+        ctx.globalAlpha = 1 - pulse1;
+        ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(drawX, drawY, pulseRadius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
+        ctx.arc(x, y, baseRadius + pulse1 * 10, 0, Math.PI * 2);
+        ctx.stroke();
 
-        // Icon rendering removed to avoid SVG text leakage
-        // ctx.font = `${cellSize * 0.6}px Arial`;
-        // ctx.textAlign = 'center';
-        // ctx.textBaseline = 'middle';
-        // ctx.fillText(this.foodType.icon, drawX, drawY);
+        // Ring 2
+        ctx.globalAlpha = 1 - pulse2;
+        ctx.beginPath();
+        ctx.arc(x, y, baseRadius + pulse2 * 10, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        ctx.globalAlpha = 1;
+
+        // Core Glowing Food
+        ctx.shadowColor = this.foodType.color;
+        ctx.shadowBlur = 20;
+        ctx.fillStyle = this.foodType.color;
+        
+        // Draw Diamond shape for "Cyber" feel instead of circle
+        ctx.beginPath();
+        ctx.moveTo(x, y - baseRadius);
+        ctx.lineTo(x + baseRadius, y);
+        ctx.lineTo(x, y + baseRadius);
+        ctx.lineTo(x - baseRadius, y);
+        ctx.closePath();
+        ctx.fill();
+
+        // Inner white shine
+        ctx.fillStyle = '#fff';
+        ctx.shadowBlur = 0;
+        ctx.beginPath();
+        ctx.arc(x - 2, y - 2, baseRadius * 0.3, 0, Math.PI * 2);
+        ctx.fill();
     }
 
     drawCombo() {
@@ -2193,15 +2291,17 @@ class SnakeGame extends GameEngine {
 
     spawnParticles(x, y, color, count = 8) {
         for (let i = 0; i < count; i++) {
-            const angle = (Math.PI * 2 / count) * i;
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 50 + Math.random() * 100;
+            const size = 2 + Math.random() * 3;
             this.particles.push({
                 x, y,
-                vx: Math.cos(angle) * 100,
-                vy: Math.sin(angle) * 100,
-                life: 0.5,
-                maxLife: 0.5,
-                size: 4,
-                color
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                life: 0.5 + Math.random() * 0.3,
+                maxLife: 0.8,
+                size: size,
+                color: color
             });
         }
     }
@@ -2209,7 +2309,23 @@ class SnakeGame extends GameEngine {
     spawnEatParticles() {
         const x = this.food.x * this.cellSize + this.cellSize / 2;
         const y = this.food.y * this.cellSize + this.cellSize / 2;
-        this.spawnParticles(x, y, this.foodType.color, 8);
+        
+        // Burst effect
+        this.spawnParticles(x, y, this.foodType.color, 15);
+        
+        // Ring ripple effect (simulated by particles moving outward)
+        for (let i = 0; i < 8; i++) {
+            const angle = (Math.PI * 2 / 8) * i;
+            this.particles.push({
+                x, y,
+                vx: Math.cos(angle) * 150,
+                vy: Math.sin(angle) * 150,
+                life: 0.4,
+                maxLife: 0.4,
+                size: 2,
+                color: '#ffffff'
+            });
+        }
     }
 
     spawnDeathParticles() {
@@ -2217,17 +2333,19 @@ class SnakeGame extends GameEngine {
         const x = head.x * this.cellSize + this.cellSize / 2;
         const y = head.y * this.cellSize + this.cellSize / 2;
 
-        for (let i = 0; i < 20; i++) {
+        // Massive explosion for death
+        for (let i = 0; i < 40; i++) {
             const angle = Math.random() * Math.PI * 2;
-            const speed = 50 + Math.random() * 100;
+            const speed = 50 + Math.random() * 200;
+            const size = 2 + Math.random() * 6;
             this.particles.push({
                 x, y,
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
-                life: 0.8,
-                maxLife: 0.8,
-                size: 6,
-                color: this.theme.snake
+                life: 0.5 + Math.random() * 1.0,
+                maxLife: 1.5,
+                size: size,
+                color: Math.random() > 0.5 ? this.theme.snake : '#ffffff'
             });
         }
     }
