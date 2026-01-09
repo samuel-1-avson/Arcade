@@ -164,6 +164,7 @@ export class UIManager {
     renderMapGrid() {
         const grid = document.getElementById('map-grid');
         const select = document.getElementById('map-select');
+        const levelEl = document.getElementById('level-display-text');
         if (!grid || !select) return;
 
         grid.innerHTML = '';
@@ -540,6 +541,7 @@ export class UIManager {
                 padding: 30px 40px;
                 max-width: 500px;
                 text-align: center;
+                color: #fff;
             }
             
             .tutorial-highlight {
@@ -1034,6 +1036,12 @@ export class UIManager {
     equipSkin(skinId) {
         this.saveCurrentSkin(skinId);
         this.renderSkinsGrid();
+    }
+    
+    // Level display update handled by specific element now
+    updateLevelDisplay(value) {
+        const levelText = document.getElementById('level-display-text');
+        if (levelText) levelText.textContent = value;
     }
     
     closeSkinsPanel() {

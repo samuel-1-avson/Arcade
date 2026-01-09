@@ -80,6 +80,15 @@
 
             <!-- Right Sidebar - Power-ups & Tips -->
             <aside class="pac-sidebar pac-sidebar-right">
+                <div class="pac-stat-card daily-panel" id="daily-challenge-panel" style="margin-bottom: 20px;">
+                    <div class="pac-stat-label" style="color:var(--pac-yellow)">DAILY CHALLENGE</div>
+                    <div class="daily-info" style="text-align: center; margin: 10px 0;">
+                        <div class="daily-target" style="font-size: 0.8rem;">Target: <span id="daily-target-score">20,000</span></div>
+                        <div class="daily-status" id="daily-status" style="font-size: 0.7rem; color: #aaa; margin-top: 5px;">NOT COMPLETED</div>
+                    </div>
+                    <button id="daily-start-btn" style="width: 100%; background: none; border: 1px solid var(--neon-cyan); color: #fff; padding: 5px; cursor: pointer;">PLAY DAILY</button>
+                </div>
+
                 <div class="pac-info-section">
                     <h3>Power-ups</h3>
                     <div class="pac-powerup-list" id="ui-powerup-list">

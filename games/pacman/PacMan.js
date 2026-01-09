@@ -3,6 +3,8 @@ import { inputManager } from '../../js/engine/InputManager.js';
 import { storageManager } from '../../js/engine/StorageManager.js';
 import { ICONS } from './Icons.js';
 
+import { dailyChallengeSystem } from '../../js/engine/DailyChallengeSystem.js';
+
 // Import enhancement systems
 import { GAME_MODES, GameModeManager } from './GameModes.js';
 import { MAPS, MapManager, TILE, MAZE_COLS, MAZE_ROWS } from './MapSystem.js';
@@ -11,6 +13,8 @@ import { ACHIEVEMENTS, AchievementSystem } from './AchievementSystem.js';
 import { STORY_CHAPTERS, StoryModeManager } from './StoryMode.js';
 import { EffectsSystem } from './EffectsSystem.js';
 import { PacManMultiplayer } from './MultiplayerSystem.js';
+
+
 
 // Grid configuration
 const CELL_SIZE = 30;
@@ -110,7 +114,12 @@ export class PacManEnhanced extends GameEngine {
         this.showingMainMenu = true;
         this.notifications = [];
 
+        // Daily Challenge State
+        this.dailyChallengeActive = false;
+        this.dailyTarget = 20000;
+
         this.setupUI();
+        this.loadDailyStatus();
         this.showMainMenu();
     }
 
@@ -147,6 +156,31 @@ export class PacManEnhanced extends GameEngine {
         }
     }
 
+    loadDailyStatus() {
+        const status = dailyChallengeSystem.getStatus('pacman');
+        const statusEl = document.getElementById('daily-status');
+        const startBtn = document.getElementById('daily-start-btn');
+        
+        if (statusEl && startBtn) {
+            if (status.completed) {
+                statusEl.textContent = 'COMPLETED ✅';
+                statusEl.style.color = '#ffff00';
+                startBtn.textContent = 'PLAY AGAIN';
+            } else {
+                statusEl.textContent = 'NOT COMPLETED';
+                statusEl.style.color = '#aaa';
+                startBtn.textContent = 'PLAY DAILY';
+            }
+        }
+    }
+
+    startDailyChallenge() {
+        console.log('[Game] Starting Daily Challenge');
+        this.dailyChallengeActive = true;
+        this.dailyTarget = 20000;
+        this.selectMode('classic'); // Use classic mode rules
+    }
+
     setupUI() {
         // Inject Icons
         const backBtn = document.getElementById('pac-back-btn');
@@ -171,6 +205,7 @@ export class PacManEnhanced extends GameEngine {
         document.getElementById('restart-btn')?.addEventListener('click', () => { this.reset(); this.start(); });
         document.getElementById('pause-btn')?.addEventListener('click', () => this.togglePause());
         document.getElementById('menu-btn')?.addEventListener('click', () => this.showMainMenu());
+        document.getElementById('daily-start-btn')?.addEventListener('click', () => this.startDailyChallenge());
 
         this.setupTouchControls();
         document.addEventListener('keydown', (e) => {
@@ -1015,6 +1050,20 @@ export class PacManEnhanced extends GameEngine {
             ctx.fillText(n.text.toUpperCase(), centerX, y);
             ctx.restore();
         });
+    }
+    showNotification(text) {
+        this.notifications.push({ text, life: 3.0 });
+    }
+
+    onGameOver(isWin, isNewHighScore) {
+        if (this.dailyChallengeActive) {
+            dailyChallengeSystem.submitResult('pacman', this.score, this.dailyTarget);
+            this.loadDailyStatus();
+            if (this.score >= this.dailyTarget) {
+                 this.showNotification('DAILY CHALLENGE COMPLETE!');
+            }
+            this.dailyChallengeActive = false;
+        }
     }
 }
 

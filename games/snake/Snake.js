@@ -626,10 +626,10 @@ class SnakeGame extends GameEngine {
     setupModeUI() {
         const livesEl = document.getElementById('lives-display');
         const timerEl = document.getElementById('timer-display');
-        const levelEl = document.getElementById('level-display');
+        const levelEl = document.querySelector('.hud-left');
         
         if (livesEl) livesEl.classList.toggle('hidden', this.gameMode !== GameMode.CLASSIC);
-        if (timerEl) timerEl.classList.toggle('hidden', this.gameMode !== GameMode.TIME_ATTACK);
+        if (timerEl) timerEl.parentElement.classList.toggle('hidden', this.gameMode !== GameMode.TIME_ATTACK);
         if (levelEl) levelEl.classList.toggle('hidden', this.gameMode === GameMode.ENDLESS);
 
         this.updateModeUI();
@@ -651,7 +651,7 @@ class SnakeGame extends GameEngine {
         if (timerValue) timerValue.textContent = Math.ceil(this.timeRemaining);
         
         // Level name
-        const levelName = document.querySelector('.level-name');
+        const levelName = document.getElementById('level-display-text');
         if (levelName) {
             if (this.gameMode === GameMode.PUZZLE && this.customLevelConfig) {
                  levelName.textContent = `Puz ${this.customLevelConfig.id}: ${this.customLevelConfig.name} (${this.customLevelConfig.desc})`;
@@ -661,7 +661,7 @@ class SnakeGame extends GameEngine {
         }
         
         // Level progress
-        const progressBar = document.querySelector('.level-progress-fill');
+        const progressBar = document.getElementById('level-progress-bar');
         if (progressBar) {
             let progress = 0;
             if (this.gameMode === GameMode.PUZZLE && this.customLevelConfig) {
@@ -679,7 +679,7 @@ class SnakeGame extends GameEngine {
     }
 
     updatePowerUpDisplay() {
-        const container = document.getElementById('powerup-display');
+        const container = document.getElementById('powerup-active-bar');
         if (!container) return;
         
         container.innerHTML = '';

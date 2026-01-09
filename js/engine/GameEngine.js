@@ -6,6 +6,9 @@ import { eventBus, GameEvents } from './EventBus.js';
 import { inputManager } from './InputManager.js';
 import { audioManager } from './AudioManager.js';
 import { storageManager } from './StorageManager.js';
+import { ParticleSystem } from './ParticleSystem.js';
+import { ScreenShake } from './ScreenShake.js';
+import { ComboSystem } from './ComboSystem.js';
 
 /**
  * Game state enumeration
@@ -40,72 +43,46 @@ class GameEngine {
             ...config
         };
 
-        if (!config.canvasId) {
+        if (!this.config.canvasId) {
             throw new Error('GameEngine requires a canvasId');
         }
-        if (!config.gameId) {
+        if (!this.config.gameId) {
             throw new Error('GameEngine requires a gameId');
         }
 
-        this.gameId = config.gameId;
-        this.canvas = document.getElementById(config.canvasId);
-        
+        // Core systems
+        this.canvas = document.getElementById(this.config.canvasId);
         if (!this.canvas) {
-            throw new Error(`Canvas element not found: ${config.canvasId}`);
+            throw new Error(`Canvas with ID "${this.config.canvasId}" not found`);
         }
+        this.ctx = this.canvas.getContext('2d', { alpha: false });
+        
+        // AAA Systems
+        this.particles = new ParticleSystem();
+        this.screenShake = new ScreenShake();
+        this.combo = new ComboSystem();
 
-        this.canvas.width = this.config.width;
-        this.canvas.height = this.config.height;
-
-        // Initialize context based on type
-        if (this.config.contextType === '2d') {
-            this.ctx = this.canvas.getContext('2d');
-            // Pixel perfect rendering
-            if (this.config.pixelPerfect) {
-                this.ctx.imageSmoothingEnabled = false;
-            }
-        } else if (this.config.contextType === 'webgl' || this.config.contextType === '3d') {
-            // Let the renderer (Three.js) handle context creation
-            this.ctx = null;
-        } else {
-             // Default to 2d for backward compatibility if not specified, 
-             // but if explicitly 'none', do nothing.
-             if (this.config.contextType !== 'none') {
-                 this.ctx = this.canvas.getContext('2d');
-                 if (this.config.pixelPerfect) this.ctx.imageSmoothingEnabled = false;
-             }
-        }
-
-        // Game state
-        this.state = GameState.MENU;
-        this.score = 0;
-        this.level = 1;
-        this.highScore = storageManager.getHighScore(this.gameId);
-
-        // Timing
+        // State management
+        this.state = GameState.LOADING;
         this.lastTime = 0;
-        this.deltaTime = 0;
-        this.elapsedTime = 0;
-        this.animationId = null;
-        this.frameTime = 1000 / this.config.targetFPS;
+        this.score = 0;
+        this.highScore = 0;
+        this.level = 1;
 
-        // Session tracking
-        this.sessionStartTime = null;
-
-        // Bind methods
-        this._gameLoop = this._gameLoop.bind(this);
-        this._onVisibilityChange = this._onVisibilityChange.bind(this);
-        this._onKeyDown = this._onKeyDown.bind(this);
+        // Loop management
+        this.animationFrameId = null;
+        this.isRunning = false;
+        
+        // Initialize
+        this._setupCanvas();
+        this._bindEvents();
+        this._loadHighScore();
 
         // Initialize managers
         inputManager.init(this.canvas);
 
-        // Setup event listeners
-        document.addEventListener('visibilitychange', this._onVisibilityChange);
-        document.addEventListener('keydown', this._onKeyDown);
-
         // Emit init event
-        eventBus.emit(GameEvents.GAME_INIT, { gameId: this.gameId });
+        eventBus.emit(GameEvents.GAME_INIT, { gameId: this.config.gameId });
     }
 
     // ============ LIFECYCLE METHODS ============
@@ -114,18 +91,17 @@ class GameEngine {
      * Start the game
      */
     start() {
-        if (this.state === GameState.PLAYING) return;
-
-        this.state = GameState.PLAYING;
+        if (this.isRunning) return;
+        
+        this.isRunning = true;
         this.lastTime = performance.now();
-        this.sessionStartTime = Date.now();
-
-        storageManager.incrementGamesPlayed();
-
-        eventBus.emit(GameEvents.GAME_START, { gameId: this.gameId });
+        this.state = GameState.PLAYING;
+        
+        // Start loop
+        this.animationFrameId = requestAnimationFrame(this._gameLoop.bind(this));
+        
         this.onStart();
-
-        this.animationId = requestAnimationFrame(this._gameLoop);
+        eventBus.emit(GameEvents.GAME_START, { gameId: this.config.gameId });
     }
 
     /**
@@ -133,16 +109,9 @@ class GameEngine {
      */
     pause() {
         if (this.state !== GameState.PLAYING) return;
-
         this.state = GameState.PAUSED;
-        cancelAnimationFrame(this.animationId);
-        this.animationId = null;
-
-        audioManager.pauseMusic();
-        eventBus.emit(GameEvents.GAME_PAUSE, { gameId: this.gameId });
         this.onPause();
-
-        this._showOverlay('paused');
+        eventBus.emit(GameEvents.GAME_PAUSE, { gameId: this.config.gameId });
     }
 
     /**
@@ -150,16 +119,10 @@ class GameEngine {
      */
     resume() {
         if (this.state !== GameState.PAUSED) return;
-
         this.state = GameState.PLAYING;
-        this.lastTime = performance.now();
-
-        audioManager.resumeMusic();
-        eventBus.emit(GameEvents.GAME_RESUME, { gameId: this.gameId });
+        this.lastTime = performance.now(); // Reset time to prevent huge delta
         this.onResume();
-
-        this._hideOverlay();
-        this.animationId = requestAnimationFrame(this._gameLoop);
+        eventBus.emit(GameEvents.GAME_RESUME, { gameId: this.config.gameId });
     }
 
     /**
@@ -181,50 +144,28 @@ class GameEngine {
         if (this.state === GameState.GAME_OVER) return;
 
         this.state = GameState.GAME_OVER;
-        cancelAnimationFrame(this.animationId);
-        this.animationId = null;
-
-        // Track play time
-        const playTime = this.sessionStartTime 
-            ? Math.floor((Date.now() - this.sessionStartTime) / 1000) 
-            : 0;
-        if (playTime > 0) {
-            storageManager.addPlayTime(playTime);
+        this.isRunning = false;
+        
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
         }
 
         // Check for new high score (local storage)
-        const isNewHighScore = storageManager.setHighScore(this.gameId, this.score);
+        const isNewHighScore = this.score > this.highScore;
         if (isNewHighScore) {
             this.highScore = this.score;
-            // Emit high score update event for Hub
-            eventBus.emit(GameEvents.HIGHSCORE_UPDATE, {
-                gameId: this.gameId,
-                score: this.score
-            });
+            storageManager.saveHighScore(this.config.gameId, this.highScore);
         }
-
-        // Award XP based on score
-        const xpGained = Math.floor(this.score / 10) + 5;
-        storageManager.addXP(xpGained);
-
-        // Submit score to Hub via HubSDK (for iframe-embedded games)
-        // This sends a postMessage to the parent Hub which processes it
-        if (window.HubSDK && window.HubSDK.submitScore) {
-            window.HubSDK.submitScore(this.score);
-            console.log(`[GameEngine] Score submitted to Hub: ${this.score}`);
-        } else if (window.parent && window.parent !== window) {
-            // Fallback: send postMessage directly if HubSDK not available
-            window.parent.postMessage({
-                type: 'SUBMIT_SCORE',
-                payload: {
-                    gameId: this.gameId,
-                    score: this.score,
-                    duration: playTime,
-                    completed: isWin
-                }
-            }, '*');
-            console.log(`[GameEngine] Score submitted via postMessage: ${this.score}`);
-        }
+        
+        // Submit score to backend via EventBus (which uses FirebaseService/HubSDK)
+        eventBus.emit(GameEvents.SCORE_SUBMIT, {
+            gameId: this.config.gameId,
+            score: this.score,
+            metadata: {
+                level: this.level,
+                isWin
+            }
+        });
 
         eventBus.emit(GameEvents.GAME_OVER, {
             gameId: this.gameId,

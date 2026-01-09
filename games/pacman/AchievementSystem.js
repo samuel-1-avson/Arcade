@@ -13,7 +13,7 @@ export const ACHIEVEMENTS = {
         category: 'progression',
         points: 10,
         secret: false,
-        check: (stats) => stats.dotsEaten >= 1
+        condition: (stats) => stats.dotsEaten >= 1
     },
     LEVEL_COMPLETE: {
         id: 'level_complete',
@@ -23,7 +23,7 @@ export const ACHIEVEMENTS = {
         category: 'progression',
         points: 25,
         secret: false,
-        check: (stats) => stats.levelsCompleted >= 1
+        condition: (stats) => stats.levelsCompleted >= 1
     },
     LEVEL_5: {
         id: 'level_5',
@@ -33,7 +33,7 @@ export const ACHIEVEMENTS = {
         category: 'progression',
         points: 50,
         secret: false,
-        check: (stats) => stats.levelsCompleted >= 5
+        condition: (stats) => stats.levelsCompleted >= 5
     },
     LEVEL_10: {
         id: 'level_10',
@@ -43,7 +43,7 @@ export const ACHIEVEMENTS = {
         category: 'progression',
         points: 100,
         secret: false,
-        check: (stats) => stats.levelsCompleted >= 10
+        condition: (stats) => stats.levelsCompleted >= 10
     },
     STORY_CHAMPION: {
         id: 'story_champion',
@@ -53,7 +53,7 @@ export const ACHIEVEMENTS = {
         category: 'progression',
         points: 500,
         secret: false,
-        check: (stats) => stats.storyChaptersCompleted >= 5
+        condition: (stats) => stats.storyChaptersCompleted >= 5
     },
 
     // Score Achievements
@@ -65,7 +65,7 @@ export const ACHIEVEMENTS = {
         category: 'score',
         points: 15,
         secret: false,
-        check: (stats) => stats.highScore >= 1000
+        condition: (stats) => stats.highScore >= 1000
     },
     SCORE_10K: {
         id: 'score_10k',
@@ -75,7 +75,7 @@ export const ACHIEVEMENTS = {
         category: 'score',
         points: 50,
         secret: false,
-        check: (stats) => stats.highScore >= 10000
+        condition: (stats) => stats.highScore >= 10000
     },
     SCORE_50K: {
         id: 'score_50k',
@@ -85,7 +85,7 @@ export const ACHIEVEMENTS = {
         category: 'score',
         points: 150,
         secret: false,
-        check: (stats) => stats.highScore >= 50000
+        condition: (stats) => stats.highScore >= 50000
     },
     SCORE_100K: {
         id: 'score_100k',
@@ -95,7 +95,7 @@ export const ACHIEVEMENTS = {
         category: 'score',
         points: 300,
         secret: false,
-        check: (stats) => stats.highScore >= 100000
+        condition: (stats) => stats.highScore >= 100000
     },
     MILLION_POINTS: {
         id: 'million_points',
@@ -105,7 +105,7 @@ export const ACHIEVEMENTS = {
         category: 'score',
         points: 1000,
         secret: true,
-        check: (stats) => stats.totalScore >= 1000000
+        condition: (stats) => stats.totalScore >= 1000000
     },
 
     // Ghost Hunting Achievements
@@ -117,7 +117,7 @@ export const ACHIEVEMENTS = {
         category: 'ghosts',
         points: 20,
         secret: false,
-        check: (stats) => stats.ghostsEaten >= 1
+        condition: (stats) => stats.ghostsEaten >= 1
     },
     GHOST_10: {
         id: 'ghost_10',
@@ -127,7 +127,7 @@ export const ACHIEVEMENTS = {
         category: 'ghosts',
         points: 40,
         secret: false,
-        check: (stats) => stats.ghostsEaten >= 10
+        condition: (stats) => stats.ghostsEaten >= 10
     },
     GHOST_50: {
         id: 'ghost_50',
@@ -137,7 +137,7 @@ export const ACHIEVEMENTS = {
         category: 'ghosts',
         points: 100,
         secret: false,
-        check: (stats) => stats.ghostsEaten >= 50
+        condition: (stats) => stats.ghostsEaten >= 50
     },
     COMBO_KING: {
         id: 'combo_king',
@@ -147,7 +147,7 @@ export const ACHIEVEMENTS = {
         category: 'ghosts',
         points: 75,
         secret: false,
-        check: (stats) => stats.maxGhostCombo >= 4
+        condition: (stats) => stats.maxGhostCombo >= 4
     },
     PERFECT_CHAIN: {
         id: 'perfect_chain',
@@ -157,7 +157,7 @@ export const ACHIEVEMENTS = {
         category: 'ghosts',
         points: 200,
         secret: false,
-        check: (stats) => stats.perfectChainsInLevel >= 3
+        condition: (stats) => stats.perfectChainsInLevel >= 3
     },
 
     // Speed Achievements
@@ -169,7 +169,7 @@ export const ACHIEVEMENTS = {
         category: 'speed',
         points: 100,
         secret: false,
-        check: (stats) => stats.fastestLevel <= 60
+        condition: (stats) => stats.fastestLevel <= 60
     },
     LIGHTNING_FAST: {
         id: 'lightning_fast',
@@ -179,7 +179,7 @@ export const ACHIEVEMENTS = {
         category: 'speed',
         points: 200,
         secret: false,
-        check: (stats) => stats.fastestLevel <= 45
+        condition: (stats) => stats.fastestLevel <= 45
     },
     TIME_MASTER: {
         id: 'time_master',
@@ -189,7 +189,7 @@ export const ACHIEVEMENTS = {
         category: 'speed',
         points: 150,
         secret: false,
-        check: (stats) => stats.speedRunCompleted
+        condition: (stats) => stats.speedRunCompleted
     },
 
     // Collection Achievements
@@ -201,7 +201,7 @@ export const ACHIEVEMENTS = {
         category: 'collection',
         points: 30,
         secret: false,
-        check: (stats) => stats.fruitsCollected >= 10
+        condition: (stats) => stats.fruitsCollected >= 10
     },
     FRUIT_FANATIC: {
         id: 'fruit_fanatic',
@@ -211,7 +211,7 @@ export const ACHIEVEMENTS = {
         category: 'collection',
         points: 100,
         secret: false,
-        check: (stats) => stats.uniqueFruits >= 8
+        condition: (stats) => stats.uniqueFruits >= 8
     },
     POWER_COLLECTOR: {
         id: 'power_collector',
@@ -221,7 +221,7 @@ export const ACHIEVEMENTS = {
         category: 'collection',
         points: 75,
         secret: false,
-        check: (stats) => stats.powerUpsUsed >= 25
+        condition: (stats) => stats.powerUpsUsed >= 25
     },
     MAP_EXPLORER: {
         id: 'map_explorer',
@@ -231,7 +231,7 @@ export const ACHIEVEMENTS = {
         category: 'collection',
         points: 150,
         secret: false,
-        check: (stats) => stats.mapsPlayed >= 10
+        condition: (stats) => stats.mapsPlayed >= 10
     },
 
     // Challenge Achievements
@@ -243,7 +243,7 @@ export const ACHIEVEMENTS = {
         category: 'challenge',
         points: 150,
         secret: false,
-        check: (stats) => stats.levelsWithoutDeath >= 3
+        condition: (stats) => stats.levelsWithoutDeath >= 3
     },
     PACIFIST: {
         id: 'pacifist',
@@ -253,7 +253,7 @@ export const ACHIEVEMENTS = {
         category: 'challenge',
         points: 100,
         secret: false,
-        check: (stats) => stats.pacifistLevels >= 1
+        condition: (stats) => stats.pacifistLevels >= 1
     },
     SURVIVOR_100: {
         id: 'survivor_100',
@@ -263,7 +263,7 @@ export const ACHIEVEMENTS = {
         category: 'challenge',
         points: 200,
         secret: false,
-        check: (stats) => stats.survivalBestTime >= 100
+        condition: (stats) => stats.survivalBestTime >= 100
     }
 };
 
@@ -334,7 +334,7 @@ export class AchievementSystem {
     checkAllAchievements() {
         Object.values(ACHIEVEMENTS).forEach(achievement => {
             if (!this.unlockedAchievements.includes(achievement.id)) {
-                if (achievement.check(this.stats)) {
+                if (achievement.condition(this.stats)) {
                     this.unlock(achievement);
                 }
             }
@@ -492,6 +492,8 @@ export class AchievementSystem {
         return {
             unlocked: this.unlockedAchievements.length,
             total: Object.keys(ACHIEVEMENTS).length,
+            points: this.getTotalPoints(),
+            maxPoints: Object.values(ACHIEVEMENTS).reduce((sum, a) => sum + a.points, 0),
             percentage: Math.round((this.unlockedAchievements.length / Object.keys(ACHIEVEMENTS).length) * 100)
         };
     }

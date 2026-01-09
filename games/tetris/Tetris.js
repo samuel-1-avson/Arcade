@@ -9,39 +9,13 @@ import { PowerUpSystem, PowerUpType } from './PowerUpSystem.js';
 import { EffectsSystem } from './EffectsSystem.js';
 import { StoryMode } from './StoryMode.js';
 import { TetrisMultiplayer } from './TetrisMultiplayer.js';
-import { ICONS } from './Icons.js';
+import { dailyChallengeSystem } from '../../js/engine/DailyChallengeSystem.js';
 
 // Grid dimensions
 const COLS = 10;
 const ROWS = 20;
-const CELL_SIZE = 30;
 
-// Tetromino definitions (shapes and colors)
-const TETROMINOES = {
-    I: { shape: [[0,0,0,0], [1,1,1,1], [0,0,0,0], [0,0,0,0]], color: '#00ffff' },
-    O: { shape: [[1,1], [1,1]], color: '#ffff00' },
-    T: { shape: [[0,1,0], [1,1,1], [0,0,0]], color: '#ff00ff' },
-    S: { shape: [[0,1,1], [1,1,0], [0,0,0]], color: '#00ff00' },
-    Z: { shape: [[1,1,0], [0,1,1], [0,0,0]], color: '#ff0000' },
-    J: { shape: [[1,0,0], [1,1,1], [0,0,0]], color: '#0088ff' },
-    L: { shape: [[0,0,1], [1,1,1], [0,0,0]], color: '#ff8800' }
-};
 
-// Wall kick data for SRS rotation
-const WALL_KICKS = {
-    normal: [
-        [[0,0], [-1,0], [-1,1], [0,-2], [-1,-2]],
-        [[0,0], [1,0], [1,-1], [0,2], [1,2]],
-        [[0,0], [1,0], [1,1], [0,-2], [1,-2]],
-        [[0,0], [-1,0], [-1,-1], [0,2], [-1,2]]
-    ],
-    I: [
-        [[0,0], [-2,0], [1,0], [-2,-1], [1,2]],
-        [[0,0], [-1,0], [2,0], [-1,2], [2,-1]],
-        [[0,0], [2,0], [-1,0], [2,1], [-1,-2]],
-        [[0,0], [1,0], [-2,0], [1,-2], [-2,1]]
-    ]
-};
 
 class Tetris extends GameEngine {
     constructor() {
@@ -107,8 +81,13 @@ class Tetris extends GameEngine {
             locked: '#333'
         };
 
+        // Daily Challenge State
+        this.dailyChallengeActive = false;
+        this.dailyTarget = 10000;
+
         this.bindEvents();
         this.setupUI();
+        this.loadDailyStatus();
         this.onReset();
     }
 
@@ -182,6 +161,32 @@ class Tetris extends GameEngine {
         this.onShuffleEffect = () => this.effects.addFlash('#00ff88', 0.1);
     }
 
+    loadDailyStatus() {
+        const status = dailyChallengeSystem.getStatus('tetris');
+        const statusEl = document.getElementById('daily-status');
+        const startBtn = document.getElementById('daily-start-btn');
+        
+        if (statusEl && startBtn) {
+            if (status.completed) {
+                statusEl.textContent = 'COMPLETED ✅';
+                statusEl.style.color = '#00ff00';
+                startBtn.textContent = 'PLAY AGAIN';
+            } else {
+                statusEl.textContent = 'NOT COMPLETED';
+                statusEl.style.color = '#888';
+                startBtn.textContent = 'PLAY DAILY';
+            }
+        }
+    }
+
+    startDailyChallenge() {
+        console.log('[Game] Starting Daily Challenge');
+        this.dailyChallengeActive = true;
+        this.dailyTarget = 10000;
+        this.setMode(GameModeType.MARATHON);
+        this.start();
+    }
+
     setupUI() {
         console.log('Setting up UI...');
         
@@ -231,6 +236,10 @@ class Tetris extends GameEngine {
 
         bind('story-btn', () => {
             this.showStoryMenu();
+        });
+
+        bind('daily-start-btn', () => {
+             this.startDailyChallenge();
         });
 
         // Multiplayer Controls
@@ -1262,9 +1271,22 @@ class Tetris extends GameEngine {
             }
         }
     }
+
+    onGameOver(isWin, isNewHighScore) {
+        if (this.dailyChallengeActive) {
+            dailyChallengeSystem.submitResult('tetris', this.score, this.dailyTarget);
+            this.loadDailyStatus();
+            
+            if (this.score >= this.dailyTarget) {
+                 this.effects.showMessage('DAILY CHALLENGE COMPLETE!', 
+                    this.canvas.width/2, this.canvas.height/2, 
+                    { color: '#00ff00', fontSize: 30, life: 4 });
+            }
+            this.dailyChallengeActive = false;
+        }
+    }
 }
 
-// Global initialization
 // Global initialization
 const init = () => {
     console.log('Initializing Tetris...');
