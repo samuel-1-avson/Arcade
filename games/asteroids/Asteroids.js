@@ -6,6 +6,7 @@ import { GameEngine, GameState } from '../../js/engine/GameEngine.js';
 import { inputManager } from '../../js/engine/InputManager.js';
 import { storageManager } from '../../js/engine/StorageManager.js';
 import { random, randomInt } from '../../js/utils/math.js';
+import GameBridge from '../../js/utils/GameBridge.js';
 
 // Import all systems
 import { AchievementSystem, ACHIEVEMENTS } from './AchievementSystem.js';
@@ -138,6 +139,12 @@ class Asteroids extends GameEngine {
         document.getElementById('start-btn')?.addEventListener('click', () => {
             this.reset();
             this.start();
+        });
+
+        // Back to hub button
+        document.getElementById('asteroids-back-btn')?.addEventListener('click', () => {
+            if (window.GameBridge) window.GameBridge.exitGame();
+            else window.location.href = '../../index.html';
         });
 
         document.getElementById('restart-btn')?.addEventListener('click', () => {
