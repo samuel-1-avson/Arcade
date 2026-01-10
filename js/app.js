@@ -1827,6 +1827,7 @@ class ArcadeHub {
         } else {
             // Main tournament list
             html += `<div class="tournament-list-header">All Open Tournaments</div>`;
+            html += `<div class="tournament-grid">`;
             html += tournaments.map(t => {
                 const isJoined = tournamentService.isParticipant(t.id);
                 const progress = (t.participants.length / t.size) * 100;
@@ -1861,6 +1862,7 @@ class ArcadeHub {
                     </div>
                 `;
             }).join('');
+            html += `</div>`;
         }
         
         container.innerHTML = html;
