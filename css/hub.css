@@ -1667,15 +1667,90 @@ body.sidebar-minimized .hub-main .container {
     letter-spacing: 0.5px;
 }
 
-/* Modals */
-.modal-content {
-    background: var(--bg-panel);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
-    color: var(--text-main);
+/* Game Selection Grid */
+.game-select-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: var(--space-sm);
+    margin-top: var(--space-xs);
 }
 
+.game-select-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-sm);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.game-select-option:hover {
+    background: rgba(255, 255, 255, 0.06);
+    transform: translateY(-2px);
+}
+
+.game-select-option.selected {
+    background: rgba(122, 162, 247, 0.15);
+    border-color: var(--primary);
+    box-shadow: 0 0 12px rgba(122, 162, 247, 0.2);
+}
+
+.game-select-icon-wrapper {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius-sm);
+    padding: 8px;
+}
+
+.game-select-icon-wrapper svg {
+    width: 100%;
+    height: 100%;
+    stroke: var(--text-muted);
+    transition: stroke 0.2s;
+}
+
+.game-select-option.selected .game-select-icon-wrapper svg {
+    stroke: var(--primary);
+}
+
+.game-select-title {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.game-select-option.selected .game-select-title {
+    color: var(--text-bright);
+    font-weight: 600;
+}
+
+/* Modal Title Icon */
+.modal-title-icon {
+    width: 24px;
+    height: 24px;
+    stroke: var(--warning);
+    margin-right: var(--space-xs);
+    vertical-align: text-bottom;
+}
+
+.modal-actions {
+    display: flex;
+    gap: var(--space-sm);
+    justify-content: flex-end;
+    margin-top: var(--space-lg);
+}
 .modal-content h2 {
     color: var(--text-bright);
     border-bottom: 1px solid rgba(255,255,255,0.1);

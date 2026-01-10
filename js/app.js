@@ -14,6 +14,7 @@ import { dailyChallengeService } from './services/DailyChallengeService.js';
 import { leaderboardService } from './services/LeaderboardService.js';
 import { tournamentService, TOURNAMENT_TYPES } from './services/TournamentService.js';
 import { tournamentRecommender } from './services/TournamentRecommender.js';
+import { GAME_ICONS } from './config/gameRegistry.js';
 import { economyService, SHOP_ITEMS } from './services/EconomyService.js';
 import { audioService } from './services/AudioService.js';
 import { backgroundService } from './services/BackgroundService.js';
@@ -1946,7 +1947,9 @@ class ArcadeHub {
 
         container.innerHTML = this.games.map(g => `
             <div class="game-select-option" data-id="${g.id}">
-                <div class="game-select-icon">${g.icon}</div>
+                <div class="game-select-icon-wrapper">
+                    ${GAME_ICONS[g.id] || GAME_ICONS.snake}
+                </div>
                 <div class="game-select-title">${g.title}</div>
             </div>
         `).join('');
