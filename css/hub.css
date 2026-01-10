@@ -1784,13 +1784,16 @@ body.sidebar-minimized .hub-main .container {
     flex-direction: column;
     padding: 0;
     overflow: hidden;
-    background: var(--bg-main); /* Ensure dark background */
+    background: #0f1115; /* Hardcoded dark bg to ensure no transparency issues */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
 }
 
 /* Header */
 .tournament-modal-view .modal-header {
-    padding: var(--space-lg) var(--space-xl);
-    background: rgba(255, 255, 255, 0.03);
+    height: 80px;
+    padding: 0 var(--space-xl);
+    background: rgba(20, 22, 28, 0.95);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
     align-items: center;
@@ -1808,12 +1811,15 @@ body.sidebar-minimized .hub-main .container {
     margin: 0;
     font-size: 1.5rem;
     font-family: var(--font-display);
+    color: var(--text-bright);
+    letter-spacing: 0.5px;
 }
 
 .modal-icon {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     stroke: var(--warning);
+    filter: drop-shadow(0 0 8px rgba(224, 175, 104, 0.3));
 }
 
 /* Scrollable Content Area */
@@ -1824,14 +1830,17 @@ body.sidebar-minimized .hub-main .container {
     display: flex;
     flex-direction: column;
     gap: var(--space-2xl);
+    background: radial-gradient(circle at top right, rgba(20, 30, 50, 0.2), transparent 40%);
 }
 
 /* Recommendations Section */
 .tournament-recommendations {
-    background: linear-gradient(135deg, rgba(122, 162, 247, 0.1), rgba(224, 175, 104, 0.05));
-    border: 1px solid rgba(122, 162, 247, 0.2);
+    background: linear-gradient(135deg, rgba(122, 162, 247, 0.08), rgba(224, 175, 104, 0.04));
+    border: 1px solid rgba(122, 162, 247, 0.15);
     border-radius: var(--radius-lg);
     padding: var(--space-lg);
+    position: relative;
+    overflow: hidden;
 }
 
 .recommendations-header {
@@ -1839,43 +1848,60 @@ body.sidebar-minimized .hub-main .container {
     align-items: center;
     gap: var(--space-sm);
     margin-bottom: var(--space-lg);
+    font-weight: 600;
+    color: var(--primary-light);
+    font-size: 1.1rem;
 }
 
 /* Grid Layouts - WIDER */
 .recommendations-grid, .tournament-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: var(--space-lg);
 }
 
-/* Ensure empty state is centered */
+/* Better Empty State */
 .tournament-empty {
     margin: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
     padding: var(--space-2xl);
-    font-size: 1.2rem;
-    color: var(--text-muted);
     text-align: center;
-    background: rgba(255,255,255,0.02);
-    border: 1px dashed rgba(255,255,255,0.1);
-    border-radius: var(--radius-lg);
-    width: 100%;
-    grid-column: 1 / -1;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    min-height: 200px;
 }
 
-/* Close button positioning */
-.tournament-modal-view .gallery-close {
-    position: absolute;
-    top: var(--space-md);
-    right: 60px; /* Offset from create button or adjust if needed */
-    display: none; /* Hide standard close button, use header close if needed or reliance on backdrop click */
+.tournament-empty::before {
+    content: '';
+    display: block;
+    width: 64px;
+    height: 64px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23565f89' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9H4.5a2.5 2.5 0 0 1 0-5H6'/%3E%3Cpath d='M18 9h1.5a2.5 2.5 0 0 0 0-5H18'/%3E%3Cpath d='M4 22h16'/%3E%3Cpath d='M18 2H6v7a6 6 0 0 0 12 0V2Z'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+    opacity: 0.5;
+    margin-bottom: var(--space-sm);
 }
 
-/* Add an explicit close X in header if desired, or keep button at bottom footer? 
-   The HTML has close button at bottom. Let's make it a footer.
-*/
+/* Footer Close Button */
 .tournament-modal-view .gallery-close {
     display: block;
-    width: auto;
-    margin: var(--space-md) auto;
-    position: static;
+    width: 100%;
+    margin: 0;
+    padding: var(--space-md);
+    background: rgba(20, 22, 28, 0.95);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.tournament-modal-view .gallery-close:hover {
+    background: rgba(30, 32, 40, 0.95);
+    color: var(--text-bright);
 }
