@@ -40,7 +40,7 @@ import { chatService } from './services/ChatService.js';
 import { zenModeService } from './services/ZenModeService.js';
 
 // Import centralized game registry
-import { GAME_ICONS } from './config/gameRegistry.js';
+// Import centralized game registry
 
 // Game catalog
 const GAMES = [
