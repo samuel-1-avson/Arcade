@@ -10,10 +10,22 @@ import { EffectsSystem } from './EffectsSystem.js';
 import { StoryMode } from './StoryMode.js';
 import { TetrisMultiplayer } from './TetrisMultiplayer.js';
 import { dailyChallengeSystem } from '../../js/engine/DailyChallengeSystem.js';
+import { ICONS } from './Icons.js';
 
 // Grid dimensions
 const COLS = 10;
 const ROWS = 20;
+const CELL_SIZE = 30;
+
+const TETROMINOES = {
+    I: { shape: [[0,0,0,0], [1,1,1,1], [0,0,0,0], [0,0,0,0]], color: '#00f0f0' },
+    J: { shape: [[1,0,0], [1,1,1], [0,0,0]], color: '#0000f0' },
+    L: { shape: [[0,0,1], [1,1,1], [0,0,0]], color: '#f0a000' },
+    O: { shape: [[1,1], [1,1]], color: '#f0f000' },
+    S: { shape: [[0,1,1], [1,1,0], [0,0,0]], color: '#00f000' },
+    T: { shape: [[0,1,0], [1,1,1], [0,0,0]], color: '#a000f0' },
+    Z: { shape: [[1,1,0], [0,1,1], [0,0,0]], color: '#f00000' }
+};
 
 
 
