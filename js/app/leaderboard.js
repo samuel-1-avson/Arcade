@@ -5,7 +5,6 @@
 
 import { LeaderboardList } from '../components/LeaderboardList.js';
 import { leaderboardService } from '../services/LeaderboardService.js';
-import { GAMES } from '../config/gameRegistry.js';
 
 export class LeaderboardManager {
     constructor(app) {
@@ -31,8 +30,8 @@ export class LeaderboardManager {
     setupTabs() {
         if (!this.tabsContainer) return;
         
-        // Add game tabs dynamically
-        const games = this.app?.games || GAMES || [];
+        // Add game tabs dynamically from app games
+        const games = this.app?.games || [];
         games.forEach(game => {
             const tab = document.createElement('button');
             tab.className = 'leaderboard-tab';
