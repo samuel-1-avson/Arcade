@@ -1,46 +1,67 @@
 /**
  * Firebase Configuration
- * This file is generated from environment variables or falls back to defaults
  * 
- * For production, set environment variables or create a .env file
- * For development, you can use this file directly with default values
+ * SECURITY WARNING: 
+ * Do NOT commit actual Firebase credentials to version control.
+ * Copy .env.example to .env.local and fill in your values.
+ * .env.local is in .gitignore and will not be committed.
  * 
- * SECURITY NOTE: In a production environment, API keys should be loaded
- * from environment variables and not committed to source control.
+ * For production deployments, set environment variables in your
+ * hosting platform (Vercel, Netlify, etc.)
  */
 
-// Check if we're in a module context that supports import.meta
-const isModule = typeof import.meta !== 'undefined';
+import { config, isConfigValid, isDevelopment } from './env.js';
 
-// Firebase configuration
-// In production, these would come from environment variables
-// For now, we keep the existing values but structure them properly
-export const firebaseConfig = {
-    apiKey: "AIzaSyCumtfvMCnSRXMHtOghgLv87PdvmwD3yjA",
-    authDomain: "arcade-7f03c.firebaseapp.com",
-    projectId: "arcade-7f03c",
-    storageBucket: "arcade-7f03c.firebasestorage.app",
-    messagingSenderId: "883884342768",
-    appId: "1:883884342768:web:8c6a43c1c3c01790d2f135",
-    measurementId: "G-NCQBGH5RR3",
-    databaseURL: "https://arcade-7f03c-default-rtdb.firebaseio.com"
-};
+// Firebase configuration from environment
+export const firebaseConfig = config.firebase;
+
+// Validate configuration
+if (!isConfigValid) {
+  console.error(`
+╔════════════════════════════════════════════════════════════════╗
+║                    CONFIGURATION ERROR                         ║
+╠════════════════════════════════════════════════════════════════╣
+║  Firebase configuration is missing or incomplete!              ║
+║                                                                ║
+║  To fix this:                                                  ║
+║  1. Copy .env.example to .env.local                            ║
+║  2. Fill in your Firebase credentials from:                    ║
+║     https://console.firebase.google.com/ → Project Settings    ║
+║  3. Restart your development server                            ║
+║                                                                ║
+║  DO NOT commit .env.local to version control!                  ║
+╚════════════════════════════════════════════════════════════════╝
+  `);
+}
 
 /**
  * Environment configuration
  * Indicates current environment and feature flags
  */
 export const envConfig = {
-    isDevelopment: typeof window !== 'undefined' && 
-        (window.location.hostname === 'localhost' || 
-         window.location.hostname === '127.0.0.1'),
-    isProduction: typeof window !== 'undefined' && 
-        window.location.hostname.includes('vercel.app'),
-    enableDebugLogging: false,
-    enableAnalytics: true
+  isDevelopment: isDevelopment,
+  isProduction: !isDevelopment,
+  enableDebugLogging: config.features.debug,
+  enableAnalytics: config.features.analytics
 };
 
 // Log environment on init (only in development)
-if (envConfig.isDevelopment) {
-    console.log('[Config] Running in development mode');
+if (isDevelopment) {
+  console.log('[Config] Running in development mode');
+  console.log('[Config] Firebase project:', firebaseConfig.projectId || 'NOT CONFIGURED');
 }
+
+// Export feature flags
+export const features = config.features;
+
+// Export limits
+export const limits = config.limits;
+
+// Default export
+export default {
+  firebaseConfig,
+  envConfig,
+  features,
+  limits,
+  isConfigValid
+};

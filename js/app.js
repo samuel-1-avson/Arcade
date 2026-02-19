@@ -35,6 +35,10 @@ import { analyticsService } from './services/AnalyticsService.js';
 // Import Social Features
 import { friendsService } from './services/FriendsService.js';
 import { chatService } from './services/ChatService.js';
+import { publicProfileService } from './services/PublicProfileService.js';
+
+// Import Utilities
+import { sanitizeHTML, sanitizeChatMessage } from './utils/sanitize.js';
 
 // Import Zen Mode
 import { zenModeService } from './services/ZenModeService.js';
@@ -170,7 +174,6 @@ class ArcadeHub {
         this.setupDailyChallenges();
         this.setupDashboard();
         this.setupProfileEditor();
-        this.setupLeaderboards();
         this.setupLeaderboards();
         this.setupSettings();
         this.setupShop();
@@ -335,7 +338,21 @@ class ArcadeHub {
 
         // Bind Close Button for SPA
         document.getElementById('close-game-btn')?.addEventListener('click', () => {
+            // Clean up DM chat if open
+            if (this.dmUnsubscribe) {
+                this.dmUnsubscribe();
+                this.dmUnsubscribe = null;
+            }
+            document.querySelector('.dm-modal')?.remove();
+            
             gameLoaderService.closeGame();
+        });
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (this.dmUnsubscribe) {
+                this.dmUnsubscribe();
+            }
         });
         
         // Update stats from global state
@@ -344,6 +361,9 @@ class ArcadeHub {
         // Initialize Analytics Pipeline
         analyticsService.init();
         analyticsService.trackPageView('hub_home');
+        
+        // Initialize Public Profile Service (handles migration)
+        publicProfileService.init();
 
         console.log('AAA Services + Backend Infrastructure + Social Features initialized');
     }
@@ -2249,7 +2269,11 @@ class ArcadeHub {
         const friend = friendsService.getFriendsList().find(f => f.id === friendId);
         if (!friend) return;
 
-        // Remove existing DM modal if any
+        // Clean up existing DM modal and unsubscribe from previous listener
+        if (this.dmUnsubscribe) {
+            this.dmUnsubscribe();
+            this.dmUnsubscribe = null;
+        }
         document.querySelector('.dm-modal')?.remove();
 
         const modal = document.createElement('div');
@@ -2283,7 +2307,10 @@ class ArcadeHub {
         // Close button
         modal.querySelector('.dm-modal-close').addEventListener('click', () => {
             modal.remove();
-            this.dmUnsubscribe?.();
+            if (this.dmUnsubscribe) {
+                this.dmUnsubscribe();
+                this.dmUnsubscribe = null;
+            }
         });
 
         // Load chat history
@@ -2299,8 +2326,13 @@ class ArcadeHub {
             const input = document.getElementById(`dm-input-${friendId}`);
             const text = input.value.trim();
             if (!text) return;
+            
+            // Sanitize before sending
+            const sanitizedText = sanitizeChatMessage(text);
+            if (!sanitizedText) return;
+            
             input.value = '';
-            await chatService.sendDirectMessage(friendId, text);
+            await chatService.sendDirectMessage(friendId, sanitizedText);
         };
 
         document.getElementById(`dm-send-${friendId}`).addEventListener('click', sendMessage);
