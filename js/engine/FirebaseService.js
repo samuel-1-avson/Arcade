@@ -180,6 +180,83 @@ class FirebaseService {
     }
 
     /**
+     * Sign in with email and password
+     */
+    async signInWithEmail(email, password) {
+        if (!this.auth) return null;
+
+        try {
+            const result = await this.auth.signInWithEmailAndPassword(email, password);
+            return result.user;
+        } catch (error) {
+            console.error('Email sign-in error:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Sign up with email and password
+     */
+    async signUpWithEmail(email, password, displayName) {
+        if (!this.auth) return null;
+
+        try {
+            const result = await this.auth.createUserWithEmailAndPassword(email, password);
+            
+            // Update profile with display name
+            if (displayName && result.user) {
+                await result.user.updateProfile({
+                    displayName: displayName
+                });
+                
+                // Also create user document in Firestore
+                await this.createUserDocument(result.user.uid, {
+                    displayName: displayName,
+                    email: email,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+            
+            return result.user;
+        } catch (error) {
+            console.error('Email sign-up error:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Send password reset email
+     */
+    async sendPasswordResetEmail(email) {
+        if (!this.auth) return null;
+
+        try {
+            await this.auth.sendPasswordResetEmail(email);
+            return true;
+        } catch (error) {
+            console.error('Password reset error:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Set auth persistence
+     */
+    async setPersistence(type) {
+        if (!this.auth) return;
+
+        const persistence = type === 'local' 
+            ? firebase.auth.Auth.Persistence.LOCAL
+            : firebase.auth.Auth.Persistence.SESSION;
+        
+        try {
+            await this.auth.setPersistence(persistence);
+        } catch (error) {
+            console.error('Set persistence error:', error);
+        }
+    }
+
+    /**
      * Sign out
      */
     async signOut() {
