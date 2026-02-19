@@ -20,8 +20,8 @@
 }
 
 .command-trigger:hover {
-    background: rgba(122, 162, 247, 0.1);
-    border-color: rgba(122, 162, 247, 0.3);
+    background: rgba(0, 240, 255, 0.1);
+    border-color: rgba(0, 240, 255, 0.3);
 }
 
 .command-shortcut-key {
@@ -44,12 +44,12 @@
     left: 0;
     width: 3px;
     height: 40px;
-    background: var(--primary, #7aa2f7);
+    background: var(--color-primary);
     border-radius: 0 4px 4px 0;
     transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
                 opacity 0.2s ease;
     opacity: 0.9;
-    box-shadow: 0 0 12px rgba(122, 162, 247, 0.3);
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
 }
 
 /* --- Enhanced Nav Items --- */
@@ -68,7 +68,7 @@
     left: 50%;
     width: 0;
     height: 0;
-    background: radial-gradient(circle, rgba(122, 162, 247, 0.15), transparent);
+    background: radial-gradient(circle, rgba(0, 240, 255, 0.15), transparent);
     border-radius: 50%;
     transform: translate(-50%, -50%);
     transition: width 0.4s ease, height 0.4s ease;
@@ -89,7 +89,7 @@
 }
 
 .nav-item.active {
-    background: linear-gradient(90deg, rgba(122, 162, 247, 0.12), transparent 80%);
+    background: linear-gradient(90deg, rgba(0, 240, 255, 0.12), transparent 80%);
 }
 
 /* --- Notification Badges --- */
@@ -100,7 +100,7 @@
     min-width: 18px;
     height: 18px;
     padding: 0 5px;
-    background: var(--danger, #f77a8e);
+    background: var(--color-danger);
     color: #fff;
     font-size: 0.65rem;
     font-weight: 700;
@@ -109,7 +109,7 @@
     align-items: center;
     justify-content: center;
     animation: badgePop 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    box-shadow: 0 2px 8px rgba(247, 122, 142, 0.4);
+    box-shadow: 0 2px 8px rgba(255, 0, 85, 0.4);
 }
 
 @keyframes badgePop {
@@ -124,8 +124,8 @@
     left: 100%;
     top: 50%;
     transform: translateY(-50%) translateX(8px);
-    background: var(--bg-panel, #1a1b26);
-    color: var(--text-bright, #fff);
+    background: var(--color-bg-panel);
+    color: var(--color-text-bright);
     padding: 6px 12px;
     border-radius: var(--radius-sm);
     font-size: 0.8rem;
@@ -147,7 +147,7 @@
     top: 50%;
     transform: translateY(-50%);
     border: 6px solid transparent;
-    border-right-color: var(--bg-panel, #1a1b26);
+    border-right-color: var(--color-bg-panel);
 }
 
 @media (max-width: 1024px) {
@@ -184,7 +184,7 @@
 .command-dialog {
     width: 100%;
     max-width: 560px;
-    background: var(--bg-panel, #1a1b26);
+    background: var(--color-bg-panel);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-lg);
     box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
@@ -215,7 +215,7 @@
     background: transparent;
     border: none;
     outline: none;
-    color: var(--text-bright, #fff);
+    color: var(--color-text-bright);
     font-size: 1rem;
     font-family: inherit;
 }
@@ -259,11 +259,11 @@
 
 .command-item:hover,
 .command-item.selected {
-    background: rgba(122, 162, 247, 0.1);
+    background: rgba(0, 240, 255, 0.1);
 }
 
 .command-item.selected {
-    border-left: 3px solid var(--primary, #7aa2f7);
+    border-left: 3px solid var(--color-primary);
     padding-left: calc(var(--space-lg) - 3px);
 }
 
@@ -349,7 +349,7 @@
     left: 50%;
     width: 0;
     height: 3px;
-    background: var(--primary, #7aa2f7);
+    background: var(--color-primary);
     border-radius: 3px 3px 0 0;
     transform: translateX(-50%);
     transition: width 0.25s ease;
@@ -371,7 +371,7 @@
 .ripple {
     position: absolute;
     border-radius: 50%;
-    background: rgba(122, 162, 247, 0.3);
+    background: rgba(0, 240, 255, 0.3);
     transform: scale(0);
     animation: rippleAnim 0.5s ease-out forwards;
     pointer-events: none;
@@ -392,7 +392,7 @@
 
 .play-fab:hover {
     transform: scale(1.08);
-    box-shadow: 0 6px 20px rgba(122, 162, 247, 0.5);
+    box-shadow: 0 6px 20px rgba(0, 240, 255, 0.5);
 }
 
 .play-fab:active {
@@ -403,7 +403,7 @@
     content: '';
     position: absolute;
     inset: -4px;
-    border: 2px solid rgba(122, 162, 247, 0.3);
+    border: 2px solid rgba(0, 240, 255, 0.3);
     border-radius: 50%;
     animation: fabPulse 2s ease-in-out infinite;
 }
@@ -442,7 +442,7 @@
 }
 
 .breadcrumb-item.current {
-    color: var(--primary, #7aa2f7);
+    color: var(--color-primary);
     font-weight: 500;
 }
 
@@ -505,7 +505,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background: var(--bg-panel, #1a1b26);
+    background: var(--color-bg-panel);
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.4);
     padding: var(--space-lg);
@@ -555,7 +555,7 @@
 }
 
 .quick-action-item:hover {
-    background: rgba(122, 162, 247, 0.1);
+    background: rgba(0, 240, 255, 0.1);
     transform: translateY(-2px);
     border-color: rgba(122, 162, 247, 0.15);
 }

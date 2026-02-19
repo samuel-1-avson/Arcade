@@ -31,17 +31,7 @@
     <!-- Header -->
     <header class="hub-header">
         <div class="container">
-            <div class="hub-logo">
-                <span class="hub-logo-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="2" y="6" width="20" height="12" rx="2"/>
-                        <circle cx="8" cy="12" r="2"/>
-                        <path d="M15 10v4M13 12h4"/>
-                    </svg>
-                </span>
-                <h1>Arcade Hub</h1>
-            </div>
-            
+            <!-- Logo moved to sidebar -->
             <!-- Story Menu -->
             <div class="overlay" id="story-menu" style="display: none;">
                 <div class="story-container-inner">
@@ -145,6 +135,18 @@
 
     <!-- Sidebar Navigation (Desktop) -->
     <aside class="hub-sidebar" id="hub-sidebar">
+        <div class="sidebar-header">
+            <div class="hub-logo">
+                <span class="hub-logo-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="6" width="20" height="12" rx="2"/>
+                        <circle cx="8" cy="12" r="2"/>
+                        <path d="M15 10v4M13 12h4"/>
+                    </svg>
+                </span>
+                <h2>Arcade Hub</h2>
+            </div>
+        </div>
         <nav class="sidebar-nav">
             <button class="nav-item active" data-section="home">
                 <span class="nav-icon">
@@ -371,6 +373,24 @@
     <!-- Main Content -->
     <main class="hub-main">
         <div class="container">
+            <!-- Hero Section -->
+            <section class="hero-section">
+                <div class="hero-content">
+                    <span class="hero-badge">Featured Game</span>
+                    <h2 class="hero-title">Neon Racer 2084</h2>
+                    <p class="hero-desc">Experience high-speed adrenaline in the ultimate retro-futuristic racing challenge. Can you beat the clock on the neon tracks?</p>
+                    <button class="btn btn-primary hero-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px; margin-right: 8px;">
+                            <polygon points="5 3 19 12 5 21 5 3"/>
+                        </svg>
+                        Play Now
+                    </button>
+                </div>
+                <div class="hero-visual">
+                    <div class="hero-glow"></div>
+                </div>
+            </section>
+
             <!-- Dashboard Grid -->
             <section class="dashboard-grid">
                 <!-- Player Profile Card -->

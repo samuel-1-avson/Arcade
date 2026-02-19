@@ -4,21 +4,27 @@
 
 /* --- Header --- */
 .hub-header {
-    background: var(--bg-panel);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: transparent;
     padding: 0;
     position: sticky;
     top: 0;
     z-index: 100;
+    margin-left: 260px;
 }
 
 .hub-header .container {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    height: 64px;
-    padding: 0 var(--space-lg);
+    justify-content: flex-end;
+    height: 80px;
+    padding: 0 var(--space-xl);
     max-width: 100%;
+}
+
+.sidebar-header {
+    padding-bottom: var(--space-lg);
+    border-bottom: 1px solid var(--glass-border);
+    margin-bottom: var(--space-lg);
 }
 
 /* Logo */
@@ -304,7 +310,7 @@
 
 /* Signed-in state for auth button */
 #auth-btn.signed-in {
-    background: rgba(158, 206, 106, 0.1);
+    background: rgba(158, 206, 106, 0.15);
     border-color: rgba(158, 206, 106, 0.2);
 }
 
@@ -317,16 +323,17 @@
 /* Sidebar (Desktop) */
 .hub-sidebar {
     position: fixed;
-    top: 64px; /* Match header height */
+    top: 0;
     left: 0;
     bottom: 0;
-    width: 220px;
-    background: var(--bg-panel);
-    border-right: 1px solid rgba(255, 255, 255, 0.04);
-    padding: var(--space-lg) var(--space-sm);
-    z-index: 90;
+    width: 260px;
+    background: var(--color-bg-overlay);
+    border-right: 1px solid var(--glass-border);
+    padding: var(--space-xl) var(--space-md);
+    z-index: 110;
     display: flex;
     flex-direction: column;
+    backdrop-filter: blur(16px);
 }
 
 .sidebar-nav {
@@ -801,7 +808,7 @@ body.sidebar-minimized .hub-main .container {
 /* Adjust Main Content for Double Sidebar */
 .hub-main .container {
     max-width: 1800px; /* Increased max-width */
-    padding-left: calc(240px + var(--space-xl));
+    padding-left: calc(260px + var(--space-xl));
     padding-right: calc(300px + var(--space-xl)); /* Space for wider right sidebar */
     transition: padding 0.3s ease;
 }
@@ -809,6 +816,7 @@ body.sidebar-minimized .hub-main .container {
 /* Adjust Nav for Right Sidebar */
 .hub-nav {
     padding-right: 300px;
+    margin-left: 260px;
 }
 
 /* Responsive Right Sidebar */
@@ -831,7 +839,7 @@ body.sidebar-minimized .hub-main .container {
         right: 0;
         left: auto;
         border-radius: 8px 0 0 8px;
-        background: var(--primary);
+        background: var(--color-primary);
         color: white;
         border: none;
         width: 24px;
@@ -842,7 +850,6 @@ body.sidebar-minimized .hub-main .container {
 
 /* Navbar Scroller Adjustment */
 .hub-nav {
-    padding-left: 220px; /* Offset sticky filter bar to match sidebar */
     width: 100%;
 }
 .hub-nav .container {
@@ -894,16 +901,16 @@ body.sidebar-minimized .hub-main .container {
     
     .hub-nav {
         top: 64px; /* Match header height */
-        padding-left: 0;
+        margin-left: 0;
     }
 }
 .hub-nav {
-    background: var(--bg-main);
+    background: transparent;
     padding: var(--space-sm) 0;
     position: sticky;
-    top: 64px; /* Match header height */
+    top: 80px; /* Match header height */
     z-index: 89;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid var(--glass-border);
 }
 
 .filter-tabs {
@@ -938,7 +945,91 @@ body.sidebar-minimized .hub-main .container {
 
     /* --- Main Dashboard --- */
     .hub-main {
-        padding: var(--space-xl) 0;
+        padding: 0;
+    }
+
+    /* Hero Section */
+    .hero-section {
+        background: linear-gradient(135deg, rgba(176, 38, 255, 0.2), rgba(0, 240, 255, 0.1)), var(--color-bg-card);
+        border: var(--glass-border);
+        border-radius: var(--radius-xl);
+        padding: var(--space-3xl);
+        margin-bottom: var(--space-2xl);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-content {
+        max-width: 600px;
+        position: relative;
+        z-index: 2;
+    }
+
+    .hero-badge {
+        display: inline-block;
+        background: rgba(0, 240, 255, 0.2);
+        color: var(--color-primary);
+        padding: var(--space-xs) var(--space-sm);
+        border-radius: var(--radius-full);
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: var(--space-md);
+        border: 1px solid var(--color-primary);
+    }
+
+    .hero-title {
+        font-family: var(--font-display);
+        font-size: 4rem;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: var(--space-md);
+        background: var(--gradient-primary);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: var(--glow-primary);
+    }
+
+    .hero-desc {
+        font-size: 1.125rem;
+        color: var(--color-text-muted);
+        margin-bottom: var(--space-xl);
+    }
+
+    .hero-btn {
+        padding: var(--space-md) var(--space-xl);
+        font-size: 1.125rem;
+        display: inline-flex;
+        align-items: center;
+        box-shadow: var(--glow-secondary);
+    }
+
+    .hero-visual {
+        position: absolute;
+        right: -10%;
+        top: -10%;
+        width: 50%;
+        height: 120%;
+        background: radial-gradient(circle, rgba(255, 0, 85, 0.3) 0%, transparent 70%);
+        z-index: 1;
+    }
+
+    .hero-glow {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 300px;
+        height: 300px;
+        background: var(--color-secondary);
+        filter: blur(100px);
+        opacity: 0.5;
+        border-radius: 50%;
     }
 
     .dashboard-grid {
@@ -1773,19 +1864,19 @@ body.sidebar-minimized .hub-main .container {
         display: none; /* Hide on mobile to save space */
     }
 }
- 
- / *   - - -   G a m e   L o a d i n g   O v e r l a y   - - -   * /  
- . g a m e - l o a d i n g - o v e r l a y   {  
-         p o s i t i o n :   f i x e d ;  
-         t o p :   0 ;  
-         l e f t :   0 ;  
-         w i d t h :   1 0 0 % ;  
-         h e i g h t :   1 0 0 % ;  
-         b a c k g r o u n d :   l i n e a r - g r a d i e n t ( 1 3 5 d e g ,   # 1 a 1 a 2 e   0 % ,   # 1 6 2 1 3 e   1 0 0 % ) ;  
-         d i s p l a y :   f l e x ;  
-         a l i g n - i t e m s :   c e n t e r ;  
-         j u s t i f y - c o n t e n t :   c e n t e r ;  
-         z - i n d e x :   9 9 9 9 ;  
-         t r a n s i t i o n :   o p a c i t y   0 . 3 s   e a s e ;  
- }  
- 
+
+/* --- Game Loading Overlay --- */
+
+.game-loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    transition: opacity 0.3s ease;
+}
