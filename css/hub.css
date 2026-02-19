@@ -360,22 +360,28 @@
 }
 
 .nav-item:hover {
-    background: rgba(255, 255, 255, 0.04);
+    background: linear-gradient(90deg, rgba(0, 240, 255, 0.08), transparent);
     color: var(--text-bright);
+    transform: translateX(4px);
 }
 
 .nav-item:hover .nav-icon svg {
-    stroke: var(--text-bright);
+    stroke: var(--primary);
+    filter: drop-shadow(0 0 4px rgba(0, 240, 255, 0.5));
 }
 
 .nav-item.active {
-    background: rgba(122, 162, 247, 0.1);
+    background: linear-gradient(90deg, rgba(0, 240, 255, 0.15), transparent);
     color: var(--primary);
-    border-color: rgba(122, 162, 247, 0.15);
+    border-left: 3px solid var(--primary);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    padding-left: 11px; /* Compensate for the 3px border */
+    font-weight: 700;
 }
 
 .nav-item.active .nav-icon svg {
     stroke: var(--primary);
+    filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.6));
 }
 
 .nav-icon {
