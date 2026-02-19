@@ -41,6 +41,7 @@ import { DashboardManager } from './dashboard.js';
 import { ProfileModalManager } from './modals/profile.js';
 import { SettingsModalManager } from './modals/settings.js';
 import { FriendsManager } from './social/friends.js';
+import { LeaderboardManager } from './leaderboard.js';
 import { accessibilityManager } from './accessibility.js';
 
 // Config
@@ -74,6 +75,7 @@ export class ArcadeHub {
         this.profileModal = new ProfileModalManager(this);
         this.settingsModal = new SettingsModalManager(this);
         this.friends = new FriendsManager(this);
+        this.leaderboardManager = new LeaderboardManager(this);
 
         // DM chat state
         this.dmUnsubscribe = null;
@@ -93,6 +95,7 @@ export class ArcadeHub {
         this.profileModal.init();
         this.settingsModal.init();
         this.friends.init();
+        this.leaderboardManager.init();
 
         // Initialize services
         await this.initServices();
@@ -247,7 +250,8 @@ export class ArcadeHub {
     }
 
     setupLeaderboards() {
-        // Leaderboards setup
+        // Leaderboard manager handles setup
+        // Tabs are populated dynamically based on available games
     }
 
     setupSidebarToggle() {
@@ -265,7 +269,8 @@ export class ArcadeHub {
     // ==================== PUBLIC API ====================
 
     async loadLeaderboard(gameId) {
-        // Load leaderboard
+        // Delegate to leaderboard manager
+        this.leaderboardManager.open(gameId);
     }
 
     renderAchievementGallery() {
