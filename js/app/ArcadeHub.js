@@ -255,7 +255,22 @@ export class ArcadeHub {
     }
 
     setupSidebarToggle() {
-        // Sidebar toggle setup
+        const toggleBtn = document.getElementById('toggle-right-sidebar');
+        const sidebar = document.getElementById('right-sidebar');
+        
+        if (toggleBtn && sidebar) {
+            toggleBtn.addEventListener('click', () => {
+                // Check if we are on mobile/tablet layout (where it slides in instead of minimizing)
+                if (window.innerWidth <= 1280) {
+                    sidebar.classList.toggle('open');
+                } else {
+                    // Desktop layout: minimize to icon strip
+                    sidebar.classList.toggle('minimized');
+                    // Add a class to body to adjust main container padding
+                    document.body.classList.toggle('sidebar-minimized');
+                }
+            });
+        }
     }
 
     setupPartyUI() {
