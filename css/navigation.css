@@ -513,6 +513,14 @@
     transform: translateY(100%);
     transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 250;
+    display: none; /* Hidden by default on desktop */
+}
+
+/* Show quick actions only on mobile */
+@media (max-width: 768px) {
+    .quick-actions-sheet {
+        display: block;
+    }
 }
 
 .quick-actions-sheet.open {

@@ -850,26 +850,26 @@ body.sidebar-minimized .hub-main .container {
 }
 
 /* Responsive Adjustments */
-@media (max-width: 1024px) {
-    /* Collapse Sidebar to Icons only */
+
+/* Tablet: Show labels with narrower sidebar */
+@media (max-width: 1024px) and (min-width: 769px) {
     .hub-sidebar {
-        width: 80px;
-        padding: var(--space-lg) var(--space-xs);
+        width: 160px;
+        padding: var(--space-lg) var(--space-sm);
     }
     .nav-label {
-        display: none;
+        display: block;
+        font-size: 0.8rem;
     }
     .nav-item {
-        justify-content: center;
-        padding: var(--space-sm);
+        justify-content: flex-start;
+        padding: var(--space-sm) var(--space-md);
+        gap: var(--space-sm);
     }
     
     .hub-main .container,
     .hub-nav {
-        padding-left: calc(80px + var(--space-lg));
-    }
-    .hub-nav {
-        padding-left: 80px;
+        padding-left: calc(160px + var(--space-lg));
     }
 }
 
