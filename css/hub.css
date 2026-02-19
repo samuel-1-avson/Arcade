@@ -1773,3 +1773,19 @@ body.sidebar-minimized .hub-main .container {
         display: none; /* Hide on mobile to save space */
     }
 }
+ 
+ / *   - - -   G a m e   L o a d i n g   O v e r l a y   - - -   * /  
+ . g a m e - l o a d i n g - o v e r l a y   {  
+         p o s i t i o n :   f i x e d ;  
+         t o p :   0 ;  
+         l e f t :   0 ;  
+         w i d t h :   1 0 0 % ;  
+         h e i g h t :   1 0 0 % ;  
+         b a c k g r o u n d :   l i n e a r - g r a d i e n t ( 1 3 5 d e g ,   # 1 a 1 a 2 e   0 % ,   # 1 6 2 1 3 e   1 0 0 % ) ;  
+         d i s p l a y :   f l e x ;  
+         a l i g n - i t e m s :   c e n t e r ;  
+         j u s t i f y - c o n t e n t :   c e n t e r ;  
+         z - i n d e x :   9 9 9 9 ;  
+         t r a n s i t i o n :   o p a c i t y   0 . 3 s   e a s e ;  
+ }  
+ 

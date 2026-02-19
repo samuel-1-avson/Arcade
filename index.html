@@ -18,6 +18,9 @@
     <link rel="stylesheet" href="css/zen-mode.css">
     <link rel="stylesheet" href="css/auth-modal.css">
     <link rel="stylesheet" href="css/accessibility.css">
+    <link rel="stylesheet" href="css/game-loading.css">
+    <link rel="stylesheet" href="css/game-cards.css">
+    <link rel="stylesheet" href="css/buttons.css">
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
@@ -1077,7 +1080,14 @@
     <!-- Game Viewport (SPA Container) -->
     <div id="game-viewport" class="game-viewport hidden">
 
-
+        <!-- Exit Game Button -->
+        <button id="exit-game-btn" class="exit-game-btn" aria-label="Exit Game">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+            <span>Exit Game</span>
+        </button>
 
         <!-- Global Overlay HUD (Hiding for game purity) -->
         <div id="global-hud" class="global-hud hidden">
