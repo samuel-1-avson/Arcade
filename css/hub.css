@@ -905,8 +905,9 @@ body.sidebar-minimized .hub-main .container {
     }
 }
 .hub-nav {
-    background: transparent;
-    padding: var(--space-sm) 0;
+    background: var(--color-bg-overlay);
+    backdrop-filter: blur(12px);
+    padding: var(--space-md) 0;
     position: sticky;
     top: 80px; /* Match header height */
     z-index: 89;
@@ -945,7 +946,7 @@ body.sidebar-minimized .hub-main .container {
 
     /* --- Main Dashboard --- */
     .hub-main {
-        padding: 0;
+        padding: var(--space-lg) 0;
     }
 
     /* Hero Section */
