@@ -5,6 +5,7 @@
 import { eventBus } from '../engine/EventBus.js';
 import { firebaseService } from '../engine/FirebaseService.js';
 import { globalStateManager, GAME_IDS } from './GlobalStateManager.js';
+import { publicProfileService } from './PublicProfileService.js';
 
 // Leaderboard time periods
 export const TIME_PERIODS = {
@@ -73,14 +74,15 @@ class LeaderboardService {
         }
 
         try {
-            // Only fetch if DB is available AND user is signed in
-            // (Firestore rules require authentication for reading user profiles/scores)
-            if (firebaseService.db && firebaseService.isSignedIn()) {
+            // Only fetch if DB is available
+            // Uses publicProfiles collection (publicly readable per new security rules)
+            if (firebaseService.db) {
                 const db = firebaseService.db;
                 const currentUserId = firebaseService.getCurrentUser()?.uid;
                 
-                // Query users by totalScore (stored at root level, not nested in stats)
-                const snapshot = await db.collection('users')
+                // Query publicProfiles by totalScore
+                // Note: totalScore should be added to publicProfiles schema
+                const snapshot = await db.collection('publicProfiles')
                     .orderBy('totalScore', 'desc')
                     .limit(limit)
                     .get();
@@ -90,9 +92,10 @@ class LeaderboardService {
                     return {
                         rank: index + 1,
                         name: data.displayName || 'Player',
-                        photoURL: data.photoURL || null,
+                        avatar: data.avatar || 'gamepad',
                         score: data.totalScore || 0,
                         level: data.level || 1,
+                        title: data.title || 'Player',
                         userId: doc.id,
                         isCurrentUser: currentUserId ? doc.id === currentUserId : false
                     };
@@ -302,9 +305,9 @@ class LeaderboardService {
             const user = firebaseService.getCurrentUser();
             const stats = globalStateManager.getStatistics();
             
-            // Count users with higher score (field is at root level, not nested)
+            // Count users with higher score using publicProfiles
             const db = firebaseService.db;
-            const snapshot = await db.collection('users')
+            const snapshot = await db.collection('publicProfiles')
                 .where('totalScore', '>', stats.totalScore)
                 .get();
 

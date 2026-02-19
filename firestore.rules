@@ -2,7 +2,10 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helper functions
+    // ============================================
+    // HELPER FUNCTIONS
+    // ============================================
+    
     function isSignedIn() {
       return request.auth != null;
     }
@@ -17,40 +20,77 @@ service cloud.firestore {
         && request.resource.data.gameId is string;
     }
     
-    // Users collection
+    // ============================================
+    // PRIVATE USER DATA
+    // Only the owner can access their own private data
+    // ============================================
+    
     match /users/{userId} {
-      // Allow any signed-in user to read profiles (needed for leaderboards)
-      // This enables cross-user leaderboard display
-      allow read: if isSignedIn();
+      // CRITICAL FIX: Only owner can read their own private data
+      allow read: if isOwner(userId);
       
       // Users can only create their own profile
       allow create: if isSignedIn() && isOwner(userId);
       
       // Users can only update their own profile
-      allow update: if isSignedIn() && isOwner(userId);
+      allow update: if isOwner(userId);
       
       // No delete (soft delete only via admin)
       allow delete: if false;
       
-      // Achievements subcollection
+      // Achievements subcollection - private
       match /achievements/{achievementId} {
-        allow read: if isSignedIn() && isOwner(userId);
-        allow write: if isSignedIn() && isOwner(userId);
+        allow read, write: if isOwner(userId);
       }
       
-      // Game stats subcollection
+      // Game stats subcollection - private
       match /gameStats/{gameId} {
-        allow read: if isSignedIn() && isOwner(userId);
-        allow write: if isSignedIn() && isOwner(userId);
+        allow read, write: if isOwner(userId);
+      }
+      
+      // User preferences - private
+      match /preferences/{prefId} {
+        allow read, write: if isOwner(userId);
       }
     }
     
-    // Scores collection
-    match /scores/{scoreId} {
-      // Anyone signed in can read scores (for leaderboards)
-      allow read: if isSignedIn();
+    // ============================================
+    // PUBLIC PROFILES
+    // Publicly readable, owner-writable
+    // This replaces the insecure users read access
+    // ============================================
+    
+    match /publicProfiles/{userId} {
+      // Anyone can read public profiles (for leaderboards, etc.)
+      allow read: if true;
       
-      // Users can only submit their own scores
+      // Only owner can create/update their public profile
+      allow create, update: if isOwner(userId) && 
+        request.resource.data.keys().hasOnly([
+          'displayName',
+          'avatar',
+          'level',
+          'title',
+          'titleColor',
+          'totalAchievements',
+          'favoriteGame',
+          'lastSeen',
+          'createdAt'
+        ]);
+      
+      // No deletion
+      allow delete: if false;
+    }
+    
+    // ============================================
+    // SCORES
+    // ============================================
+    
+    match /scores/{scoreId} {
+      // Public read for leaderboards
+      allow read: if true;
+      
+      // Users can only submit their own scores with validation
       allow create: if isSignedIn() 
         && request.resource.data.userId == request.auth.uid
         && isValidScore();
@@ -60,35 +100,42 @@ service cloud.firestore {
       allow delete: if false;
     }
     
-    // Leaderboards collection (aggregated, read-only)
+    // ============================================
+    // LEADERBOARDS
+    // Read-only, maintained by Cloud Functions
+    // ============================================
+    
     match /leaderboards/{gameId} {
       allow read: if true; // Public read
       allow write: if false; // Only Cloud Functions
     }
     
-    // Analytics collection
+    // ============================================
+    // ANALYTICS
+    // System-only collections
+    // ============================================
+    
     match /analytics/{eventId} {
-      // Users can submit analytics events
       allow create: if isSignedIn();
-      allow read, update, delete: if false; // Cloud Functions only
+      allow read, update, delete: if false;
     }
     
-    // Analytics counters (read by admins only)
     match /analytics_counters/{dateId} {
-      allow read, write: if false; // Cloud Functions only
+      allow read, write: if false;
     }
     
-    // Analytics daily rollups
     match /analytics_daily/{dateId} {
-      allow read, write: if false; // Cloud Functions only
+      allow read, write: if false;
     }
     
-    // Processed analytics
     match /analytics_processed/{dateId}/events/{eventId} {
-      allow read, write: if false; // Cloud Functions only
+      allow read, write: if false;
     }
     
-    // Tournaments
+    // ============================================
+    // TOURNAMENTS
+    // ============================================
+    
     match /tournaments/{tournamentId} {
       // Anyone can read tournaments
       allow read: if true;
@@ -96,14 +143,14 @@ service cloud.firestore {
       // Only signed in users can create
       allow create: if isSignedIn();
       
-      // Participants can only join (modify participants array) - not change other fields
+      // Participants can only join (modify participants array)
       allow update: if isSignedIn() 
         && request.resource.data.diff(resource.data).affectedKeys()
-           .hasOnly(['participants', 'updatedAt']);
+           .hasOnly(['participants', 'updatedAt', 'status']);
       
       allow delete: if false;
       
-      // Tournament scores
+      // Tournament scores subcollection
       match /scores/{scoreId} {
         allow read: if true;
         allow create: if isSignedIn() 
@@ -112,7 +159,10 @@ service cloud.firestore {
       }
     }
     
-    // Tournament scores (global collection)
+    // ============================================
+    // TOURNAMENT SCORES (GLOBAL)
+    // ============================================
+    
     match /tournament_scores/{scoreId} {
       allow read: if true;
       allow create: if isSignedIn() 
@@ -120,16 +170,126 @@ service cloud.firestore {
       allow update, delete: if false;
     }
     
-    // Challenges
+    // ============================================
+    // CHALLENGES
+    // ============================================
+    
     match /challenges/{type}/{challengeId} {
       allow read: if true;
-      allow write: if false; // Admin/Cloud Functions only
+      allow write: if false;
     }
     
-    // Global stats (public read)
+    // ============================================
+    // GLOBAL STATS
+    // ============================================
+    
     match /stats/{statId} {
       allow read: if true;
-      allow write: if false; // Cloud Functions only
+      allow write: if false;
+    }
+    
+    // ============================================
+    // FRIENDS SYSTEM
+    // ============================================
+    
+    match /friends/{friendshipId} {
+      // Users can read friendships they're part of
+      allow read: if isSignedIn() && (
+        resource.data.user1Id == request.auth.uid ||
+        resource.data.user2Id == request.auth.uid
+      );
+      
+      // Users can create friend requests
+      allow create: if isSignedIn() && 
+        request.resource.data.user1Id == request.auth.uid;
+      
+      // Users can update friendships they're part of
+      allow update: if isSignedIn() && (
+        resource.data.user1Id == request.auth.uid ||
+        resource.data.user2Id == request.auth.uid
+      );
+      
+      allow delete: if false;
+    }
+    
+    match /friendRequests/{requestId} {
+      // Users can read requests they're involved in
+      allow read: if isSignedIn() && (
+        resource.data.fromUserId == request.auth.uid ||
+        resource.data.toUserId == request.auth.uid
+      );
+      
+      // Users can send friend requests
+      allow create: if isSignedIn() && 
+        request.resource.data.fromUserId == request.auth.uid;
+      
+      // Users can accept/decline requests sent to them
+      allow update: if isSignedIn() && 
+        resource.data.toUserId == request.auth.uid;
+      
+      allow delete: if isSignedIn() && (
+        resource.data.fromUserId == request.auth.uid ||
+        resource.data.toUserId == request.auth.uid
+      );
+    }
+    
+    // ============================================
+    // PARTY SYSTEM
+    // ============================================
+    
+    match /parties/{partyId} {
+      // Party members can read party data
+      allow read: if isSignedIn() && 
+        request.auth.uid in resource.data.memberIds;
+      
+      // Any signed-in user can create a party
+      allow create: if isSignedIn();
+      
+      // Party members can update (for joining/leaving)
+      allow update: if isSignedIn() && (
+        request.auth.uid in resource.data.memberIds ||
+        request.auth.uid == resource.data.leaderId
+      );
+      
+      // Only leader can delete
+      allow delete: if isSignedIn() && 
+        resource.data.leaderId == request.auth.uid;
+      
+      // Party chat messages
+      match /messages/{messageId} {
+        allow read: if isSignedIn() && 
+          request.auth.uid in get(/databases/$(database)/documents/parties/$(partyId)).data.memberIds;
+        
+        allow create: if isSignedIn() && 
+          request.auth.uid in get(/databases/$(database)/documents/parties/$(partyId)).data.memberIds &&
+          request.resource.data.userId == request.auth.uid;
+        
+        allow update, delete: if false;
+      }
+    }
+    
+    // ============================================
+    // PRESENCE / ONLINE STATUS
+    // ============================================
+    
+    match /presence/{userId} {
+      // Public read for online status
+      allow read: if true;
+      
+      // Users can only update their own presence
+      allow write: if isOwner(userId);
+    }
+    
+    // ============================================
+    // NOTIFICATIONS
+    // ============================================
+    
+    match /notifications/{userId}/{notificationId} {
+      // Users can only read their own notifications
+      allow read: if isOwner(userId);
+      
+      // System writes only (Cloud Functions)
+      allow write: if false;
     }
   }
 }
