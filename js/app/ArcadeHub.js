@@ -41,6 +41,7 @@ import { DashboardManager } from './dashboard.js';
 import { ProfileModalManager } from './modals/profile.js';
 import { SettingsModalManager } from './modals/settings.js';
 import { FriendsManager } from './social/friends.js';
+import { accessibilityManager } from './accessibility.js';
 
 // Config
 import { GAME_ICONS } from '../config/gameRegistry.js';
@@ -129,6 +130,9 @@ export class ArcadeHub {
         
         // Initialize public profile service (handles migration)
         publicProfileService.init();
+        
+        // Initialize accessibility manager (Phase 3)
+        accessibilityManager.init();
 
         // Setup additional UI
         this.setupAchievementGallery();

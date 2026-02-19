@@ -8,6 +8,7 @@ import { economyService } from '../services/EconomyService.js';
 import { audioService } from '../services/AudioService.js';
 import { gameLoaderService } from '../services/GameLoaderService.js';
 import { GAME_ICONS } from '../config/gameRegistry.js';
+import { LazyImageLoader } from '../utils/lazyLoad.js';
 
 export class GameCardsManager {
     constructor(app, games) {
@@ -15,12 +16,17 @@ export class GameCardsManager {
         this.games = games;
         this.grid = null;
         this.currentFilter = 'all';
+        this.imageLoader = new LazyImageLoader({
+            rootMargin: '100px',
+            threshold: 0.1
+        });
     }
 
     init() {
         this.grid = document.getElementById('games-grid');
         this.setupFilters();
         this.render();
+        this.imageLoader.init();
     }
 
     setupFilters() {
@@ -54,44 +60,54 @@ export class GameCardsManager {
         const card = document.createElement('article');
         card.className = 'game-card';
         card.style.animationDelay = `${index * 0.05}s`;
-
+        
+        // Accessibility attributes
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', game.comingSoon ? '-1' : '0');
+        card.setAttribute('aria-label', this.buildAriaLabel(game));
+        
         const stats = globalStateManager.getStatistics();
         const highScore = stats.gameStats[game.id]?.highScore || 0;
         const difficultyClass = `difficulty-${game.difficulty}`;
         const svgIcon = GAME_ICONS[game.id] || '';
 
         // Star rating
-        const starIcon = '<svg class="star-icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>';
-        const starRating = Array(game.rating).fill(starIcon).join('');
+        const starIcon = '<svg class="star-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>';
+        const starRating = Array(game.rating || 3).fill(starIcon).join('');
 
         // Trophy icon
-        const trophyIcon = '<svg class="trophy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>';
+        const trophyIcon = '<svg class="trophy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>';
+
+        // Support for lazy-loaded image or SVG icon
+        const iconHtml = game.image ? this.renderLazyImage(game.image, game.title) : `
+            <div class="game-card-svg-icon" aria-hidden="true">
+                ${svgIcon}
+            </div>
+        `;
 
         card.innerHTML = `
             <div class="game-card-icon-wrapper">
-                <div class="game-card-svg-icon">
-                    ${svgIcon}
-                </div>
+                ${iconHtml}
                 <span class="game-card-difficulty ${difficultyClass}">${game.difficulty}</span>
             </div>
             <div class="game-card-content">
-                <h3 class="game-card-title">${game.title}</h3>
+                <h3 class="game-card-title" id="game-title-${game.id}">${game.title}</h3>
                 <p class="game-card-description">${game.description}</p>
                 <div class="game-card-meta">
                     <div class="game-card-highscore">
                         ${trophyIcon}
                         <span class="score-label">High Score:</span>
-                        <span class="score">${highScore.toLocaleString()}</span>
+                        <span class="score" aria-label="High score ${highScore.toLocaleString()}">${highScore.toLocaleString()}</span>
                     </div>
-                    <div class="game-card-rating">
+                    <div class="game-card-rating" aria-label="Rating ${game.rating || 3} out of 5 stars">
                         ${starRating}
                     </div>
                 </div>
             </div>
             ${!game.comingSoon ? `
             <div class="game-card-play-overlay">
-                <button class="play-btn" aria-label="Play ${game.title}">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+                <button class="play-btn" aria-label="Play ${game.title}" aria-describedby="game-title-${game.id}">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="5,3 19,12 5,21"/></svg>
                 </button>
             </div>
             ` : `
@@ -108,7 +124,15 @@ export class GameCardsManager {
         }
 
         if (!game.comingSoon) {
-            card.addEventListener('click', () => this.launchGame(game));
+            // Click and keyboard handlers
+            const activate = () => this.launchGame(game);
+            card.addEventListener('click', activate);
+            card.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    activate();
+                }
+            });
             card.addEventListener('mouseenter', () => audioService.playSFX('hover'));
             card.style.cursor = 'pointer';
         } else {
@@ -118,6 +142,25 @@ export class GameCardsManager {
         return card;
     }
 
+    renderLazyImage(src, alt) {
+        return `
+            <div class="game-card-image-wrapper">
+                <img 
+                    data-src="${src}" 
+                    alt="${alt} game preview"
+                    class="game-card-image lazy-load"
+                    loading="lazy"
+                >
+            </div>
+        `;
+    }
+
+    buildAriaLabel(game) {
+        const stats = globalStateManager.getStatistics();
+        const highScore = stats.gameStats[game.id]?.highScore || 0;
+        return `${game.title}. ${game.difficulty} difficulty. ${game.description}. High score: ${highScore.toLocaleString()}. ${game.comingSoon ? 'Coming soon' : 'Press Enter to play'}`;
+    }
+
     launchGame(game) {
         audioService.playSFX('click');
         gameLoaderService.loadGame(game);
@@ -125,6 +168,10 @@ export class GameCardsManager {
 
     updateHighScores() {
         this.render();
+    }
+
+    destroy() {
+        this.imageLoader?.destroy();
     }
 }
 
