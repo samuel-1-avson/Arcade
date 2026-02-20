@@ -43,7 +43,7 @@ import { SettingsModalManager } from './modals/settings.js';
 import { FriendsManager } from './social/friends.js';
 import { LeaderboardManager } from './leaderboard.js';
 import { accessibilityManager } from './accessibility.js';
-import { ErrorBoundary } from '../components/ErrorBoundary.v2.js';
+import { ErrorBoundary } from '../components/ErrorBoundary.js';
 import { connectionDiagnostics } from '../utils/connectionDiagnostics.js';
 
 // Free Tier Client-Side Features
