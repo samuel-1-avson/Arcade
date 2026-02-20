@@ -10,7 +10,7 @@ export class ErrorBoundary {
         this.options = {
             container: document.body,
             fallbackMessage: 'Something went wrong.',
-            showDetails: process.env.NODE_ENV === 'development',
+            showDetails: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1',
             onError: null,
             ...options
         };
@@ -120,7 +120,7 @@ export class ErrorBoundary {
         }
         
         // Log to console in development
-        if (process.env.NODE_ENV === 'development') {
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
             console.group('Error Report');
             console.log('Context:', context);
             console.log('Error:', error);
