@@ -1,87 +1,168 @@
 /* ==========================================================================
-   CSS Variables - Arcade Gaming Hub Design System
+   CSS Variables - NEON ARCADE Design System v3.0
    ========================================================================== */
 
 :root {
-    /* Primary palette - Synthwave Arcade theme */
-    --color-bg-dark: #09090e;
-    --color-bg-card: rgba(18, 18, 26, 0.45);
-    --color-bg-overlay: rgba(9, 9, 14, 0.85);
-    
-    /* Neon Accents */
-    --color-primary: #00f0ff; /* Neon Cyan */
-    --color-secondary: #ff0055; /* Electric Pink */
-    --color-accent: #b026ff; /* Deep Purple Neon */
-    --color-success: #00ff88;
-    --color-danger: #ff0044;
-    --color-warning: #ffb800;
+    /* =========================================================================
+       BACKGROUND SYSTEM — Deep dark arcade void
+       ========================================================================= */
+    --bg-void:        #05060f;   /* deepest dark - page bg */
+    --bg-surface:     #0b0d1a;   /* panels, sidebar */
+    --bg-elevated:    #111328;   /* cards, inputs */
+    --bg-raised:      #191c35;   /* hover states, elevated cards */
+    --bg-overlay:     rgba(5, 6, 15, 0.92);
+    --bg-glass:       rgba(17, 19, 40, 0.75);
 
-    /* Backwards compatibility for old variables */
-    --primary: var(--color-primary);
-    --secondary: var(--color-secondary);
-    --accent: var(--color-accent);
-    --success: var(--color-success);
-    --danger: var(--color-danger);
-    --warning: var(--color-warning);
+    /* Backwards compat */
+    --color-bg-dark:    var(--bg-void);
+    --color-bg-card:    rgba(17, 19, 40, 0.65);
+    --color-bg-overlay: var(--bg-overlay);
+    --bg-main:          var(--bg-void);
+    --bg-panel:         var(--bg-glass);
+    --bg-panel-hover:   var(--bg-raised);
+    --bg-input:         rgba(255,255,255,0.04);
 
-    --bg-main: var(--color-bg-dark);
-    --bg-panel: var(--color-bg-card);
-    --bg-panel-hover: var(--color-bg-overlay);
+    /* =========================================================================
+       NEON ACCENT COLORS
+       ========================================================================= */
+    --neon-cyan:    #00f5ff;
+    --neon-pink:    #ff006e;
+    --neon-violet:  #8b00ff;
+    --neon-amber:   #ffb800;
+    --neon-green:   #00ff88;
+    --neon-red:     #ff2244;
 
-    --text-main: var(--color-text);
-    --text-bright: var(--color-text-bright);
-    --text-muted: var(--color-text-muted);
+    /* Semantic aliases */
+    --color-primary:   var(--neon-cyan);
+    --color-secondary: var(--neon-pink);
+    --color-accent:    var(--neon-violet);
+    --color-success:   var(--neon-green);
+    --color-danger:    var(--neon-red);
+    --color-warning:   var(--neon-amber);
 
+    /* Backwards compat */
+    --primary:   var(--neon-cyan);
+    --secondary: var(--neon-pink);
+    --accent:    var(--neon-violet);
+    --success:   var(--neon-green);
+    --danger:    var(--neon-red);
+    --warning:   var(--neon-amber);
 
-    /* Text colors */
-    --color-text: #e2e2ec;
-    --color-text-bright: #ffffff;
-    --color-text-muted: #888899;
+    /* Dim/muted accent variants */
+    --primary-dim:    rgba(0, 245, 255, 0.15);
+    --secondary-dim:  rgba(255, 0, 110, 0.15);
+    --accent-dim:     rgba(139, 0, 255, 0.15);
 
-    /* Glow effects */
-    --glow-primary: 0 0 15px rgba(0, 240, 255, 0.6), 0 0 30px rgba(0, 240, 255, 0.3);
-    --glow-secondary: 0 0 15px rgba(255, 0, 85, 0.6), 0 0 30px rgba(255, 0, 85, 0.3);
-    --glow-accent: 0 0 15px rgba(176, 38, 255, 0.6), 0 0 30px rgba(176, 38, 255, 0.3);
-    --glow-text: 0 0 8px rgba(0, 240, 255, 0.4);
+    /* =========================================================================
+       TEXT COLORS
+       ========================================================================= */
+    --text-primary:    #ffffff;
+    --text-secondary:  #c8d0f0;
+    --text-muted:      #6b7299;
+    --text-disabled:   #3d4266;
 
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
-    --gradient-card: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.01) 100%);
-    --gradient-shine: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
-    --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+    /* Backwards compat */
+    --color-text:        var(--text-secondary);
+    --color-text-bright: var(--text-primary);
+    --color-text-muted:  var(--text-muted);
+    --text-main:         var(--text-secondary);
+    --text-bright:       var(--text-primary);
 
-    /* Spacing */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 1rem;
-    --space-lg: 1.5rem;
-    --space-xl: 2rem;
-    --space-2xl: 3rem;
-    --space-3xl: 4rem;
+    /* =========================================================================
+       GLOW / SHADOW SYSTEM
+       ========================================================================= */
+    --glow-cyan:    0 0 12px rgba(0, 245, 255, 0.7), 0 0 40px rgba(0, 245, 255, 0.3), 0 0 80px rgba(0, 245, 255, 0.1);
+    --glow-pink:    0 0 12px rgba(255, 0, 110, 0.7), 0 0 40px rgba(255, 0, 110, 0.3), 0 0 80px rgba(255, 0, 110, 0.1);
+    --glow-violet:  0 0 12px rgba(139, 0, 255, 0.7), 0 0 40px rgba(139, 0, 255, 0.3), 0 0 80px rgba(139, 0, 255, 0.1);
+    --glow-amber:   0 0 12px rgba(255, 184, 0, 0.7), 0 0 40px rgba(255, 184, 0, 0.3);
 
-    /* Border radius */
-    --radius-sm: 4px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
-    --radius-xl: 16px;
+    /* Backwards compat */
+    --glow-primary:   var(--glow-cyan);
+    --glow-secondary: var(--glow-pink);
+    --glow-accent:    var(--glow-violet);
+    --glow-text:      0 0 8px rgba(0, 245, 255, 0.5);
+
+    /* Shadow system */
+    --shadow-sm:  0 2px 8px rgba(0,0,0,0.4);
+    --shadow-md:  0 4px 20px rgba(0,0,0,0.5);
+    --shadow-lg:  0 8px 40px rgba(0,0,0,0.6);
+    --shadow-xl:  0 16px 60px rgba(0,0,0,0.7);
+
+    /* =========================================================================
+       GRADIENTS
+       ========================================================================= */
+    --gradient-cyber:   linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-violet) 100%);
+    --gradient-hot:     linear-gradient(135deg, var(--neon-pink) 0%, var(--neon-amber) 100%);
+    --gradient-neon:    linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-pink) 100%);
+    --gradient-void:    linear-gradient(180deg, var(--bg-surface) 0%, var(--bg-void) 100%);
+
+    /* Backwards compat */
+    --gradient-primary: var(--gradient-neon);
+    --gradient-card:    linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 100%);
+    --gradient-shine:   linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+
+    /* =========================================================================
+       BORDERS
+       ========================================================================= */
+    --border-subtle:  1px solid rgba(255,255,255,0.04);
+    --border-default: 1px solid rgba(255,255,255,0.08);
+    --border-strong:  1px solid rgba(255,255,255,0.14);
+    --border-neon:    1px solid rgba(0, 245, 255, 0.4);
+    --border-hot:     1px solid rgba(255, 0, 110, 0.4);
+
+    /* Backwards compat */
+    --glass-border: var(--border-default);
+
+    /* =========================================================================
+       SPACING
+       ========================================================================= */
+    --space-xs:  0.25rem;   /*  4px */
+    --space-sm:  0.5rem;    /*  8px */
+    --space-md:  1rem;      /* 16px */
+    --space-lg:  1.5rem;    /* 24px */
+    --space-xl:  2rem;      /* 32px */
+    --space-2xl: 3rem;      /* 48px */
+    --space-3xl: 4rem;      /* 64px */
+
+    /* =========================================================================
+       BORDER RADIUS
+       ========================================================================= */
+    --radius-sm:   4px;
+    --radius-md:   8px;
+    --radius-lg:   12px;
+    --radius-xl:   16px;
+    --radius-2xl:  24px;
     --radius-full: 9999px;
 
-    /* Transitions */
-    --transition-fast: 150ms ease;
-    --transition-normal: 250ms ease;
-    --transition-slow: 400ms ease;
+    /* =========================================================================
+       TYPOGRAPHY
+       ========================================================================= */
+    --font-display: 'Orbitron', 'Rajdhani', 'Share Tech Mono', system-ui, sans-serif;
+    --font-body:    system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-mono:    'Share Tech Mono', 'Courier New', monospace;
 
-    /* Z-index layers */
-    --z-base: 0;
+    /* =========================================================================
+       TRANSITIONS
+       ========================================================================= */
+    --transition-fast:   150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow:   400ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    /* =========================================================================
+       Z-INDEX LAYERS
+       ========================================================================= */
+    --z-base:     0;
+    --z-raised:   10;
     --z-dropdown: 100;
-    --z-overlay: 200;
-    --z-modal: 300;
-    --z-toast: 400;
+    --z-sidebar:  110;
+    --z-overlay:  200;
+    --z-modal:    300;
+    --z-toast:    400;
 
-    /* Container widths */
-    --container-sm: 640px;
-    --container-md: 768px;
-    --container-lg: 1024px;
-    --container-xl: 1280px;
-    --container-2xl: 1440px;
+    /* =========================================================================
+       LAYOUT
+       ========================================================================= */
+    --sidebar-width: 260px;
+    --topbar-height: 64px;
 }

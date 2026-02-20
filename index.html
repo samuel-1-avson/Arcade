@@ -3,72 +3,216 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Arcade Gaming Hub - Play classic arcade games like Snake, Tetris, Flappy Bird, and more!">
+    <meta name="description" content="Arcade Gaming Hub - Play classic arcade games like Snake, Tetris, 2048, and more!">
     <title>🎮 Arcade Gaming Hub</title>
-    
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="css/style.css?v=2">
-    <link rel="stylesheet" href="css/hub.css?v=2">
-    <link rel="stylesheet" href="css/spa.css?v=2">
-    <link rel="stylesheet" href="css/party.css?v=2">
-    <link rel="stylesheet" href="css/overlay-hud.css?v=2">
-    <link rel="stylesheet" href="css/navigation.css?v=2">
-    <link rel="stylesheet" href="css/modals.css?v=2">
-    <link rel="stylesheet" href="css/friends.css?v=2">
-    <link rel="stylesheet" href="css/zen-mode.css?v=2">
-    <link rel="stylesheet" href="css/auth-modal.css?v=2">
-    <link rel="stylesheet" href="css/accessibility.css?v=2">
-    <link rel="stylesheet" href="css/game-loading.css?v=2">
-    <link rel="stylesheet" href="css/game-cards.css?v=2">
-    <link rel="stylesheet" href="css/buttons.css?v=2">
-    <link rel="stylesheet" href="css/virtual-list.css?v=2">
-    <link rel="stylesheet" href="css/lazy-images.css?v=2">
-    
+
+    <!-- Google Fonts: Orbitron for arcade display -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <!-- Design System -->
+    <link rel="stylesheet" href="css/variables.css?v=3">
+    <link rel="stylesheet" href="css/animations.css?v=3">
+
+    <!-- Core Styles -->
+    <link rel="stylesheet" href="css/style.css?v=3">
+    <link rel="stylesheet" href="css/hub.css?v=3">
+    <link rel="stylesheet" href="css/buttons.css?v=3">
+    <link rel="stylesheet" href="css/navigation.css?v=3">
+    <link rel="stylesheet" href="css/game-cards.css?v=3">
+    <link rel="stylesheet" href="css/modals.css?v=3">
+
+    <!-- Feature Styles -->
+    <link rel="stylesheet" href="css/spa.css?v=3">
+    <link rel="stylesheet" href="css/party.css?v=3">
+    <link rel="stylesheet" href="css/friends.css?v=3">
+    <link rel="stylesheet" href="css/overlay-hud.css?v=3">
+    <link rel="stylesheet" href="css/zen-mode.css?v=3">
+    <link rel="stylesheet" href="css/auth-modal.css?v=3">
+    <link rel="stylesheet" href="css/accessibility.css?v=3">
+    <link rel="stylesheet" href="css/game-loading.css?v=3">
+    <link rel="stylesheet" href="css/virtual-list.css?v=3">
+    <link rel="stylesheet" href="css/lazy-images.css?v=3">
+
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
 </head>
 <body>
-    <!-- Header -->
-    <header class="hub-header">
-        <div class="container">
-            <!-- Logo moved to sidebar -->
-            <!-- Story Menu -->
+
+<!-- ================================================================
+     APP SHELL
+     ================================================================ -->
+<div class="app-shell">
+
+    <!-- ============================================================
+         LEFT SIDEBAR
+         ============================================================ -->
+    <aside class="hub-sidebar" id="hub-sidebar">
+
+        <!-- Logo -->
+        <div class="sidebar-header">
+            <div class="hub-logo">
+                <span class="hub-logo-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="6" width="20" height="12" rx="2"/>
+                        <circle cx="8" cy="12" r="2"/>
+                        <path d="M15 10v4M13 12h4"/>
+                    </svg>
+                </span>
+                <h2>Arcade Hub</h2>
+            </div>
+        </div>
+
+        <!-- Nav -->
+        <nav class="sidebar-nav">
+            <span class="sidebar-section-title">Play</span>
+
+            <button class="nav-item active" data-section="home">
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9,22 9,12 15,12 15,22"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Home</span>
+            </button>
+
+            <button class="nav-item" id="nav-tournaments">
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                        <path d="M4 22h16"/>
+                        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+                        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+                        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Tournaments</span>
+            </button>
+
+            <button class="nav-item" id="nav-challenges">
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <circle cx="12" cy="12" r="6"/>
+                        <circle cx="12" cy="12" r="2"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Challenges</span>
+            </button>
+
+            <div class="nav-divider"></div>
+            <span class="sidebar-section-title">Compete</span>
+
+            <button class="nav-item" id="nav-leaderboard">
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="20" x2="18" y2="10"/>
+                        <line x1="12" y1="20" x2="12" y2="4"/>
+                        <line x1="6" y1="20" x2="6" y2="14"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Leaderboard</span>
+            </button>
+
+            <button class="nav-item" id="nav-achievements">
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="8" r="6"/>
+                        <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Achievements</span>
+            </button>
+
+            <div class="nav-divider"></div>
+            <span class="sidebar-section-title">Profile</span>
+
+            <button class="nav-item" id="nav-shop">
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="9" cy="21" r="1"/>
+                        <circle cx="20" cy="21" r="1"/>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Shop</span>
+            </button>
+
+            <button class="nav-item" id="nav-zen-mode">
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Zen Mode</span>
+            </button>
+
+            <div class="nav-spacer"></div>
+
+            <button class="nav-item" id="nav-settings">
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 4.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 .33 1.65 1.65 0 0 0 10 1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Settings</span>
+            </button>
+        </nav>
+    </aside>
+
+    <!-- ============================================================
+         MAIN AREA (topbar + content)
+         ============================================================ -->
+    <div class="main-area">
+
+        <!-- ── Topbar ──────────────────────────────────────── -->
+        <header class="hub-header">
+            <!-- Story Menu (hidden by default, shown via JS) -->
             <div class="overlay" id="story-menu" style="display: none;">
                 <div class="story-container-inner">
                     <div class="story-header-row">
-                        <h3 style="margin: 0; color: var(--neon-blue); font-size: 1.5rem;">STORY CAMPAIGN</h3>
-                        <button class="btn btn-secondary" id="story-back-btn" style="padding: 8px 16px;">BACK</button>
+                        <h3 style="margin: 0; color: var(--neon-cyan); font-size: 1.4rem; font-family: var(--font-display); text-transform: uppercase; letter-spacing: 2px;">Story Campaign</h3>
+                        <button class="btn btn-secondary btn-sm" id="story-back-btn">Back</button>
                     </div>
-                    
-                    <div class="chapter-selector">
-                        <!-- Chapters populated via JS -->
-                    </div>
-
-                    <div class="story-tree" id="level-grid">
-                        <!-- Levels Populated via JS -->
-                    </div>
+                    <div class="chapter-selector"><!-- Chapters via JS --></div>
+                    <div class="story-tree" id="level-grid"><!-- Levels via JS --></div>
                 </div>
-            </div>    
-            
+            </div>
+
+            <!-- User stats -->
             <div class="user-area">
                 <div class="user-stats" id="user-stats">
                     <div class="stat-item">
-                        <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M12 2l3 7h7l-5.5 4 2 7.5L12 16l-6.5 4.5 2-7.5L2 9h7z"/>
                         </svg>
                         <span class="stat-value" id="total-score">0</span>
                     </div>
                 </div>
-                
-                <!-- Sync Status Indicator -->
-                <div id="sync-indicator" class="sync-indicator sync-idle" title="Sync: idle">
+
+                <!-- Sync Indicator -->
+                <div id="sync-indicator" class="sync-indicator sync-idle" title="Sync status">
                     <span class="sync-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
                         </svg>
                     </span>
                 </div>
-                
+
+                <!-- Command search -->
+                <button class="btn btn-ghost command-trigger" id="command-trigger" title="Quick Search (Ctrl+K)">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <kbd class="command-shortcut-key">⌘K</kbd>
+                </button>
+
                 <!-- User Dropdown -->
                 <div class="user-dropdown" id="user-dropdown">
                     <button class="btn btn-ghost" id="auth-btn">
@@ -87,8 +231,8 @@
                                 </svg>
                             </span>
                             <div class="dropdown-user-info">
-                                <span class="dropdown-name">User</span>
-                                <span class="dropdown-email">email@example.com</span>
+                                <span class="dropdown-name">Player</span>
+                                <span class="dropdown-email">guest@arcadehub.gg</span>
                             </div>
                         </div>
                         <div class="dropdown-divider"></div>
@@ -102,875 +246,217 @@
                         </button>
                     </div>
                 </div>
-                
-                <!-- Keyboard Shortcut Hint -->
-                <button class="btn btn-ghost command-trigger" id="command-trigger" title="Quick Search (Ctrl+K)">
-                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="11" cy="11" r="8"/>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                    </svg>
-                    <kbd class="command-shortcut-key">⌘K</kbd>
-                </button>
             </div>
-        </div>
-    </header>
+        </header>
 
-    <!-- Navigation / Filters -->
-    <nav class="hub-nav">
-        <div class="container">
-            <div class="filter-tabs">
-                <button class="filter-tab active" data-filter="all">All Games</button>
-                <button class="filter-tab" data-filter="easy">
-                    <span style="color: var(--color-success)">●</span> Easy
-                </button>
-                <button class="filter-tab" data-filter="medium">
-                    <span style="color: var(--color-warning)">●</span> Medium
-                </button>
-                <button class="filter-tab" data-filter="hard">
-                    <span style="color: var(--color-danger)">●</span> Hard
-                </button>
+        <!-- ── Filter Nav Bar ────────────────────────────── -->
+        <nav class="hub-nav">
+            <div class="container">
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-filter="all">
+                        <span class="dot dot-all"></span> All Games
+                    </button>
+                    <button class="filter-tab" data-filter="easy">
+                        <span class="dot dot-easy"></span> Easy
+                    </button>
+                    <button class="filter-tab" data-filter="medium">
+                        <span class="dot dot-medium"></span> Medium
+                    </button>
+                    <button class="filter-tab" data-filter="hard">
+                        <span class="dot dot-hard"></span> Hard
+                    </button>
+                </div>
             </div>
-        </div>
-    </nav>
+        </nav>
 
-    <!-- Sidebar Navigation (Desktop) -->
-    <aside class="hub-sidebar" id="hub-sidebar">
-        <div class="sidebar-header">
-            <div class="hub-logo">
-                <span class="hub-logo-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <!-- ── Scrollable Content ────────────────────────── -->
+        <main class="hub-main">
+            <div class="container">
+
+                <!-- Hero Section -->
+                <section class="hero-section">
+                    <div class="hero-content">
+                        <span class="hero-badge">Featured</span>
+                        <h2 class="hero-title">Neon Arcade 2084</h2>
+                        <p class="hero-desc">Your ultimate retro-futuristic gaming destination. 11 games, real-time leaderboards, and neon-drenched glory. Insert coin to begin.</p>
+                        <button class="btn btn-play hero-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;">
+                                <polygon points="5 3 19 12 5 21 5 3"/>
+                            </svg>
+                            Play Now
+                        </button>
+                    </div>
+                    <div class="hero-visual">
+                        <div class="hero-glow"></div>
+                    </div>
+                </section>
+
+                <!-- Quick Stats Row -->
+                <div class="quick-stats-row">
+                    <div class="quick-stat-card stat-score">
+                        <div class="quick-stat-icon">🏆</div>
+                        <div class="quick-stat-info">
+                            <span class="quick-stat-value" id="qs-score">0</span>
+                            <span class="quick-stat-label">Total Score</span>
+                        </div>
+                    </div>
+                    <div class="quick-stat-card stat-level">
+                        <div class="quick-stat-icon">⚡</div>
+                        <div class="quick-stat-info">
+                            <span class="quick-stat-value" id="qs-level">1</span>
+                            <span class="quick-stat-label">Level</span>
+                        </div>
+                    </div>
+                    <div class="quick-stat-card stat-streak">
+                        <div class="quick-stat-icon">🔥</div>
+                        <div class="quick-stat-info">
+                            <span class="quick-stat-value" id="qs-streak">0</span>
+                            <span class="quick-stat-label">Day Streak</span>
+                        </div>
+                    </div>
+                    <div class="quick-stat-card stat-games">
+                        <div class="quick-stat-icon">🎮</div>
+                        <div class="quick-stat-info">
+                            <span class="quick-stat-value" id="qs-games">0</span>
+                            <span class="quick-stat-label">Games Played</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Grid -->
+                <section class="dashboard-grid">
+
+                    <!-- Profile Card -->
+                    <div class="dashboard-card profile-card" id="profile-card">
+                        <div class="profile-header">
+                            <div class="profile-avatar" id="profile-avatar">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="6" width="20" height="12" rx="2"/>
+                                    <circle cx="8" cy="12" r="2"/>
+                                    <path d="M15 10v4M13 12h4"/>
+                                </svg>
+                            </div>
+                            <div class="profile-info">
+                                <div class="profile-name" id="profile-name">Player</div>
+                                <div class="profile-title" id="profile-title">Newcomer</div>
+                            </div>
+                            <button class="btn btn-ghost btn-sm btn-icon" id="edit-profile-btn" title="Edit Profile">
+                                <svg class="edit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="profile-level">
+                            <div class="level-info">
+                                <span class="level-badge" id="level-badge">Lv. 1</span>
+                                <span class="xp-text" id="xp-text">0 / 100 XP</span>
+                            </div>
+                            <div class="xp-bar">
+                                <div class="xp-fill" id="xp-fill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="profile-stats">
+                            <div class="mini-stat">
+                                <span class="mini-stat-value" id="games-played">0</span>
+                                <span class="mini-stat-label">Games</span>
+                            </div>
+                            <div class="mini-stat">
+                                <span class="mini-stat-value" id="achievements-count">0</span>
+                                <span class="mini-stat-label">Trophies</span>
+                            </div>
+                            <div class="mini-stat">
+                                <span class="mini-stat-value" id="total-playtime">0h</span>
+                                <span class="mini-stat-label">Play Time</span>
+                            </div>
+                            <div class="mini-stat">
+                                <span class="mini-stat-value" id="streak-count">0</span>
+                                <span class="mini-stat-label">Streak</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Leaderboard Preview -->
+                    <div class="dashboard-card leaderboard-card">
+                        <div class="card-header">
+                            <h3>
+                                <svg class="card-header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+                                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                                    <path d="M4 22h16"/>
+                                    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+                                </svg>
+                                Top Players
+                            </h3>
+                            <button class="btn btn-ghost btn-sm" id="view-leaderboard-btn">View All</button>
+                        </div>
+                        <div class="leaderboard-list" id="leaderboard-preview">
+                            <div class="leaderboard-empty">Loading scores...</div>
+                        </div>
+                    </div>
+
+                    <!-- Best Games -->
+                    <div class="dashboard-card best-games-card">
+                        <div class="card-header">
+                            <h3>
+                                <svg class="card-header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
+                                </svg>
+                                Your Best Games
+                            </h3>
+                        </div>
+                        <div class="best-games-list" id="best-games-list">
+                            <div class="best-games-empty">Play games to see your best scores!</div>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- Games Section -->
+                <section class="games-section">
+                    <div class="section-header">
+                        <h2 class="section-title">Game Library</h2>
+                    </div>
+                    <div class="games-grid" id="games-grid">
+                        <!-- Game cards inserted by JavaScript (js/app/gameCards.js) -->
+                    </div>
+                </section>
+
+            </div><!-- /container -->
+        </main><!-- /hub-main -->
+
+        <!-- Footer -->
+        <footer class="hub-footer">
+            <div class="container">
+                <p>
+                    <svg style="width:15px;height:15px;vertical-align:middle;stroke:var(--neon-cyan);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="2" y="6" width="20" height="12" rx="2"/>
                         <circle cx="8" cy="12" r="2"/>
                         <path d="M15 10v4M13 12h4"/>
                     </svg>
-                </span>
-                <h2>Arcade Hub</h2>
+                    Arcade Gaming Hub &copy; 2026 &mdash; Insert Coin to Continue
+                    <svg style="width:13px;height:13px;vertical-align:middle;stroke:#f76c6c;fill:#f76c6c;" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                    </svg>
+                </p>
             </div>
-        </div>
-        <nav class="sidebar-nav">
-            <button class="nav-item active" data-section="home">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                        <polyline points="9,22 9,12 15,12 15,22"/>
-                    </svg>
-                </span>
-                <span class="nav-label">Home</span>
-            </button>
-            <button class="nav-item" id="nav-tournaments">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
-                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
-                        <path d="M4 22h16"/>
-                        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
-                        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
-                        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
-                    </svg>
-                </span>
-                <span class="nav-label">Tournaments</span>
-            </button>
-            <button class="nav-item" id="nav-challenges">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"/>
-                        <circle cx="12" cy="12" r="6"/>
-                        <circle cx="12" cy="12" r="2"/>
-                    </svg>
-                </span>
-                <span class="nav-label">Challenges</span>
-            </button>
-            <div class="nav-divider"></div>
-            <button class="nav-item" id="nav-leaderboard">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="20" x2="18" y2="10"/>
-                        <line x1="12" y1="20" x2="12" y2="4"/>
-                        <line x1="6" y1="20" x2="6" y2="14"/>
-                    </svg>
-                </span>
-                <span class="nav-label">Leaderboard</span>
-            </button>
-            <button class="nav-item" id="nav-achievements">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="8" r="6"/>
-                        <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
-                    </svg>
-                </span>
-                <span class="nav-label">Achievements</span>
-            </button>
-            <button class="nav-item" id="nav-shop">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="9" cy="21" r="1"/>
-                        <circle cx="20" cy="21" r="1"/>
-                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-                    </svg>
-                </span>
-                <span class="nav-label">Shop</span>
-            </button>
-            <button class="nav-item" id="nav-zen-mode">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                    </svg>
-                </span>
-                <span class="nav-label">Zen Mode</span>
-            </button>
-            <div class="nav-spacer"></div>
-            <button class="nav-item" id="nav-settings">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="3"/>
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                    </svg>
-                </span>
-                <span class="nav-label">Settings</span>
-            </button>
-        </nav>
-    </aside>
+        </footer>
 
-    <!-- Bottom Navigation (Mobile) -->
-    <nav class="bottom-nav">
-        <button class="nav-item active" data-section="home">
-            <span class="nav-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                    <polyline points="9,22 9,12 15,12 15,22"/>
-                </svg>
-            </span>
-            <span class="nav-label">Home</span>
-        </button>
-        <button class="nav-item" id="mobile-nav-tournaments">
-            <span class="nav-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
-                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
-                    <path d="M4 22h16"/>
-                    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
-                </svg>
-            </span>
-            <span class="nav-label">Events</span>
-        </button>
-        <button class="nav-item" id="mobile-play-btn">
-            <div class="play-fab">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="2" y="6" width="20" height="12" rx="2"/>
-                    <circle cx="8" cy="12" r="2"/>
-                    <path d="M15 10v4M13 12h4"/>
-                </svg>
-            </div>
-        </button>
-        <button class="nav-item" id="mobile-nav-shop">
-            <span class="nav-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="9" cy="21" r="1"/>
-                    <circle cx="20" cy="21" r="1"/>
-                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-                </svg>
-            </span>
-            <span class="nav-label">Shop</span>
-        </button>
-        <button class="nav-item" id="mobile-menu-btn">
-            <span class="nav-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="3" y1="12" x2="21" y2="12"/>
-                    <line x1="3" y1="6" x2="21" y2="6"/>
-                    <line x1="3" y1="18" x2="21" y2="18"/>
-                </svg>
-            </span>
-            <span class="nav-label">Menu</span>
-        </button>
-    </nav>
+    </div><!-- /main-area -->
 
-    <!-- Quick Actions Sheet (Mobile) -->
-    <div id="quick-actions-sheet" class="quick-actions-sheet">
-        <div class="quick-actions-handle"></div>
-        <div class="quick-actions-grid">
-            <button class="quick-action-item" data-action="leaderboard">
-                <span class="quick-action-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="20" x2="18" y2="10"/>
-                        <line x1="12" y1="20" x2="12" y2="4"/>
-                        <line x1="6" y1="20" x2="6" y2="14"/>
-                    </svg>
-                </span>
-                <span class="quick-action-label">Leaderboard</span>
-            </button>
-            <button class="quick-action-item" data-action="achievements">
-                <span class="quick-action-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="8" r="6"/>
-                        <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
-                    </svg>
-                </span>
-                <span class="quick-action-label">Achievements</span>
-            </button>
-            <button class="quick-action-item" data-action="settings">
-                <span class="quick-action-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="3"/>
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                    </svg>
-                </span>
-                <span class="quick-action-label">Settings</span>
-            </button>
-            <button class="quick-action-item" data-action="party">
-                <span class="quick-action-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                        <circle cx="9" cy="7" r="4"/>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                    </svg>
-                </span>
-                <span class="quick-action-label">Party</span>
-            </button>
-            <button class="quick-action-item" data-action="challenges">
-                <span class="quick-action-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"/>
-                        <circle cx="12" cy="12" r="6"/>
-                        <circle cx="12" cy="12" r="2"/>
-                    </svg>
-                </span>
-                <span class="quick-action-label">Challenges</span>
-            </button>
-            <button class="quick-action-item" data-action="tournaments">
-                <span class="quick-action-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
-                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
-                        <path d="M4 22h16"/>
-                        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
-                    </svg>
-                </span>
-                <span class="quick-action-label">Tournaments</span>
-            </button>
-            <button class="quick-action-item" data-action="search">
-                <span class="quick-action-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="11" cy="11" r="8"/>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                    </svg>
-                </span>
-                <span class="quick-action-label">Search</span>
-            </button>
-            <button class="quick-action-item" data-action="profile">
-                <span class="quick-action-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                    </svg>
-                </span>
-                <span class="quick-action-label">Profile</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <main class="hub-main">
-        <div class="container">
-            <!-- Hero Section -->
-            <section class="hero-section">
-                <div class="hero-content">
-                    <span class="hero-badge">Featured Game</span>
-                    <h2 class="hero-title">Neon Racer 2084</h2>
-                    <p class="hero-desc">Experience high-speed adrenaline in the ultimate retro-futuristic racing challenge. Can you beat the clock on the neon tracks?</p>
-                    <button class="btn btn-primary hero-btn">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px; margin-right: 8px;">
-                            <polygon points="5 3 19 12 5 21 5 3"/>
-                        </svg>
-                        Play Now
-                    </button>
-                </div>
-                <div class="hero-visual">
-                    <div class="hero-glow"></div>
-                </div>
-            </section>
-
-            <!-- Dashboard Grid -->
-            <section class="dashboard-grid">
-                <!-- Player Profile Card -->
-                <div class="dashboard-card profile-card" id="profile-card">
-                    <div class="profile-header">
-                        <div class="profile-avatar" id="profile-avatar">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="2" y="6" width="20" height="12" rx="2"/>
-                                <circle cx="8" cy="12" r="2"/>
-                                <path d="M15 10v4M13 12h4"/>
-                            </svg>
-                        </div>
-                        <div class="profile-info">
-                            <div class="profile-name" id="profile-name">Player</div>
-                            <div class="profile-title" id="profile-title">Newcomer</div>
-                        </div>
-                        <button class="btn btn-ghost btn-sm" id="edit-profile-btn">
-                            <svg class="edit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="profile-level">
-                        <div class="level-info">
-                            <span class="level-badge" id="level-badge">Lv. 1</span>
-                            <span class="xp-text" id="xp-text">0 / 100 XP</span>
-                        </div>
-                        <div class="xp-bar">
-                            <div class="xp-fill" id="xp-fill" style="width: 0%"></div>
-                        </div>
-                    </div>
-                    <div class="profile-stats">
-                        <div class="mini-stat">
-                            <span class="mini-stat-value" id="games-played">0</span>
-                            <span class="mini-stat-label">Games</span>
-                        </div>
-                        <div class="mini-stat">
-                            <span class="mini-stat-value" id="achievements-count">0</span>
-                            <span class="mini-stat-label">Achievements</span>
-                        </div>
-                        <div class="mini-stat">
-                            <span class="mini-stat-value" id="total-playtime">0h</span>
-                            <span class="mini-stat-label">Play Time</span>
-                        </div>
-                        <div class="mini-stat">
-                            <span class="mini-stat-value" id="streak-count">0</span>
-                            <span class="mini-stat-label">Day Streak</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Leaderboard Preview -->
-                <div class="dashboard-card leaderboard-card">
-                    <div class="card-header">
-                        <h3>
-                            <svg class="card-header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
-                                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
-                                <path d="M4 22h16"/>
-                                <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
-                            </svg>
-                            Top Players
-                        </h3>
-                        <button class="btn btn-ghost btn-sm" id="view-leaderboard-btn">View All</button>
-                    </div>
-                    <div class="leaderboard-list" id="leaderboard-preview">
-                        <!-- Populated by JS -->
-                        <div class="leaderboard-empty">Loading...</div>
-                    </div>
-                </div>
-
-                <!-- Best Games -->
-                <div class="dashboard-card best-games-card">
-                    <div class="card-header">
-                        <h3>
-                            <svg class="card-header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
-                            </svg>
-                            Your Best Games
-                        </h3>
-                    </div>
-                    <div class="best-games-list" id="best-games-list">
-                        <!-- Populated by JS -->
-                        <div class="best-games-empty">Play games to see your best scores!</div>
-                    </div>
-                </div>
-            </section>
-            
-            <!-- Games Grid -->
-            <section class="games-section">
-                <div class="games-grid" id="games-grid">
-                    <!-- Game cards will be inserted here by JavaScript -->
-                </div>
-            </section>
-        </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="hub-footer">
-        <div class="container">
-            <p>
-                <svg style="width: 16px; height: 16px; vertical-align: middle; stroke: var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="2" y="6" width="20" height="12" rx="2"/>
-                    <circle cx="8" cy="12" r="2"/>
-                    <path d="M15 10v4M13 12h4"/>
-                </svg>
-                Arcade Gaming Hub &copy; 2026 | Built with
-                <svg style="width: 14px; height: 14px; vertical-align: middle; stroke: #f76c6c; fill: #f76c6c;" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                </svg>
-            </p>
-        </div>
-    </footer>
-
-    <!-- Auth Modal -->
-    <!-- Enhanced Auth Modal -->
-    <div class="auth-modal hidden" id="auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
-        <div class="auth-modal-backdrop"></div>
-        <div class="auth-modal-container">
-            <!-- Left Side - Visual -->
-            <div class="auth-modal-visual">
-                <div class="auth-visual-content">
-                    <div class="auth-logo-large">🎮</div>
-                    <h2 class="auth-visual-title">Arcade Hub</h2>
-                    <p class="auth-visual-subtitle">Join the ultimate gaming experience</p>
-                    <div class="auth-features">
-                        <div class="auth-feature">
-                            <span class="auth-feature-icon">🏆</span>
-                            <span>Compete on leaderboards</span>
-                        </div>
-                        <div class="auth-feature">
-                            <span class="auth-feature-icon">💾</span>
-                            <span>Save your progress</span>
-                        </div>
-                        <div class="auth-feature">
-                            <span class="auth-feature-icon">🎯</span>
-                            <span>Earn achievements</span>
-                        </div>
-                        <div class="auth-feature">
-                            <span class="auth-feature-icon">👥</span>
-                            <span>Play with friends</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Right Side - Auth Forms -->
-            <div class="auth-modal-content">
-                <button class="auth-modal-close" id="modal-close" aria-label="Close">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"/>
-                        <line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
-                </button>
-                
-                <div class="auth-header">
-                    <h2 id="auth-title" class="auth-title">Welcome Back!</h2>
-                    <p class="auth-subtitle">Sign in to continue your gaming journey</p>
-                </div>
-                
-                <!-- Auth Tabs -->
-                <div class="auth-tabs" role="tablist">
-                    <button class="auth-tab active" data-tab="signin" role="tab" aria-selected="true">Sign In</button>
-                    <button class="auth-tab" data-tab="signup" role="tab" aria-selected="false">Create Account</button>
-                </div>
-                
-                <!-- Sign In Form -->
-                <form class="auth-form active" id="signin-form" data-form="signin">
-                    <div class="auth-form-group">
-                        <label for="signin-email" class="auth-label">Email</label>
-                        <input type="email" id="signin-email" class="auth-input" placeholder="Enter your email" required autocomplete="email">
-                    </div>
-                    <div class="auth-form-group">
-                        <label for="signin-password" class="auth-label">Password</label>
-                        <div class="auth-password-wrapper">
-                            <input type="password" id="signin-password" class="auth-input" placeholder="Enter your password" required autocomplete="current-password">
-                            <button type="button" class="auth-password-toggle" aria-label="Toggle password visibility">
-                                <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                    <circle cx="12" cy="12" r="3"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="auth-form-options">
-                        <label class="auth-checkbox">
-                            <input type="checkbox" id="remember-me">
-                            <span>Remember me</span>
-                        </label>
-                        <a href="#" class="auth-link" id="forgot-password">Forgot password?</a>
-                    </div>
-                    <button type="submit" class="auth-btn auth-btn-primary">
-                        <span class="auth-btn-text">Sign In</span>
-                        <span class="auth-btn-loader hidden"></span>
-                    </button>
-                </form>
-                
-                <!-- Sign Up Form -->
-                <form class="auth-form" id="signup-form" data-form="signup">
-                    <div class="auth-form-group">
-                        <label for="signup-name" class="auth-label">Display Name</label>
-                        <input type="text" id="signup-name" class="auth-input" placeholder="Choose a display name" required autocomplete="username">
-                    </div>
-                    <div class="auth-form-group">
-                        <label for="signup-email" class="auth-label">Email</label>
-                        <input type="email" id="signup-email" class="auth-input" placeholder="Enter your email" required autocomplete="email">
-                    </div>
-                    <div class="auth-form-group">
-                        <label for="signup-password" class="auth-label">Password</label>
-                        <div class="auth-password-wrapper">
-                            <input type="password" id="signup-password" class="auth-input" placeholder="Create a password" required autocomplete="new-password" minlength="6">
-                            <button type="button" class="auth-password-toggle" aria-label="Toggle password visibility">
-                                <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                    <circle cx="12" cy="12" r="3"/>
-                                </svg>
-                            </button>
-                        </div>
-                        <span class="auth-hint">Must be at least 6 characters</span>
-                    </div>
-                    <button type="submit" class="auth-btn auth-btn-primary">
-                        <span class="auth-btn-text">Create Account</span>
-                        <span class="auth-btn-loader hidden"></span>
-                    </button>
-                </form>
-                
-                <!-- Divider -->
-                <div class="auth-divider">
-                    <span>or continue with</span>
-                </div>
-                
-                <!-- Social Login -->
-                <div class="auth-social">
-                    <button class="auth-btn auth-btn-google" id="google-signin">
-                        <svg class="google-icon" viewBox="0 0 24 24">
-                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                        </svg>
-                        Google
-                    </button>
-                </div>
-                
-                <!-- Guest Option -->
-                <div class="auth-guest">
-                    <button class="auth-btn auth-btn-ghost" id="guest-play">
-                        <span>Continue as Guest</span>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M5 12h14M12 5l7 7-7 7"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Achievement Gallery Modal -->
-    <div class="modal hidden" id="achievement-gallery">
-        <div class="modal-backdrop"></div>
-        <div class="modal-content gallery-modal">
-            <div id="gallery-content">
-                <!-- Gallery content populated by JS -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Profile Editor Modal -->
-    <div class="modal hidden" id="profile-modal">
-        <div class="modal-backdrop"></div>
-        <div class="modal-content profile-editor-modal">
-            <div class="modal-header">
-                <div class="modal-title-row">
-                    <svg class="modal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                    </svg>
-                    <h2>Edit Profile</h2>
-                </div>
-            </div>
-            <div class="profile-edit-form">
-                <div class="form-group">
-                    <label>Display Name</label>
-                    <input type="text" id="edit-name-input" maxlength="20" placeholder="Enter your name">
-                </div>
-                <div class="form-group">
-                    <label>Avatar</label>
-                    <div class="avatar-grid" id="avatar-grid">
-                        <!-- Avatars populated by JS -->
-                    </div>
-                </div>
-            </div>
-            <div class="modal-buttons">
-                <button class="btn btn-primary" id="save-profile-btn">Save</button>
-                <button class="btn btn-ghost" id="cancel-profile-btn">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Leaderboard Modal -->
-    <div class="modal hidden" id="leaderboard-modal">
-        <div class="modal-backdrop"></div>
-        <div class="modal-content leaderboard-modal">
-            <div class="modal-header">
-                <div class="modal-title-row">
-                    <svg class="modal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
-                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
-                        <path d="M4 22h16"/>
-                        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
-                        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
-                        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
-                    </svg>
-                    <h2>Leaderboards</h2>
-                </div>
-            </div>
-            <div class="leaderboard-tabs" id="leaderboard-tabs">
-                <button class="leaderboard-tab active" data-game="global">
-                    <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"/>
-                        <line x1="2" y1="12" x2="22" y2="12"/>
-                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                    </svg>
-                    Global
-                </button>
-                <!-- Game tabs populated by JS -->
-            </div>
-            <div class="leaderboard-content" id="leaderboard-content">
-                <!-- Leaderboard populated by JS -->
-            </div>
-            <button class="btn btn-ghost gallery-close" id="leaderboard-close-btn">Close</button>
-        </div>
-    </div>
-
-    <!-- Settings Modal -->
-    <div class="modal hidden" id="settings-modal">
-        <div class="modal-backdrop"></div>
-        <div class="modal-content settings-modal">
-            <div class="modal-header">
-                <div class="modal-title-row">
-                    <svg class="modal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="3"/>
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                    </svg>
-                    <h2>Settings</h2>
-                </div>
-            </div>
-            <div class="settings-list">
-                <div class="setting-item">
-                    <div class="setting-info">
-                        <span class="setting-name">
-                            <svg class="setting-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polygon points="11,5 6,9 2,9 2,15 6,15 11,19 11,5"/>
-                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
-                            </svg>
-                            Sound Effects
-                        </span>
-                        <span class="setting-desc">Play sounds for notifications</span>
-                    </div>
-                    <label class="toggle">
-                        <input type="checkbox" id="sound-toggle" checked>
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-                <div class="setting-item">
-                    <div class="setting-info">
-                        <span class="setting-name">
-                            <svg class="setting-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M9 18V5l12-2v13"/>
-                                <circle cx="6" cy="18" r="3"/>
-                                <circle cx="18" cy="16" r="3"/>
-                            </svg>
-                            Music
-                        </span>
-                        <span class="setting-desc">Background music in games</span>
-                    </div>
-                    <label class="toggle">
-                        <input type="checkbox" id="music-toggle" checked>
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-                <div class="setting-item">
-                    <div class="setting-info">
-                        <span class="setting-name">
-                            <svg class="setting-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                            </svg>
-                            Notifications
-                        </span>
-                        <span class="setting-desc">Show achievement popups</span>
-                    </div>
-                    <label class="toggle">
-                        <input type="checkbox" id="notifications-toggle" checked>
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-                <div class="setting-item">
-                    <div class="setting-info">
-                        <span class="setting-name">
-                            <svg class="setting-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="5"/>
-                                <line x1="12" y1="1" x2="12" y2="3"/>
-                                <line x1="12" y1="21" x2="12" y2="23"/>
-                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-                                <line x1="1" y1="12" x2="3" y2="12"/>
-                                <line x1="21" y1="12" x2="23" y2="12"/>
-                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-                            </svg>
-                            High Contrast
-                        </span>
-                        <span class="setting-desc">Enhanced visibility mode</span>
-                    </div>
-                    <label class="toggle">
-                        <input type="checkbox" id="contrast-toggle">
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-            </div>
-            <button class="btn btn-ghost gallery-close" id="settings-close-btn">Close</button>
-        </div>
-    </div>
-
-    <!-- Shop Modal -->
-    <div class="modal hidden" id="shop-modal">
-        <div class="modal-backdrop"></div>
-        <div class="modal-content shop-modal">
-            <div class="shop-header">
-                <div class="modal-title-row">
-                    <svg class="modal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="9" cy="21" r="1"/>
-                        <circle cx="20" cy="21" r="1"/>
-                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-                    </svg>
-                    <h2>Item Shop</h2>
-                </div>
-                <div class="shop-wallet">
-                    <div class="wallet-item">
-                        <svg class="coin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"/>
-                            <path d="M12 6v12"/>
-                            <path d="M15 9.5a3.5 3.5 0 0 0-6 0v0a3.5 3.5 0 0 0 6 5 3.5 3.5 0 0 1-6 0"/>
-                        </svg>
-                        <span id="shop-coins">0</span>
-                    </div>
-                </div>
-            </div>
-            <div class="shop-tabs" id="shop-tabs">
-                <button class="shop-tab active" data-category="all">All</button>
-                <button class="shop-tab" data-category="title">Titles</button>
-                <button class="shop-tab" data-category="badge">Badges</button>
-                <button class="shop-tab" data-category="card_skin">Skins</button>
-                <button class="shop-tab" data-category="avatar_frame">Frames</button>
-            </div>
-            <div class="shop-grid" id="shop-grid">
-                <!-- Populated by JS -->
-            </div>
-            <button class="btn btn-ghost gallery-close" id="shop-close-btn">Close</button>
-        </div>
-    </div>
-
-    <!-- Create Tournament Modal -->
-    <div class="modal hidden" id="create-tournament-modal">
-        <div class="modal-backdrop"></div>
-        <div class="modal-content tournament-modal">
-            <h2>
-                <svg class="modal-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
-                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
-                    <path d="M4 22h16"/>
-                    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
-                </svg>
-                Create Tournament
-            </h2>
-            <div class="form-group">
-                <label>Tournament Name</label>
-                <input type="text" id="tourney-name-input" placeholder="e.g. Weekend Warrior">
-            </div>
-            <div class="form-group">
-                <label>Game</label>
-                <div class="game-select-grid" id="tourney-game-select">
-                    <!-- Populated by JS -->
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Size</label>
-                <select id="tourney-size-select" class="form-select">
-                    <option value="4">4 Players</option>
-                    <option value="8">8 Players</option>
-                    <option value="16">16 Players</option>
-                </select>
-            </div>
-            <div class="modal-actions">
-                <button class="btn btn-primary" id="start-tournament-btn">Create & Join</button>
-                <button class="btn btn-ghost" id="cancel-tournament-btn">Cancel</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Tournaments Modal (New) -->
-    <div class="modal hidden" id="tournaments-modal">
-        <div class="modal-backdrop"></div>
-        <div class="modal-content tournament-modal-view">
-            <div class="modal-header">
-                <div class="modal-title-row">
-                    <svg class="modal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
-                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
-                        <path d="M4 22h16"/>
-                        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
-                    </svg>
-                    <h2>Active Tournaments</h2>
-                </div>
-                <button class="btn btn-primary btn-sm" id="modal-create-tournament-btn">+ Create</button>
-            </div>
-            <div id="tournament-section">
-                <!-- Content will be populated here by TournamentService -->
-            </div>
-            <button class="btn btn-ghost gallery-close" id="tournaments-close-btn">Close</button>
-        </div>
-    </div>
-    
-    <!-- Challenges Modal (New) -->
-    <div class="modal hidden" id="challenges-modal">
-        <div class="modal-backdrop"></div>
-        <div class="modal-content challenges-modal-view">
-            <div class="modal-header">
-                <div class="modal-title-row">
-                    <svg class="modal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"/>
-                        <circle cx="12" cy="12" r="6"/>
-                        <circle cx="12" cy="12" r="2"/>
-                    </svg>
-                    <h2>Daily Challenges</h2>
-                </div>
-            </div>
-            <div id="challenge-section">
-                <!-- Content will be populated here by DailyChallengeService -->
-            </div>
-            <button class="btn btn-ghost gallery-close" id="challenges-close-btn">Close</button>
-        </div>
-    </div>
-
-
-    <!-- Bracket Modal -->
-    <div class="modal hidden" id="bracket-modal">
-        <div class="modal-backdrop"></div>
-        <div class="modal-content bracket-modal-content" style="max-width: 90vw; width: 100%;">
-            <div class="bracket-header">
-                <h2 id="bracket-title">Tournament Bracket</h2>
-                <div class="bracket-actions">
-                    <button class="btn btn-ghost" id="bracket-refresh">🔄 Refresh</button>
-                    <button class="btn btn-ghost modal-close-btn" id="bracket-close-btn">Close</button>
-                </div>
-            </div>
-            <div class="bracket-scroll-container">
-                <div class="bracket-container" id="bracket-container">
-                    <!-- Populated by JS -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Right Sidebar (Challenges, Tournaments, Party) -->
+    <!-- ============================================================
+         RIGHT SIDEBAR (Party / Friends)
+         ============================================================ -->
     <aside class="hub-sidebar-right" id="right-sidebar">
         <button id="toggle-right-sidebar" class="sidebar-toggle-btn" title="Toggle Sidebar">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
-        <!-- Social Hub Only -->
 
-        <!-- Social Hub Section -->
         <div class="social-hub-divider">
             <span>Social Hub</span>
         </div>
 
         <!-- Party Widget -->
-        <!-- Party Widget (Compact Refactor) -->
         <div id="party-widget" class="party-widget">
             <div class="party-header">
                 <div class="party-header-left">
@@ -987,7 +473,6 @@
                 <span id="party-status" class="party-status">SOLO</span>
             </div>
 
-            <!-- Active Party Content -->
             <div id="party-content" class="party-content hidden">
                 <div class="party-code-display">
                     <span class="code-label">CODE:</span>
@@ -996,15 +481,9 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                     </button>
                 </div>
-                
-                <div class="party-members" id="party-members">
-                    <!-- Members populated by JS -->
-                </div>
-
+                <div class="party-members" id="party-members"></div>
                 <div class="party-chat" id="party-chat-mini">
-                    <div class="party-chat-messages" id="party-chat-messages">
-                        <!-- Chat messages -->
-                    </div>
+                    <div class="party-chat-messages" id="party-chat-messages"></div>
                     <div class="party-chat-input">
                         <input type="text" id="party-chat-input" placeholder="Message party...">
                         <button id="party-chat-send">
@@ -1012,11 +491,9 @@
                         </button>
                     </div>
                 </div>
-
                 <button id="leave-party-btn" class="btn btn-danger btn-sm btn-full" style="margin-top: var(--space-md);">Leave Party</button>
             </div>
 
-            <!-- Join/Create Actions -->
             <div id="party-actions" class="party-actions">
                 <button id="create-party-btn" class="btn-primary btn-full party-create-card">
                     <div class="party-create-icon">
@@ -1030,14 +507,12 @@
                         <span class="action-subtitle">Party</span>
                     </div>
                 </button>
-                
                 <button id="join-party-btn-trigger" class="btn-ghost btn-full join-trigger-btn">
                     <span>HAVE A CODE?</span>
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </button>
             </div>
 
-            <!-- Join Party Input Area (Moved outside actions) -->
             <div id="join-party-input-area" class="join-area hidden">
                 <div class="join-input-wrapper">
                     <input type="text" id="join-party-input" placeholder="CODE" maxlength="6">
@@ -1049,21 +524,18 @@
             </div>
         </div>
 
-        <!-- Friends Widget (Expanded Refactor) -->
+        <!-- Friends Widget -->
         <div id="friends-widget" class="friends-panel">
             <div class="friends-header">
                 <h3>Friends <span id="online-friends-count" class="friend-count">0</span></h3>
             </div>
-            
             <div class="friends-tabs-container">
                 <div class="friends-tabs">
                     <button class="friends-tab active" data-tab="friends">Friends</button>
                     <button class="friends-tab" data-tab="requests">Requests <span id="request-badge" class="badge-mini hidden">0</span></button>
                 </div>
             </div>
-
             <div id="friends-list" class="friends-list">
-                <!-- Friends populated by JS -->
                 <div class="friends-empty">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"/>
@@ -1073,12 +545,7 @@
                     <p>No friends online</p>
                 </div>
             </div>
-
-            <!-- Friend Requests List (Hidden by default) -->
-            <div id="friend-requests-list" class="friends-list hidden">
-                <!-- Populated by JS -->
-            </div>
-
+            <div id="friend-requests-list" class="friends-list hidden"></div>
             <div class="add-friend-section">
                 <div class="add-friend-input-group">
                     <svg class="search-icon-input" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1093,52 +560,506 @@
                         </svg>
                     </button>
                 </div>
-                <!-- Search Results Dropdown -->
                 <div id="friend-search-results" class="search-results hidden"></div>
             </div>
         </div>
+
     </aside>
 
-    <!-- Game Viewport (SPA Container) -->
-    <div id="game-viewport" class="game-viewport hidden">
+</div><!-- /app-shell -->
 
-        <!-- Exit Game Button -->
-        <button id="exit-game-btn" class="exit-game-btn" aria-label="Exit Game">
+<!-- ================================================================
+     BOTTOM NAVIGATION (Mobile)
+     ================================================================ -->
+<nav class="bottom-nav">
+    <button class="nav-item active" data-section="home">
+        <span class="nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9,22 9,12 15,12 15,22"/>
             </svg>
-            <span>Exit Game</span>
-        </button>
+        </span>
+        <span class="nav-label">Home</span>
+    </button>
+    <button class="nav-item" id="mobile-nav-tournaments">
+        <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                <path d="M4 22h16"/>
+                <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+            </svg>
+        </span>
+        <span class="nav-label">Events</span>
+    </button>
+    <button class="nav-item" id="mobile-play-btn">
+        <div class="play-fab">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="6" width="20" height="12" rx="2"/>
+                <circle cx="8" cy="12" r="2"/>
+                <path d="M15 10v4M13 12h4"/>
+            </svg>
+        </div>
+    </button>
+    <button class="nav-item" id="mobile-nav-shop">
+        <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="9" cy="21" r="1"/>
+                <circle cx="20" cy="21" r="1"/>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+            </svg>
+        </span>
+        <span class="nav-label">Shop</span>
+    </button>
+    <button class="nav-item" id="mobile-menu-btn">
+        <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </span>
+        <span class="nav-label">Menu</span>
+    </button>
+</nav>
 
-        <!-- Global Overlay HUD (Hiding for game purity) -->
-        <div id="global-hud" class="global-hud hidden">
-            <div id="hud-event-banner" class="hud-event-banner hidden">
-                <span class="event-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 2c3 3 4 7 4 10a5 5 0 0 1-10 0c0-3 1-7 4-10z"/>
-                        <circle cx="12" cy="14" r="2"/>
-                    </svg>
-                </span>
-                <span id="hud-event-text" class="event-text">FLASH CHALLENGE ACTIVE!</span>
-                <span id="hud-event-timer" class="event-timer">05:00</span>
+<!-- Quick Actions Sheet (Mobile) -->
+<div id="quick-actions-sheet" class="quick-actions-sheet">
+    <div class="quick-actions-handle"></div>
+    <div class="quick-actions-grid">
+        <button class="quick-action-item" data-action="leaderboard">
+            <span class="quick-action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
+            <span class="quick-action-label">Leaderboard</span>
+        </button>
+        <button class="quick-action-item" data-action="achievements">
+            <span class="quick-action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg></span>
+            <span class="quick-action-label">Achievements</span>
+        </button>
+        <button class="quick-action-item" data-action="settings">
+            <span class="quick-action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 4.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 .33 1.65 1.65 0 0 0 10 1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+            <span class="quick-action-label">Settings</span>
+        </button>
+        <button class="quick-action-item" data-action="party">
+            <span class="quick-action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+            <span class="quick-action-label">Party</span>
+        </button>
+        <button class="quick-action-item" data-action="challenges">
+            <span class="quick-action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span>
+            <span class="quick-action-label">Challenges</span>
+        </button>
+        <button class="quick-action-item" data-action="tournaments">
+            <span class="quick-action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></span>
+            <span class="quick-action-label">Tournaments</span>
+        </button>
+        <button class="quick-action-item" data-action="search">
+            <span class="quick-action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+            <span class="quick-action-label">Search</span>
+        </button>
+        <button class="quick-action-item" data-action="profile">
+            <span class="quick-action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></span>
+            <span class="quick-action-label">Profile</span>
+        </button>
+    </div>
+</div>
+
+<!-- ================================================================
+     MODALS
+     ================================================================ -->
+
+<!-- Auth Modal -->
+<div class="auth-modal hidden" id="auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+    <div class="auth-modal-backdrop"></div>
+    <div class="auth-modal-container">
+        <div class="auth-modal-visual">
+            <div class="auth-visual-content">
+                <div class="auth-logo-large">🎮</div>
+                <h2 class="auth-visual-title">Arcade Hub</h2>
+                <p class="auth-visual-subtitle">Join the ultimate gaming experience</p>
+                <div class="auth-features">
+                    <div class="auth-feature"><span class="auth-feature-icon">🏆</span><span>Compete on leaderboards</span></div>
+                    <div class="auth-feature"><span class="auth-feature-icon">💾</span><span>Save your progress</span></div>
+                    <div class="auth-feature"><span class="auth-feature-icon">🎯</span><span>Earn achievements</span></div>
+                    <div class="auth-feature"><span class="auth-feature-icon">👥</span><span>Play with friends</span></div>
+                </div>
             </div>
         </div>
-
-
-        <iframe id="game-frame" class="game-frame" src="about:blank" allow="autoplay; fullscreen"></iframe>
+        <div class="auth-modal-content">
+            <button class="auth-modal-close" id="modal-close" aria-label="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <div class="auth-header">
+                <h2 id="auth-title" class="auth-title">Welcome Back!</h2>
+                <p class="auth-subtitle">Sign in to continue your gaming journey</p>
+            </div>
+            <div class="auth-tabs" role="tablist">
+                <button class="auth-tab active" data-tab="signin" role="tab" aria-selected="true">Sign In</button>
+                <button class="auth-tab" data-tab="signup" role="tab" aria-selected="false">Create Account</button>
+            </div>
+            <form class="auth-form active" id="signin-form" data-form="signin">
+                <div class="auth-form-group">
+                    <label for="signin-email" class="auth-label">Email</label>
+                    <input type="email" id="signin-email" class="auth-input" placeholder="Enter your email" required autocomplete="email">
+                </div>
+                <div class="auth-form-group">
+                    <label for="signin-password" class="auth-label">Password</label>
+                    <div class="auth-password-wrapper">
+                        <input type="password" id="signin-password" class="auth-input" placeholder="Enter your password" required autocomplete="current-password">
+                        <button type="button" class="auth-password-toggle" aria-label="Toggle password visibility">
+                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="auth-form-options">
+                    <label class="auth-checkbox"><input type="checkbox" id="remember-me"><span>Remember me</span></label>
+                    <a href="#" class="auth-link" id="forgot-password">Forgot password?</a>
+                </div>
+                <button type="submit" class="auth-btn auth-btn-primary">
+                    <span class="auth-btn-text">Sign In</span>
+                    <span class="auth-btn-loader hidden"></span>
+                </button>
+            </form>
+            <form class="auth-form" id="signup-form" data-form="signup">
+                <div class="auth-form-group">
+                    <label for="signup-name" class="auth-label">Display Name</label>
+                    <input type="text" id="signup-name" class="auth-input" placeholder="Choose a display name" required autocomplete="username">
+                </div>
+                <div class="auth-form-group">
+                    <label for="signup-email" class="auth-label">Email</label>
+                    <input type="email" id="signup-email" class="auth-input" placeholder="Enter your email" required autocomplete="email">
+                </div>
+                <div class="auth-form-group">
+                    <label for="signup-password" class="auth-label">Password</label>
+                    <div class="auth-password-wrapper">
+                        <input type="password" id="signup-password" class="auth-input" placeholder="Create a password" required autocomplete="new-password" minlength="6">
+                        <button type="button" class="auth-password-toggle" aria-label="Toggle password visibility">
+                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
+                    <span class="auth-hint">Must be at least 6 characters</span>
+                </div>
+                <button type="submit" class="auth-btn auth-btn-primary">
+                    <span class="auth-btn-text">Create Account</span>
+                    <span class="auth-btn-loader hidden"></span>
+                </button>
+            </form>
+            <div class="auth-divider"><span>or continue with</span></div>
+            <div class="auth-social">
+                <button class="auth-btn auth-btn-google" id="google-signin">
+                    <svg class="google-icon" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Google
+                </button>
+            </div>
+            <div class="auth-guest">
+                <button class="auth-btn auth-btn-ghost" id="guest-play">
+                    <span>Continue as Guest</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+            </div>
+        </div>
     </div>
+</div>
 
-    <!-- Three.js (for AAA Background) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- Achievement Gallery Modal -->
+<div class="modal hidden" id="achievement-gallery">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content gallery-modal">
+        <div id="gallery-content"></div>
+    </div>
+</div>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+<!-- Profile Editor Modal -->
+<div class="modal hidden" id="profile-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content profile-editor-modal">
+        <div class="modal-header">
+            <div class="modal-title-row">
+                <svg class="modal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+                <h2>Edit Profile</h2>
+            </div>
+            <button class="modal-close" id="profile-modal-close" aria-label="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="profile-edit-form">
+            <div class="form-group">
+                <label>Display Name</label>
+                <input type="text" id="edit-name-input" maxlength="20" placeholder="Enter your name">
+            </div>
+            <div class="form-group">
+                <label>Avatar</label>
+                <div class="avatar-grid" id="avatar-grid"></div>
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn btn-primary" id="save-profile-btn">Save Changes</button>
+            <button class="btn btn-ghost" id="cancel-profile-btn">Cancel</button>
+        </div>
+    </div>
+</div>
 
-    <!-- Load App -->
-    <script type="module" src="js/app.js"></script>
+<!-- Leaderboard Modal -->
+<div class="modal hidden" id="leaderboard-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content leaderboard-modal">
+        <div class="modal-header">
+            <div class="modal-title-row">
+                <svg class="modal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                    <path d="M4 22h16"/>
+                    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+                </svg>
+                <h2>Leaderboards</h2>
+            </div>
+            <button class="modal-close" id="leaderboard-close-btn" aria-label="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="leaderboard-tabs" id="leaderboard-tabs">
+            <button class="leaderboard-tab active" data-game="global">
+                <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                Global
+            </button>
+            <!-- Game tabs populated by JS -->
+        </div>
+        <div class="leaderboard-content" id="leaderboard-content"></div>
+    </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal hidden" id="settings-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content settings-modal">
+        <div class="modal-header">
+            <div class="modal-title-row">
+                <svg class="modal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 4.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 .33 1.65 1.65 0 0 0 10 1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                <h2>Settings</h2>
+            </div>
+            <button class="modal-close" id="settings-close-btn" aria-label="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="settings-list">
+            <div class="setting-item">
+                <div class="setting-info">
+                    <span class="setting-name">
+                        <svg class="setting-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11,5 6,9 2,9 2,15 6,15 11,19 11,5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                        Sound Effects
+                    </span>
+                    <span class="setting-desc">Play sounds for notifications</span>
+                </div>
+                <label class="toggle"><input type="checkbox" id="sound-toggle" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <span class="setting-name">
+                        <svg class="setting-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                        Music
+                    </span>
+                    <span class="setting-desc">Background music in games</span>
+                </div>
+                <label class="toggle"><input type="checkbox" id="music-toggle" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <span class="setting-name">
+                        <svg class="setting-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        Notifications
+                    </span>
+                    <span class="setting-desc">Show achievement popups</span>
+                </div>
+                <label class="toggle"><input type="checkbox" id="notifications-toggle" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <span class="setting-name">
+                        <svg class="setting-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                        High Contrast
+                    </span>
+                    <span class="setting-desc">Enhanced visibility mode</span>
+                </div>
+                <label class="toggle"><input type="checkbox" id="contrast-toggle"><span class="toggle-slider"></span></label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Shop Modal -->
+<div class="modal hidden" id="shop-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content shop-modal">
+        <div class="shop-header">
+            <div class="modal-title-row">
+                <svg class="modal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="9" cy="21" r="1"/>
+                    <circle cx="20" cy="21" r="1"/>
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                </svg>
+                <h2>Item Shop</h2>
+            </div>
+            <div class="shop-wallet">
+                <svg class="coin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M15 9.5a3.5 3.5 0 0 0-6 0v0a3.5 3.5 0 0 0 6 5 3.5 3.5 0 0 1-6 0"/></svg>
+                <span id="shop-coins">0</span>
+            </div>
+        </div>
+        <div class="shop-tabs" id="shop-tabs">
+            <button class="shop-tab active" data-category="all">All</button>
+            <button class="shop-tab" data-category="title">Titles</button>
+            <button class="shop-tab" data-category="badge">Badges</button>
+            <button class="shop-tab" data-category="card_skin">Skins</button>
+            <button class="shop-tab" data-category="avatar_frame">Frames</button>
+        </div>
+        <div class="shop-grid" id="shop-grid"></div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost gallery-close" id="shop-close-btn">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Create Tournament Modal -->
+<div class="modal hidden" id="create-tournament-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content tournament-modal">
+        <div class="modal-header">
+            <div class="modal-title-row">
+                <svg class="modal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                    <path d="M4 22h16"/>
+                    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+                </svg>
+                <h2>Create Tournament</h2>
+            </div>
+        </div>
+        <div style="padding: var(--space-lg) var(--space-xl);">
+            <div class="form-group">
+                <label>Tournament Name</label>
+                <input type="text" id="tourney-name-input" placeholder="e.g. Weekend Warrior">
+            </div>
+            <div class="form-group">
+                <label>Game</label>
+                <div class="game-select-grid" id="tourney-game-select"></div>
+            </div>
+            <div class="form-group">
+                <label>Size</label>
+                <select id="tourney-size-select" class="form-select">
+                    <option value="4">4 Players</option>
+                    <option value="8">8 Players</option>
+                    <option value="16">16 Players</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-primary" id="start-tournament-btn">Create &amp; Join</button>
+            <button class="btn btn-ghost" id="cancel-tournament-btn">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Tournaments View Modal -->
+<div class="modal hidden" id="tournaments-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content tournament-modal-view">
+        <div class="modal-header">
+            <div class="modal-title-row">
+                <svg class="modal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                    <path d="M4 22h16"/>
+                    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+                </svg>
+                <h2>Active Tournaments</h2>
+            </div>
+            <button class="btn btn-primary btn-sm" id="modal-create-tournament-btn">+ Create</button>
+        </div>
+        <div id="tournament-section" style="flex:1;overflow-y:auto;padding:var(--space-lg) var(--space-xl);"></div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost gallery-close" id="tournaments-close-btn">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Challenges Modal -->
+<div class="modal hidden" id="challenges-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content challenges-modal-view">
+        <div class="modal-header">
+            <div class="modal-title-row">
+                <svg class="modal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <circle cx="12" cy="12" r="6"/>
+                    <circle cx="12" cy="12" r="2"/>
+                </svg>
+                <h2>Daily Challenges</h2>
+            </div>
+        </div>
+        <div id="challenge-section" style="flex:1;overflow-y:auto;padding:var(--space-lg) var(--space-xl);"></div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost gallery-close" id="challenges-close-btn">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Bracket Modal -->
+<div class="modal hidden" id="bracket-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content bracket-modal-content" style="max-width: 90vw; width: 100%;">
+        <div class="bracket-header">
+            <h2 id="bracket-title">Tournament Bracket</h2>
+            <div class="bracket-actions">
+                <button class="btn btn-ghost" id="bracket-refresh">🔄 Refresh</button>
+                <button class="btn btn-ghost modal-close-btn" id="bracket-close-btn">Close</button>
+            </div>
+        </div>
+        <div class="bracket-scroll-container">
+            <div class="bracket-container" id="bracket-container"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ================================================================
+     GAME VIEWPORT (SPA Container)
+     ================================================================ -->
+<div id="game-viewport" class="game-viewport hidden">
+    <button id="exit-game-btn" class="exit-game-btn" aria-label="Exit Game">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+        <span>Exit Game</span>
+    </button>
+    <div id="global-hud" class="global-hud hidden">
+        <div id="hud-event-banner" class="hud-event-banner hidden">
+            <span class="event-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c3 3 4 7 4 10a5 5 0 0 1-10 0c0-3 1-7 4-10z"/><circle cx="12" cy="14" r="2"/></svg>
+            </span>
+            <span id="hud-event-text" class="event-text">FLASH CHALLENGE ACTIVE!</span>
+            <span id="hud-event-timer" class="event-timer">05:00</span>
+        </div>
+    </div>
+    <iframe id="game-frame" class="game-frame" src="about:blank" allow="autoplay; fullscreen"></iframe>
+</div>
+
+<!-- ================================================================
+     SCRIPTS
+     ================================================================ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+<script type="module" src="js/app.js"></script>
+
 </body>
 </html>

@@ -60,67 +60,69 @@ export class GameCardsManager {
         const card = document.createElement('article');
         card.className = 'game-card';
         card.style.animationDelay = `${index * 0.05}s`;
-        
+
         // Accessibility attributes
         card.setAttribute('role', 'button');
         card.setAttribute('tabindex', game.comingSoon ? '-1' : '0');
         card.setAttribute('aria-label', this.buildAriaLabel(game));
-        
+
         const stats = globalStateManager.getStatistics();
         const highScore = stats.gameStats[game.id]?.highScore || 0;
         const difficultyClass = `difficulty-${game.difficulty}`;
         const svgIcon = GAME_ICONS[game.id] || '';
+        const emoji = game.icon || '';
 
-        // Star rating
-        const starIcon = '<svg class="star-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>';
-        const starRating = Array(game.rating || 3).fill(starIcon).join('');
+        // Star rating (max 5)
+        const starIcon = '<svg class="star-icon" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>';
+        const starCount = Math.min(game.rating || 3, 5);
+        const starRating = Array(starCount).fill(starIcon).join('');
 
-        // Trophy icon
+        // Trophy icon for high score
         const trophyIcon = '<svg class="trophy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>';
 
-        const category = game.category || 'Arcade';
-        const playersCount = game.players || Math.floor(Math.random() * 5000 + 1000).toLocaleString();
+        // Play icon
+        const playIcon = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="5,3 19,12 5,21"/></svg>';
+
+        // Stable player count seeded from game id
+        const seed = game.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+        const playersCount = (((seed * 137) % 8000) + 1200).toLocaleString();
 
         card.innerHTML = `
-            <div class="game-card-header">
-                <div class="game-card-icon-minimal">
-                    ${game.image ? `<img src="${game.image}" alt="${game.title}" class="lazy-load" loading="lazy">` : svgIcon}
-                </div>
-                <div class="game-card-title-group">
-                    <h3 class="game-card-title" id="game-title-${game.id}">${game.title}</h3>
-                    <span class="game-card-category">${category}</span>
-                </div>
-                <div class="game-card-badges">
-                    <span class="difficulty-indicator ${difficultyClass}" title="${game.difficulty}"></span>
-                </div>
-            </div>
-            <div class="game-card-body">
-                <p class="game-card-description">${game.description}</p>
-            </div>
-            <div class="game-card-footer">
-                <div class="stat-item stat-highlight">
-                    ${trophyIcon}
-                    <span class="stat-value">${highScore.toLocaleString()}</span>
-                </div>
-                <div class="stat-item">
-                    <svg class="users-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                    <span class="stat-value">${playersCount}</span>
-                </div>
-                <div class="game-card-rating" aria-label="Rating ${game.rating || 3} out of 5 stars">
+            <div class="game-card-art">
+                <div class="game-card-art-bg"></div>
+                <span class="game-card-difficulty ${difficultyClass}">${game.difficulty}</span>
+                <div class="game-card-rating" aria-label="Rating ${starCount} out of 5 stars">
                     ${starRating}
+                </div>
+                ${emoji
+                    ? `<div class="game-card-emoji" aria-hidden="true">${emoji}</div>`
+                    : `<div class="game-card-icon-wrapper">
+                           <div class="game-card-svg-icon">${svgIcon}</div>
+                       </div>`
+                }
+                ${game.comingSoon ? `<div class="coming-soon-overlay"><span class="coming-soon-label">COMING SOON</span></div>` : ''}
+            </div>
+            <div class="game-card-content">
+                <h3 class="game-card-title" id="game-title-${game.id}">${game.title}</h3>
+                <p class="game-card-description">${game.description}</p>
+                <div class="game-card-meta">
+                    <div class="game-card-highscore">
+                        ${trophyIcon}
+                        <span class="score">${highScore > 0 ? highScore.toLocaleString() : '—'}</span>
+                    </div>
+                    <div class="game-card-players">
+                        <span class="live-dot"></span>
+                        ${playersCount} playing
+                    </div>
                 </div>
             </div>
             ${!game.comingSoon ? `
-            <div class="game-card-play-overlay">
-                <button class="play-btn btn-primary btn-sm" aria-label="Play ${game.title}" aria-describedby="game-title-${game.id}">
-                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width: 14px; height: 14px; margin-right: 4px;"><polygon points="5,3 19,12 5,21"/></svg> PLAY
+            <div class="game-card-footer">
+                <button class="game-card-play-btn" aria-label="Play ${game.title}" aria-describedby="game-title-${game.id}">
+                    ${playIcon} PLAY NOW
                 </button>
             </div>
-            ` : `
-            <div class="game-card-play-overlay coming-soon-overlay">
-                <span class="coming-soon-label">COMING SOON</span>
-            </div>
-            `}
+            ` : ''}
         `;
 
         // Apply equipped card skin
