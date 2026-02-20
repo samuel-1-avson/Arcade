@@ -10,7 +10,13 @@ export class ErrorBoundary {
         this.options = {
             container: document.body,
             fallbackMessage: 'Something went wrong.',
-            showDetails: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1',
+            showDetails: (() => {
+                try {
+                    return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                } catch (e) {
+                    return false;
+                }
+            })(),
             onError: null,
             ...options
         };
