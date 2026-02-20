@@ -1,65 +1,71 @@
 /* ==========================================================================
-   CSS Variables - NEON ARCADE Design System v3.0
+   CSS Variables — RETRO MINIMAL Design System v4.0
+   Clean, structured, distraction-free gaming hub
    ========================================================================== */
 
 :root {
     /* =========================================================================
-       BACKGROUND SYSTEM — Deep dark arcade void
+       BACKGROUND SYSTEM — deep dark, structured layers
        ========================================================================= */
-    --bg-void:        #05060f;   /* deepest dark - page bg */
-    --bg-surface:     #0b0d1a;   /* panels, sidebar */
-    --bg-elevated:    #111328;   /* cards, inputs */
-    --bg-raised:      #191c35;   /* hover states, elevated cards */
-    --bg-overlay:     rgba(5, 6, 15, 0.92);
-    --bg-glass:       rgba(17, 19, 40, 0.75);
+    --bg-void:     #000000;   /* page background */
+    --bg-surface:  #0a0a0a;   /* sidebar, panels */
+    --bg-elevated: #111111;   /* cards, inputs */
+    --bg-raised:   #1a1a1a;   /* hover, active states */
+    --bg-overlay:  rgba(0, 0, 0, 0.95);
+    --bg-glass:    rgba(10, 10, 10, 0.95);
 
     /* Backwards compat */
     --color-bg-dark:    var(--bg-void);
-    --color-bg-card:    rgba(17, 19, 40, 0.65);
+    --color-bg-card:    var(--bg-elevated);
     --color-bg-overlay: var(--bg-overlay);
     --bg-main:          var(--bg-void);
-    --bg-panel:         var(--bg-glass);
+    --bg-panel:         var(--bg-surface);
     --bg-panel-hover:   var(--bg-raised);
     --bg-input:         rgba(255,255,255,0.04);
 
     /* =========================================================================
-       NEON ACCENT COLORS
+       ACCENT COLORS — restrained retro palette
+       Cyan is the one signature accent; others used sparingly
        ========================================================================= */
-    --neon-cyan:    #00f5ff;
-    --neon-pink:    #ff006e;
-    --neon-violet:  #8b00ff;
-    --neon-amber:   #ffb800;
-    --neon-green:   #00ff88;
-    --neon-red:     #ff2244;
+    --accent:          #00e5ff;   /* primary accent: electric cyan */
+    --accent-dim:      rgba(0, 229, 255, 0.12);
+    --accent-border:   rgba(0, 229, 255, 0.30);
 
-    /* Semantic aliases */
-    --color-primary:   var(--neon-cyan);
-    --color-secondary: var(--neon-pink);
-    --color-accent:    var(--neon-violet);
-    --color-success:   var(--neon-green);
-    --color-danger:    var(--neon-red);
-    --color-warning:   var(--neon-amber);
+    --color-green:     #39d98a;   /* success / online */
+    --color-amber:     #f5a623;   /* warning / coins */
+    --color-red:       #e85555;   /* danger / offline */
+    --color-violet:    #9d6fff;   /* special events */
+    --color-pink:      #e0508a;   /* secondary accent */
 
-    /* Backwards compat */
-    --primary:   var(--neon-cyan);
-    --secondary: var(--neon-pink);
-    --accent:    var(--neon-violet);
-    --success:   var(--neon-green);
-    --danger:    var(--neon-red);
-    --warning:   var(--neon-amber);
+    /* Backwards compat neon aliases (used by game-specific CSS) */
+    --neon-cyan:    var(--accent);
+    --neon-pink:    var(--color-pink);
+    --neon-violet:  var(--color-violet);
+    --neon-amber:   var(--color-amber);
+    --neon-green:   var(--color-green);
+    --neon-red:     var(--color-red);
 
-    /* Dim/muted accent variants */
-    --primary-dim:    rgba(0, 245, 255, 0.15);
-    --secondary-dim:  rgba(255, 0, 110, 0.15);
-    --accent-dim:     rgba(139, 0, 255, 0.15);
+    /* Semantic */
+    --color-primary:   var(--accent);
+    --color-secondary: var(--color-pink);
+    --color-accent:    var(--color-violet);
+    --color-success:   var(--color-green);
+    --color-danger:    var(--color-red);
+    --color-warning:   var(--color-amber);
+    --primary:         var(--accent);
+    --secondary:       var(--color-pink);
+    --accent-color:    var(--color-violet);
+    --success:         var(--color-green);
+    --danger:          var(--color-red);
+    --warning:         var(--color-amber);
 
     /* =========================================================================
-       TEXT COLORS
+       TEXT COLORS — clear hierarchy
        ========================================================================= */
-    --text-primary:    #ffffff;
-    --text-secondary:  #c8d0f0;
-    --text-muted:      #6b7299;
-    --text-disabled:   #3d4266;
+    --text-primary:   #f0f0f5;
+    --text-secondary: #9898b0;
+    --text-muted:     #52526a;
+    --text-disabled:  #30303f;
 
     /* Backwards compat */
     --color-text:        var(--text-secondary);
@@ -69,49 +75,51 @@
     --text-bright:       var(--text-primary);
 
     /* =========================================================================
-       GLOW / SHADOW SYSTEM
+       BORDERS — subtle, structural
        ========================================================================= */
-    --glow-cyan:    0 0 12px rgba(0, 245, 255, 0.7), 0 0 40px rgba(0, 245, 255, 0.3), 0 0 80px rgba(0, 245, 255, 0.1);
-    --glow-pink:    0 0 12px rgba(255, 0, 110, 0.7), 0 0 40px rgba(255, 0, 110, 0.3), 0 0 80px rgba(255, 0, 110, 0.1);
-    --glow-violet:  0 0 12px rgba(139, 0, 255, 0.7), 0 0 40px rgba(139, 0, 255, 0.3), 0 0 80px rgba(139, 0, 255, 0.1);
-    --glow-amber:   0 0 12px rgba(255, 184, 0, 0.7), 0 0 40px rgba(255, 184, 0, 0.3);
+    --border-subtle:  1px solid #1a1a1a;
+    --border-default: 1px solid #222222;
+    --border-strong:  1px solid #333333;
+    --border-accent:  1px solid var(--accent);
 
     /* Backwards compat */
-    --glow-primary:   var(--glow-cyan);
-    --glow-secondary: var(--glow-pink);
-    --glow-accent:    var(--glow-violet);
-    --glow-text:      0 0 8px rgba(0, 245, 255, 0.5);
-
-    /* Shadow system */
-    --shadow-sm:  0 2px 8px rgba(0,0,0,0.4);
-    --shadow-md:  0 4px 20px rgba(0,0,0,0.5);
-    --shadow-lg:  0 8px 40px rgba(0,0,0,0.6);
-    --shadow-xl:  0 16px 60px rgba(0,0,0,0.7);
+    --border-neon:     var(--border-accent);
+    --border-hot:      1px solid rgba(224, 80, 138, 0.35);
+    --glass-border:    var(--border-default);
 
     /* =========================================================================
-       GRADIENTS
+       SHADOWS — clean depth, no glow bloat
        ========================================================================= */
-    --gradient-cyber:   linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-violet) 100%);
-    --gradient-hot:     linear-gradient(135deg, var(--neon-pink) 0%, var(--neon-amber) 100%);
-    --gradient-neon:    linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-pink) 100%);
-    --gradient-void:    linear-gradient(180deg, var(--bg-surface) 0%, var(--bg-void) 100%);
+    --shadow-sm:  none;
+    --shadow-md:  none;
+    --shadow-lg:  none;
+    --shadow-xl:  none;
 
-    /* Backwards compat */
-    --gradient-primary: var(--gradient-neon);
-    --gradient-card:    linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 100%);
-    --gradient-shine:   linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+    /* Minimal accent glow — used very sparingly */
+    --glow-accent: none;
+
+    /* Backwards compat glow aliases */
+    --glow-cyan:      none;
+    --glow-pink:      none;
+    --glow-violet:    none;
+    --glow-amber:     none;
+    --glow-primary:   none;
+    --glow-secondary: none;
+    --glow-text:      none;
 
     /* =========================================================================
-       BORDERS
+       GRADIENTS — minimal, purposeful
        ========================================================================= */
-    --border-subtle:  1px solid rgba(255,255,255,0.04);
-    --border-default: 1px solid rgba(255,255,255,0.08);
-    --border-strong:  1px solid rgba(255,255,255,0.14);
-    --border-neon:    1px solid rgba(0, 245, 255, 0.4);
-    --border-hot:     1px solid rgba(255, 0, 110, 0.4);
+    --gradient-accent: var(--accent);
+    --gradient-void:   var(--bg-void);
 
     /* Backwards compat */
-    --glass-border: var(--border-default);
+    --gradient-cyber:   var(--gradient-accent);
+    --gradient-hot:     linear-gradient(135deg, var(--color-pink) 0%, var(--color-amber) 100%);
+    --gradient-neon:    var(--gradient-accent);
+    --gradient-primary: var(--gradient-accent);
+    --gradient-card:    var(--bg-elevated);
+    --gradient-shine:   transparent;
 
     /* =========================================================================
        SPACING
@@ -127,27 +135,27 @@
     /* =========================================================================
        BORDER RADIUS
        ========================================================================= */
-    --radius-sm:   4px;
-    --radius-md:   8px;
-    --radius-lg:   12px;
-    --radius-xl:   16px;
-    --radius-2xl:  24px;
+    --radius-sm:   0px;
+    --radius-md:   2px;
+    --radius-lg:   4px;
+    --radius-xl:   6px;
+    --radius-2xl:  8px;
     --radius-full: 9999px;
 
     /* =========================================================================
        TYPOGRAPHY
        ========================================================================= */
-    --font-display: 'Orbitron', 'Rajdhani', 'Share Tech Mono', system-ui, sans-serif;
-    --font-body:    system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-display: 'Orbitron', system-ui, sans-serif;
+    --font-body:    system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     --font-mono:    'Share Tech Mono', 'Courier New', monospace;
 
     /* =========================================================================
        TRANSITIONS
        ========================================================================= */
     --transition-fast:   150ms cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-slow:   400ms cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-bounce: 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    --transition-normal: 220ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow:   350ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
 
     /* =========================================================================
        Z-INDEX LAYERS
@@ -163,6 +171,7 @@
     /* =========================================================================
        LAYOUT
        ========================================================================= */
-    --sidebar-width: 260px;
-    --topbar-height: 64px;
+    --sidebar-width:       240px;
+    --sidebar-width-right: 260px;
+    --topbar-height:       56px;
 }

@@ -1,262 +1,140 @@
 /* ==========================================================================
-   Animations — NEON ARCADE Design System v3.0
+   Animations — RETRO MINIMAL v4.0
+   Purposeful, subtle. No scanlines, no flicker, no bloom.
    ========================================================================== */
 
-/* ============================================================
-   LOGO & BRAND EFFECTS
-   ============================================================ */
-
-@keyframes neonFlicker {
-    0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
-        text-shadow: 0 0 7px var(--neon-cyan), 0 0 10px var(--neon-cyan), 0 0 21px var(--neon-cyan), 0 0 42px var(--neon-cyan);
-        opacity: 1;
-    }
-    20%, 24%, 55% {
-        text-shadow: none;
-        opacity: 0.85;
-    }
-}
-
-@keyframes logoGlow {
-    0%, 100% { filter: drop-shadow(0 0 6px var(--neon-cyan)); }
-    50%       { filter: drop-shadow(0 0 18px var(--neon-cyan)) drop-shadow(0 0 36px rgba(0,245,255,0.4)); }
-}
-
-@keyframes glitchText {
-    0%   { clip-path: inset(80% 0 0 0); transform: translateX(-4px); }
-    20%  { clip-path: inset(20% 0 60% 0); transform: translateX(4px); }
-    40%  { clip-path: inset(40% 0 40% 0); transform: translateX(-2px); }
-    60%  { clip-path: inset(0 0 80% 0); transform: translateX(2px); }
-    80%  { clip-path: inset(60% 0 20% 0); transform: translateX(-4px); }
-    100% { clip-path: inset(0 0 0 0); transform: translateX(0); }
-}
-
-/* ============================================================
-   BACKGROUND & AMBIANCE
-   ============================================================ */
-
-@keyframes scanlineScroll {
-    from { background-position: 0 0; }
-    to   { background-position: 0 100%; }
-}
-
-@keyframes gridPulse {
-    0%, 100% { opacity: 0.03; }
-    50%       { opacity: 0.06; }
-}
-
-@keyframes ambientGlow {
-    0%, 100% { opacity: 0.15; transform: scale(1); }
-    50%       { opacity: 0.25; transform: scale(1.05); }
-}
-
-/* ============================================================
-   ENTRY ANIMATIONS
-   ============================================================ */
-
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(24px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeInLeft {
-    from { opacity: 0; transform: translateX(-24px); }
-    to   { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes fadeInRight {
-    from { opacity: 0; transform: translateX(24px); }
-    to   { opacity: 1; transform: translateX(0); }
-}
-
+/* ── Entry animations ──────────────────────────────────────────────────── */
 @keyframes fadeIn {
     from { opacity: 0; }
     to   { opacity: 1; }
 }
 
-@keyframes slideInLeft {
-    from { opacity: 0; transform: translateX(-100%); }
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInLeft {
+    from { opacity: 0; transform: translateX(-12px); }
     to   { opacity: 1; transform: translateX(0); }
 }
 
 @keyframes slideInDown {
-    from { opacity: 0; transform: translateY(-16px) scale(0.97); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes popIn {
-    0%   { opacity: 0; transform: scale(0.85); }
-    60%  { transform: scale(1.04); }
+    0%   { opacity: 0; transform: scale(0.92); }
+    70%  { transform: scale(1.02); }
     100% { opacity: 1; transform: scale(1); }
 }
 
 @keyframes modalEntry {
-    from { opacity: 0; transform: translateY(32px) scale(0.95); }
+    from { opacity: 0; transform: translateY(20px) scale(0.97); }
     to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* ============================================================
-   CARD & BUTTON EFFECTS
-   ============================================================ */
-
-@keyframes cardGlow {
-    0%, 100% { box-shadow: 0 0 10px rgba(0,245,255,0.15), 0 8px 32px rgba(0,0,0,0.5); }
-    50%       { box-shadow: 0 0 24px rgba(0,245,255,0.35), 0 8px 32px rgba(0,0,0,0.5); }
+/* ── Utility / Loading ─────────────────────────────────────────────────── */
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
-@keyframes cardShine {
-    0%   { left: -100%; }
-    100% { left: 200%; }
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.45; }
 }
 
-@keyframes neonBorderPulse {
-    0%, 100% { border-color: rgba(0,245,255,0.3); box-shadow: 0 0 8px rgba(0,245,255,0.2); }
-    50%       { border-color: rgba(0,245,255,0.7); box-shadow: 0 0 20px rgba(0,245,255,0.5); }
+@keyframes skeletonShimmer {
+    0%   { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
 }
 
-@keyframes buttonPress {
-    0%   { transform: translateY(0); }
-    50%  { transform: translateY(3px); }
-    100% { transform: translateY(0); }
+@keyframes rippleAnim {
+    to { transform: scale(3.5); opacity: 0; }
 }
 
-/* ============================================================
-   GAME CARD STAGGER
-   ============================================================ */
-
-.game-card:nth-child(1)  { animation-delay: 0.05s; }
-.game-card:nth-child(2)  { animation-delay: 0.10s; }
-.game-card:nth-child(3)  { animation-delay: 0.15s; }
-.game-card:nth-child(4)  { animation-delay: 0.20s; }
-.game-card:nth-child(5)  { animation-delay: 0.25s; }
-.game-card:nth-child(6)  { animation-delay: 0.30s; }
-.game-card:nth-child(7)  { animation-delay: 0.35s; }
-.game-card:nth-child(8)  { animation-delay: 0.40s; }
-.game-card:nth-child(9)  { animation-delay: 0.45s; }
-.game-card:nth-child(10) { animation-delay: 0.50s; }
-.game-card:nth-child(11) { animation-delay: 0.55s; }
-
-/* ============================================================
-   BADGES & INDICATORS
-   ============================================================ */
+/* ── Status indicators ─────────────────────────────────────────────────── */
+@keyframes liveIndicator {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.4; transform: scale(0.75); }
+}
 
 @keyframes badgePop {
-    0%   { transform: scale(0) rotate(-20deg); }
-    60%  { transform: scale(1.2) rotate(4deg); }
-    100% { transform: scale(1) rotate(0deg); }
+    0%   { transform: scale(0); }
+    70%  { transform: scale(1.15); }
+    100% { transform: scale(1); }
 }
 
+/* ── XP / progress ─────────────────────────────────────────────────────── */
+@keyframes xpBarFill {
+    from { width: 0%; }
+}
+
+/* ── Dropdown ──────────────────────────────────────────────────────────── */
+@keyframes dropdownSlide {
+    from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Page ──────────────────────────────────────────────────────────────── */
+@keyframes pageSlideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Difficulty badge pulse (subtle) ───────────────────────────────────── */
 @keyframes difficultyPulse {
     0%, 100% { opacity: 1; }
     50%       { opacity: 0.65; }
 }
 
-@keyframes liveIndicator {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50%       { opacity: 0.4; transform: scale(0.85); }
+/* ── Accent pulse on active FAB ────────────────────────────────────────── */
+@keyframes accentPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(0,229,255,0.3); }
+    50%       { box-shadow: 0 0 0 6px rgba(0,229,255,0); }
 }
 
-/* ============================================================
-   LOADING & PROGRESS
-   ============================================================ */
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
+/* ── Zen hint fade ──────────────────────────────────────────────────────── */
+@keyframes zenHintFade {
+    0%, 20%  { opacity: 0; }
+    30%      { opacity: 1; }
+    70%      { opacity: 1; }
+    100%     { opacity: 0; }
 }
 
-@keyframes spinReverse {
-    to { transform: rotate(-360deg); }
-}
+/* ── Utility classes ────────────────────────────────────────────────────── */
+.anim-fade-in    { animation: fadeIn    0.3s ease both; }
+.anim-fade-in-up { animation: fadeInUp  0.35s ease both; }
+.anim-pop-in     { animation: popIn     0.35s ease both; }
+.anim-spin       { animation: spin      0.7s linear infinite; }
+.anim-pulse      { animation: pulse     1.6s ease-in-out infinite; }
 
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.5; }
-}
-
-@keyframes skeletonShimmer {
-    0%   { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
-}
-
-@keyframes progressFill {
-    from { width: 0%; }
-    to   { width: var(--progress-target, 100%); }
-}
-
-@keyframes xpBarFill {
-    from { transform: scaleX(0); }
-    to   { transform: scaleX(1); }
-}
-
-/* ============================================================
-   NOTIFICATION & TOAST
-   ============================================================ */
-
-@keyframes toastSlideIn {
-    from { opacity: 0; transform: translateX(120%); }
-    to   { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes toastSlideOut {
-    from { opacity: 1; transform: translateX(0); }
-    to   { opacity: 0; transform: translateX(120%); }
-}
-
-@keyframes syncPulse {
-    0%, 100% { opacity: 0.5; transform: rotate(0deg); }
-    50%       { opacity: 1; transform: rotate(180deg); }
-}
-
-/* ============================================================
-   NAVIGATION
-   ============================================================ */
-
-@keyframes navIndicatorSlide {
-    from { opacity: 0; transform: scaleY(0.5); }
-    to   { opacity: 1; transform: scaleY(1); }
-}
-
-@keyframes dropdownSlide {
-    from { opacity: 0; transform: translateY(-10px) scale(0.96); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@keyframes rippleAnim {
-    to { transform: scale(4); opacity: 0; }
-}
-
-@keyframes fabPulse {
-    0%, 100% { transform: scale(1); opacity: 0.6; }
-    50%       { transform: scale(1.2); opacity: 0; }
-}
-
-/* ============================================================
-   PLAY FAB / BOTTOM NAV
-   ============================================================ */
-
-@keyframes fabGlow {
-    0%, 100% { box-shadow: 0 4px 20px rgba(0,245,255,0.4); }
-    50%       { box-shadow: 0 4px 32px rgba(0,245,255,0.8), 0 0 60px rgba(0,245,255,0.3); }
-}
-
-/* ============================================================
-   UTILITY CLASSES
-   ============================================================ */
-
-.anim-fade-in       { animation: fadeIn var(--transition-normal) both; }
-.anim-fade-in-up    { animation: fadeInUp var(--transition-slow) both; }
-.anim-slide-in-left { animation: slideInLeft var(--transition-slow) both; }
-.anim-pop-in        { animation: popIn var(--transition-bounce) both; }
-.anim-spin          { animation: spin 1s linear infinite; }
-.anim-pulse         { animation: pulse 2s ease-in-out infinite; }
-
+/* ── Skeleton loading ───────────────────────────────────────────────────── */
 .skeleton {
-    background: linear-gradient(90deg,
-        rgba(255,255,255,0.03) 25%,
-        rgba(255,255,255,0.08) 50%,
-        rgba(255,255,255,0.03) 75%
+    background: linear-gradient(
+        90deg,
+        var(--bg-elevated) 25%,
+        var(--bg-raised) 50%,
+        var(--bg-elevated) 75%
     );
-    background-size: 200% 100%;
-    animation: skeletonShimmer 1.5s infinite;
-    border-radius: var(--radius-sm);
+    background-size: 800px 100%;
+    animation: skeletonShimmer 1.4s ease infinite;
+    border-radius: var(--radius-md);
 }
+
+/* ── Page transition ────────────────────────────────────────────────────── */
+.page-transition { animation: pageSlideIn 0.28s ease-out; }
+
+/* ── Game card stagger delays ───────────────────────────────────────────── */
+.game-card:nth-child(1)  { animation-delay: 0.04s; }
+.game-card:nth-child(2)  { animation-delay: 0.08s; }
+.game-card:nth-child(3)  { animation-delay: 0.12s; }
+.game-card:nth-child(4)  { animation-delay: 0.16s; }
+.game-card:nth-child(5)  { animation-delay: 0.20s; }
+.game-card:nth-child(6)  { animation-delay: 0.24s; }
+.game-card:nth-child(7)  { animation-delay: 0.28s; }
+.game-card:nth-child(8)  { animation-delay: 0.32s; }
+.game-card:nth-child(9)  { animation-delay: 0.36s; }
+.game-card:nth-child(10) { animation-delay: 0.40s; }
+.game-card:nth-child(11) { animation-delay: 0.44s; }

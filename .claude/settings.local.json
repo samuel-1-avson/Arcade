@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)",
+      "Bash(git push:*)",
+      "Bash(vercel:*)",
+      "Bash(\"C:/Users/samue/Desktop/project/ideas testing:*)",
+      "Bash(python3:*)",
+      "Bash(where:*)",
+      "Bash(python:*)"
+    ]
+  }
+}

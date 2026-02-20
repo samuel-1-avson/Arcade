@@ -1028,6 +1028,7 @@ class ZenModeService {
     }
 
     startLoop() {
+        this.stopLoop(); // Prevent multiple loops
         const loop = () => {
             if (!this.isActive) return;
             
