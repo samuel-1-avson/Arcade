@@ -985,9 +985,10 @@ body::after {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    overflow-x: hidden;
+    overflow-x: visible; /* Changed from hidden to show toggle */
     z-index: 90;
     transition: margin-right var(--transition-slow), transform var(--transition-slow);
+    position: relative; /* Added for absolute positioned toggle */
 }
 
 body.sidebar-minimized .hub-sidebar-right {
@@ -1194,9 +1195,9 @@ body.sidebar-minimized .hub-sidebar-right {
 
 /* Toggle sidebar right btn */
 .sidebar-toggle-btn {
-    position: fixed;
+    position: absolute;
     top: 80px;
-    right: 0;
+    left: -24px; /* Hangs off the left edge */
     width: 24px;
     height: 48px;
     background: var(--bg-elevated);
@@ -1221,13 +1222,7 @@ body.sidebar-minimized .sidebar-toggle-btn {
     border-right: 1px solid rgba(255,255,255,0.08);
 }
 
-@media (max-width: 1280px) {
-    #toggle-right-sidebar {
-        position: fixed;
-        top: 80px;
-        right: 0;
-    }
-}
+ 
 
 /* ============================================================
    CHALLENGE & TOURNAMENT CARDS
