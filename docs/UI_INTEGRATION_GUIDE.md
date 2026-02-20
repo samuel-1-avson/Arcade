@@ -5,6 +5,7 @@ This guide explains how to integrate the new UI with the existing ArcadeHub appl
 ## Overview
 
 The new UI is designed to be:
+
 - **Progressive**: Can be enabled gradually
 - **Reversible**: Can rollback to old UI if needed
 - **Compatible**: Works with existing services
@@ -19,13 +20,13 @@ The new UI is designed to be:
 open index-new-ui.html
 ```
 
-This loads only the new UI with mock data.
+This loads only the new UI.
 
 ### Option 2: Integrated with Existing App
 
 ```javascript
 // In your existing app initialization
-import { migrateToNewUI } from './js-new/integration/index.js';
+import { migrateToNewUI } from "./js-new/integration/index.js";
 
 // After ArcadeHub initializes
 await migrateToNewUI();
@@ -50,19 +51,20 @@ js-new/
 ### Method 1: Automatic Migration (Recommended)
 
 ```javascript
-import { migrateToNewUI } from './js-new/integration/index.js';
+import { migrateToNewUI } from "./js-new/integration/index.js";
 
 // Call after your app is ready
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener("DOMContentLoaded", async () => {
   // Wait for existing ArcadeHub
   await waitForArcadeHub();
-  
+
   // Migrate to new UI
   await migrateToNewUI();
 });
 ```
 
 **What this does:**
+
 1. Hides old UI elements
 2. Initializes new UI components
 3. Transfers data from old to new
@@ -74,8 +76,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 For more control, use the bridge directly:
 
 ```javascript
-import { bridge } from './js-new/integration/Bridge.js';
-import { app } from './js-new/App.js';
+import { bridge } from "./js-new/integration/Bridge.js";
+import { app } from "./js-new/App.js";
 
 // Initialize bridge with existing ArcadeHub
 await bridge.init();
@@ -95,13 +97,13 @@ bridge.onGameLaunch = (gameId) => {
 Use only specific new components:
 
 ```javascript
-import { TopBar, NavigationPills } from './js-new/components/index.js';
+import { TopBar, NavigationPills } from "./js-new/components/index.js";
 
 // Replace just the top bar
-const topbar = new TopBar('.topbar');
+const topbar = new TopBar(".topbar");
 
 // Keep old sidebar but use new navigation
-const nav = new NavigationPills('.nav-pills');
+const nav = new NavigationPills(".nav-pills");
 ```
 
 ## Data Flow
@@ -135,12 +137,12 @@ const nav = new NavigationPills('.nav-pills');
 
 ## Event Mapping
 
-| Old Event | New Event | Bridge Action |
-|-----------|-----------|---------------|
-| `game:launch` | `app:game:launch` | Launch via gameLoaderService |
-| `userSignedIn` | `app:user:update` | Update user avatar/name |
-| `HIGHSCORE_UPDATE` | `app:game:score` | Update card high score |
-| `syncStatusChanged` | - | Update sync indicator |
+| Old Event           | New Event         | Bridge Action                |
+| ------------------- | ----------------- | ---------------------------- |
+| `game:launch`       | `app:game:launch` | Launch via gameLoaderService |
+| `userSignedIn`      | `app:user:update` | Update user avatar/name      |
+| `HIGHSCORE_UPDATE`  | `app:game:score`  | Update card high score       |
+| `syncStatusChanged` | -                 | Update sync indicator        |
 
 ## API Reference
 
@@ -151,13 +153,13 @@ const nav = new NavigationPills('.nav-pills');
 await bridge.init();
 
 // Launch game
-bridge.launchGame('snake');
+bridge.launchGame("snake");
 
 // Update user
-bridge.setUser({ name: 'Player', xp: 1000 });
+bridge.setUser({ name: "Player", xp: 1000 });
 
 // Update settings
-bridge.updateSetting('sound-toggle', true);
+bridge.updateSetting("sound-toggle", true);
 
 // Show auth modal
 bridge.showAuth();
@@ -170,19 +172,19 @@ bridge.hideAuth();
 
 ```javascript
 // Access the new UI app
-import { app } from './js-new/App.js';
+import { app } from "./js-new/App.js";
 
 // Navigation
-app.navigateTo('games');
-app.openPanel('social');
+app.navigateTo("games");
+app.openPanel("social");
 app.closePanel();
 
 // Notifications
-app.showToast('Message', 'success'); // types: success, error, info
+app.showToast("Message", "success"); // types: success, error, info
 
 // Events
-app.on('game:play', ({ gameId }) => {
-  console.log('Playing', gameId);
+app.on("game:play", ({ gameId }) => {
+  console.log("Playing", gameId);
 });
 ```
 
@@ -194,7 +196,7 @@ app.on('game:play', ({ gameId }) => {
 /* Override CSS variables */
 :root {
   --accent-primary: #ff0055; /* Change primary color */
-  --topbar-height: 56px;     /* Change header height */
+  --topbar-height: 56px; /* Change header height */
 }
 ```
 
@@ -206,7 +208,7 @@ class MyTopBar extends TopBar {
   bindEvents() {
     super.bindEvents();
     // Add custom events
-    this.on(this.element, 'custom-event', () => {
+    this.on(this.element, "custom-event", () => {
       // Handle it
     });
   }
@@ -218,7 +220,7 @@ class MyTopBar extends TopBar {
 If you need to revert to the old UI:
 
 ```javascript
-import { migrator } from './js-new/integration/Migrator.js';
+import { migrator } from "./js-new/integration/Migrator.js";
 
 // Rollback to old UI
 migrator.rollback();
@@ -241,7 +243,7 @@ if (window.gameLoaderService) {
 Ensure eventBus is properly connected:
 
 ```javascript
-eventBus.on('userSignedIn', (user) => {
+eventBus.on("userSignedIn", (user) => {
   app.setUser(user);
 });
 ```
@@ -265,16 +267,16 @@ Components are loaded on-demand:
 
 ```javascript
 // Only load when needed
-const { SocialPanel } = await import('./js-new/components/SlidePanel.js');
+const { SocialPanel } = await import("./js-new/components/SlidePanel.js");
 ```
 
 ### Bundle Size
 
-| Module | Size (gzipped) |
-|--------|---------------|
-| Full UI | ~25KB |
-| Components only | ~15KB |
-| Utils only | ~5KB |
+| Module          | Size (gzipped) |
+| --------------- | -------------- |
+| Full UI         | ~25KB          |
+| Components only | ~15KB          |
+| Utils only      | ~5KB           |
 
 ## Browser Support
 
@@ -286,7 +288,7 @@ const { SocialPanel } = await import('./js-new/components/SlidePanel.js');
 ## Migration Checklist
 
 - [ ] Backup existing code
-- [ ] Test with mock data first
+
 - [ ] Verify all games launch correctly
 - [ ] Check auth flow
 - [ ] Test on mobile devices
@@ -297,6 +299,7 @@ const { SocialPanel } = await import('./js-new/components/SlidePanel.js');
 ## Support
 
 For issues or questions:
+
 1. Check browser console for errors
 2. Verify all dependencies are loaded
 3. Test with `index-new-ui.html` standalone

@@ -484,14 +484,7 @@ export class UIBridge {
   }
   
   getPlayerCount(gameId) {
-    // Mock data - in real app would come from server
-    const counts = {
-      snake: 2400,
-      tetris: 3200,
-      pacman: 1800,
-      minesweeper: 1200
-    };
-    return counts[gameId] || Math.floor(Math.random() * 2000 + 500);
+    return 0;
   }
   
   getUserStats() {
@@ -514,11 +507,7 @@ export class UIBridge {
     if (window.friendsService?.getFriends) {
       return window.friendsService.getFriends();
     }
-    return [
-      { id: '1', name: 'GamerOne', avatar: '🎮', status: 'online', activity: 'Playing Snake' },
-      { id: '2', name: 'ProPlayer', avatar: '⚡', status: 'online', activity: 'In Menu' },
-      { id: '3', name: 'ArcadeFan', avatar: '👾', status: 'offline', activity: 'Last seen 2h ago' }
-    ];
+    return [];
   }
   
   getPartyInfo() {
