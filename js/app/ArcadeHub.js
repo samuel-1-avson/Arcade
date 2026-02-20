@@ -180,7 +180,7 @@ export class ArcadeHub {
         localTournamentManager.init();
         
         // Show connection status in development
-        if (config.features.debug) {
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
             connectionDiagnostics.createStatusIndicator();
         }
 
