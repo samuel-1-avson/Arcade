@@ -80,6 +80,11 @@
       "source": "/old-index",
       "destination": "/",
       "permanent": true
+    },
+    {
+      "source": "/js/components/ErrorBoundary.js",
+      "destination": "/js/components/ErrorBoundary.v2.js?v=2",
+      "permanent": false
     }
   ]
 }
