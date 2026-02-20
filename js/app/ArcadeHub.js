@@ -200,7 +200,6 @@ export class ArcadeHub {
         this.setupGlobalEventListeners();
 
         console.log('Arcade Hub initialized with modular architecture');
-        }
     }
 
     setupEventListeners() {
