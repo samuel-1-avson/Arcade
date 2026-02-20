@@ -53,7 +53,7 @@ import { clientAnalytics } from '../utils/ClientAnalytics.js';
 import { localTournamentManager } from '../services/LocalTournamentManager.js';
 
 // Components
-import { featuredCarousel } from '../components/FeaturedCarousel.js';
+import { featuredCarousel } from '../components/FeaturedGames.js';
 
 // Config
 import { GAME_ICONS } from '../config/gameRegistry.js';
