@@ -476,8 +476,8 @@ body::after {
     border-radius: var(--radius-md);
     padding: var(--space-md) var(--space-lg);
     margin: 0 auto var(--space-xl);
-    max-width: 600px;
-    overflow: hidden;
+    max-width: 560px;
+    overflow: clip;
     position: relative;
     box-shadow: 
         0 4px 24px rgba(0,0,0,0.2),
@@ -563,12 +563,15 @@ body::after {
     overflow: hidden;
     border-radius: var(--radius-sm);
     width: 100%;
+    max-width: 100%;
 }
 
 .featured-slider {
     display: flex;
     width: 100%;
+    max-width: 100%;
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
 }
 
 /* Individual slide - strict containment */
@@ -583,6 +586,7 @@ body::after {
     gap: var(--space-lg);
     padding: var(--space-xs) 0;
     box-sizing: border-box;
+    overflow: hidden;
 }
 
 /* Game info section */
