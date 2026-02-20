@@ -1196,10 +1196,11 @@ body.sidebar-minimized .hub-sidebar-right {
 /* Toggle sidebar right btn */
 .sidebar-toggle-btn {
     position: absolute;
-    top: 80px;
+    top: 50%;
+    transform: translateY(-50%);
     left: -24px; /* Hangs off the left edge */
     width: 24px;
-    height: 48px;
+    height: 64px;
     background: var(--bg-elevated);
     border: 1px solid rgba(255,255,255,0.08);
     border-right: none;
@@ -1210,7 +1211,13 @@ body.sidebar-minimized .hub-sidebar-right {
     align-items: center;
     justify-content: center;
     z-index: var(--z-overlay);
-    transition: all var(--transition-fast);
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.sidebar-toggle-btn svg {
+    width: 16px;
+    height: 16px;
+    transition: transform var(--transition-slow);
 }
 
 .sidebar-toggle-btn:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
