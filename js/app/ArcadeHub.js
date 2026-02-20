@@ -52,6 +52,9 @@ import { offlineManager } from '../utils/OfflineManager.js';
 import { clientAnalytics } from '../utils/ClientAnalytics.js';
 import { localTournamentManager } from '../services/LocalTournamentManager.js';
 
+// Components
+import { featuredCarousel } from '../components/FeaturedCarousel.js';
+
 // Config
 import { GAME_ICONS } from '../config/gameRegistry.js';
 
@@ -179,6 +182,9 @@ export class ArcadeHub {
         clientAnalytics.init();
         localTournamentManager.init();
         
+        // Initialize featured carousel
+        featuredCarousel.init();
+        
         // Show connection status in development
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
             connectionDiagnostics.createStatusIndicator();
@@ -231,6 +237,11 @@ export class ArcadeHub {
 
         eventBus.on('userSignedOut', () => {
             console.log('User signed out');
+        });
+
+        // Featured game selection
+        eventBus.on('featuredGameSelected', ({ gameId }) => {
+            gameLoaderService.loadGame(gameId);
         });
 
         // Game close button

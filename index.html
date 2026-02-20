@@ -273,22 +273,26 @@
         <main class="hub-main">
             <div class="container">
 
-                <!-- Hero Section -->
-                <section class="hero-section">
-                    <div class="hero-content">
-                        <span class="hero-badge">Featured</span>
-                        <h2 class="hero-title">Neon Arcade 2084</h2>
-                        <p class="hero-desc">Your ultimate retro-futuristic gaming destination. 11 games, real-time leaderboards, and neon-drenched glory. Insert coin to begin.</p>
-                        <button class="btn btn-play hero-btn">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;">
-                                <polygon points="5 3 19 12 5 21 5 3"/>
-                            </svg>
-                            Play Now
-                        </button>
+                <!-- Featured Games Carousel - Minimal -->
+                <section class="featured-carousel" id="featured-carousel">
+                    <div class="featured-header">
+                        <span class="featured-badge">
+                            <span class="live-dot"></span>
+                            Featured
+                        </span>
+                        <div class="featured-nav">
+                            <button class="featured-nav-btn" id="featured-prev" aria-label="Previous">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+                            </button>
+                            <button class="featured-nav-btn" id="featured-next" aria-label="Next">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+                            </button>
+                        </div>
                     </div>
-                    <div class="hero-visual">
-                        <div class="hero-glow"></div>
+                    <div class="featured-slider" id="featured-slider">
+                        <!-- Slides will be populated by JS -->
                     </div>
+                    <div class="featured-dots" id="featured-dots"></div>
                 </section>
 
                 <!-- Quick Stats Row -->
