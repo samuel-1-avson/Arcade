@@ -193,18 +193,18 @@ export class FeaturedCarousel {
 
         if (index === this.currentIndex) return;
 
-        // Update slide content animation
-        this.animateSlideChange(this.currentIndex, index);
-        
         this.currentIndex = index;
-        this.slider.style.transform = `translateX(-${index * 100}%)`;
+        
+        // Use precise percentage for transform
+        const translateX = -(index * 100);
+        this.slider.style.transform = `translate3d(${translateX}%, 0, 0)`;
 
         // Update dots
         this.dots.querySelectorAll('.featured-dot').forEach((dot, i) => {
             dot.classList.toggle('active', i === index);
         });
 
-        // Update active slide class
+        // Update active slide class for styling
         this.slider.querySelectorAll('.featured-slide').forEach((slide, i) => {
             slide.classList.toggle('active', i === index);
         });
