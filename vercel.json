@@ -83,7 +83,7 @@
     },
     {
       "source": "/js/components/ErrorBoundary.js",
-      "destination": "/js/components/ErrorBoundary.v2.js?v=2",
+      "destination": "/js/components/ErrorBoundary.v2.js",
       "permanent": false
     }
   ]
