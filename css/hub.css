@@ -476,13 +476,15 @@ body::after {
     border-radius: var(--radius-md);
     padding: var(--space-md) var(--space-lg);
     margin: 0 auto var(--space-xl);
-    max-width: 560px;
-    overflow: clip;
+    max-width: 540px;
+    overflow: hidden;
     position: relative;
     box-shadow: 
         0 4px 24px rgba(0,0,0,0.2),
         inset 0 1px 0 rgba(255,255,255,0.05);
-    isolation: isolate;
+    /* Ensure content is clipped to border radius */
+    -webkit-mask-image: -webkit-radial-gradient(white, black);
+    mask-image: radial-gradient(white, black);
 }
 
 /* Subtle top accent line */
@@ -557,13 +559,15 @@ body::after {
     height: 14px;
 }
 
-/* Slider container - strict overflow control */
+/* Slider container - strict overflow control with masking */
 .featured-slider-wrapper {
     position: relative;
     overflow: hidden;
     border-radius: var(--radius-sm);
     width: 100%;
     max-width: 100%;
+    /* Create a stacking context to ensure proper clipping */
+    z-index: 1;
 }
 
 .featured-slider {
