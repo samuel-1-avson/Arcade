@@ -1,7 +1,7 @@
-const CACHE_NAME = 'arcade-hub-v4';
-const STATIC_CACHE = 'arcade-hub-static-v4';
-const DYNAMIC_CACHE = 'arcade-hub-dynamic-v4';
-const IMAGE_CACHE = 'arcade-hub-images-v4';
+const CACHE_NAME = 'arcade-hub-v5';
+const STATIC_CACHE = 'arcade-hub-static-v5';
+const DYNAMIC_CACHE = 'arcade-hub-dynamic-v5';
+const IMAGE_CACHE = 'arcade-hub-images-v5';
 
 // Static assets that should always be cached
 const STATIC_ASSETS = [
