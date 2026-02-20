@@ -79,27 +79,19 @@ export class FeaturedCarousel {
     }
 
     render() {
-        // Render slides with enhanced structure
+        // Render slides - minimal design without icons
         this.slider.innerHTML = FEATURED_GAMES.map((game, index) => `
             <div class="featured-slide ${index === 0 ? 'active' : ''}" data-index="${index}" data-game="${game.id}">
-                <div class="featured-game-icon" style="--game-color: ${game.color}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        ${game.icon}
-                    </svg>
-                </div>
                 <div class="featured-game-info">
                     <h3 class="featured-game-title">${game.name}</h3>
                     <div class="featured-game-meta">
                         <span class="featured-game-difficulty difficulty-${game.difficulty}">${game.difficulty}</span>
                         <span class="featured-game-players">${game.players}</span>
+                        <span class="featured-game-desc">${game.description}</span>
                     </div>
-                    <p class="featured-game-description">${game.description}</p>
                 </div>
                 <button class="featured-play-btn" data-game="${game.id}" aria-label="Play ${game.name}">
-                    <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                        <polygon points="5 3 19 12 5 21 5 3"/>
-                    </svg>
-                    Play Now
+                    Play
                 </button>
             </div>
         `).join('');
