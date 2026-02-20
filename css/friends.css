@@ -88,8 +88,8 @@
 
 .friends-tab.active {
     background: transparent;
-    color: var(--primary);
-    border-bottom-color: var(--primary);
+    color: var(--neon-cyan);
+    border-color: var(--neon-cyan);
     box-shadow: none;
 }
 
@@ -251,14 +251,14 @@
     align-items: center;
     background: var(--bg-elevated);
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-sm);
+    border-radius: 0;
     padding: 8px 16px;
     transition: all 0.2s ease;
 }
 
 .add-friend-input-group:focus-within {
-    border-color: var(--primary);
-    background: rgba(0, 240, 255, 0.05);
+    border-color: var(--neon-cyan);
+    background: rgba(0, 245, 255, 0.05);
 }
 
 .search-icon-input {
@@ -449,8 +449,9 @@
 }
 
 .friends-tab.active {
-    background: var(--bg-elevated);
-    color: var(--text-bright);
+    background: rgba(0, 245, 255, 0.1);
+    border: 1px solid var(--neon-cyan);
+    color: var(--neon-cyan);
     box-shadow: none;
 }
 

@@ -987,7 +987,11 @@ body::after {
     overflow-y: auto;
     overflow-x: hidden;
     z-index: 90;
-    transition: transform var(--transition-slow);
+    transition: margin-right var(--transition-slow), transform var(--transition-slow);
+}
+
+body.sidebar-minimized .hub-sidebar-right {
+    margin-right: -280px;
 }
 
 .hub-sidebar-right::-webkit-scrollbar { width: 3px; }
@@ -1201,16 +1205,24 @@ body::after {
     border-radius: var(--radius-md) 0 0 var(--radius-md);
     color: var(--text-muted);
     cursor: pointer;
-    display: none;
+    display: flex;
     align-items: center;
     justify-content: center;
-    z-index: var(--z-dropdown);
+    z-index: var(--z-overlay);
+    transition: all var(--transition-fast);
+}
+
+.sidebar-toggle-btn:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+
+body.sidebar-minimized .sidebar-toggle-btn svg {
+    transform: rotate(180deg);
+}
+body.sidebar-minimized .sidebar-toggle-btn {
+    border-right: 1px solid rgba(255,255,255,0.08);
 }
 
 @media (max-width: 1280px) {
-    .sidebar-toggle-btn { display: flex; }
     #toggle-right-sidebar {
-        display: flex;
         position: fixed;
         top: 80px;
         right: 0;

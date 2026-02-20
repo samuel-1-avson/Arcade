@@ -274,7 +274,66 @@ export class ArcadeHub {
     }
 
     setupPartyUI() {
-        // Party UI setup
+        const createBtn = document.getElementById('create-party-btn');
+        const joinInput = document.getElementById('join-party-input');
+        const joinBtn = document.getElementById('join-party-btn');
+        const copyBtn = document.getElementById('copy-party-code');
+        const leaveBtn = document.getElementById('leave-party-btn');
+        const actionsView = document.getElementById('party-actions-view');
+        const activeView = document.getElementById('active-party-view');
+
+        createBtn?.addEventListener('click', async () => {
+            const code = await partyService.createParty();
+        });
+
+        joinBtn?.addEventListener('click', async () => {
+            const code = joinInput.value.trim();
+            if (code) await partyService.joinParty(code);
+        });
+
+        copyBtn?.addEventListener('click', () => {
+            const code = document.getElementById('current-party-code')?.textContent;
+            if (code && code !== '------') {
+                navigator.clipboard.writeText(code);
+                notificationService.success('Party code copied!');
+            }
+        });
+
+        leaveBtn?.addEventListener('click', () => {
+            partyService.leaveParty();
+        });
+
+        // Listen for party state changes
+        eventBus.on('partyStateChange', (state) => {
+            if (partyService.isInParty()) {
+                actionsView?.classList.add('hidden');
+                activeView?.classList.remove('hidden');
+                const codeEl = document.getElementById('current-party-code');
+                if (codeEl) codeEl.textContent = state.partyId;
+                this.updatePartyMembers(state.members, state.isLeader);
+            } else {
+                actionsView?.classList.remove('hidden');
+                activeView?.classList.add('hidden');
+                const codeEl = document.getElementById('current-party-code');
+                if (codeEl) codeEl.textContent = '------';
+            }
+        });
+    }
+
+    updatePartyMembers(members, isLeader) {
+        const list = document.getElementById('party-members-list');
+        if (!list) return;
+
+        list.innerHTML = members.map(m => `
+            <div class="party-member ${m.isLeader ? 'is-host' : ''}">
+                <div class="member-avatar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+                </div>
+                <div class="member-name">${m.name}</div>
+                ${m.isLeader ? '<span class="host-badge">HOST</span>' : ''}
+                <div class="member-status-dot ${m.status}"></div>
+            </div>
+        `).join('');
     }
 
     setupPartyChatUI() {

@@ -6,7 +6,7 @@
     width: 100%;
     background: var(--bg-surface);
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
+    border-radius: 0;
     padding: var(--space-md);
     margin-top: 0;
     margin-bottom: var(--space-md);
@@ -78,13 +78,14 @@
     padding: 12px 16px;
     background: var(--bg-elevated);
     border: 1px solid var(--border-subtle);
+    border-radius: 0;
     transition: all 0.2s ease;
     height: auto;
 }
 
 .party-create-card:hover {
-    background: var(--bg-raised);
-    border-color: var(--border-default);
+    background: rgba(0, 245, 255, 0.08);
+    border-color: var(--neon-cyan);
 }
 
 .party-create-icon {
@@ -149,13 +150,13 @@
     align-items: center;
     background: rgba(0,0,0,0.3);
     border: 1px solid rgba(255,255,255,0.1);
-    border-radius: var(--radius-md);
+    border-radius: 0;
     padding: 4px;
     transition: border-color 0.2s;
 }
 
 .join-input-wrapper:focus-within {
-    border-color: var(--accent-color, #ff6b6b);
+    border-color: var(--neon-cyan);
 }
 
 .join-input-wrapper input {
@@ -554,14 +555,14 @@
     display: flex;
     background: rgba(0,0,0,0.3);
     border: 1px solid rgba(255,255,255,0.1);
-    border-radius: var(--radius-md);
+    border-radius: 0;
     padding: 0;
     overflow: hidden;
     transition: border-color 0.2s;
 }
 
 .join-input-wrapper:focus-within {
-    border-color: var(--primary);
+    border-color: var(--neon-cyan);
 }
 
 .join-input-wrapper input {
