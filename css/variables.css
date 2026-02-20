@@ -171,7 +171,7 @@
     /* =========================================================================
        LAYOUT
        ========================================================================= */
-    --sidebar-width:       240px;
-    --sidebar-width-right: 260px;
-    --topbar-height:       56px;
+    --sidebar-width:       64px;      /* Collapsed icon-only sidebar */
+    --sidebar-width-expanded: 200px;  /* Expanded on hover */
+    --topbar-height:       64px;
 }
