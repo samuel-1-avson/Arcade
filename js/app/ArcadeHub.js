@@ -46,6 +46,12 @@ import { accessibilityManager } from './accessibility.js';
 import { ErrorBoundary } from '../components/ErrorBoundary.js';
 import { connectionDiagnostics } from '../utils/connectionDiagnostics.js';
 
+// Free Tier Client-Side Features
+import { clientSideAggregator } from '../services/ClientSideAggregator.js';
+import { offlineManager } from '../utils/OfflineManager.js';
+import { clientAnalytics } from '../utils/ClientAnalytics.js';
+import { localTournamentManager } from '../services/LocalTournamentManager.js';
+
 // Config
 import { GAME_ICONS } from '../config/gameRegistry.js';
 
@@ -166,6 +172,12 @@ export class ArcadeHub {
 
         // Initialize connection diagnostics
         connectionDiagnostics.init();
+        
+        // Initialize free tier client-side features
+        clientSideAggregator.init();
+        offlineManager.init();
+        clientAnalytics.init();
+        localTournamentManager.init();
         
         // Show connection status in development
         if (config.features.debug) {
