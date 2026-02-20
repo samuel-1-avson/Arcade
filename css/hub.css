@@ -476,7 +476,7 @@ body::after {
     border-radius: var(--radius-md);
     padding: var(--space-md) var(--space-lg);
     margin: 0 auto var(--space-xl);
-    max-width: 540px;
+    max-width: 520px;
     overflow: hidden;
     position: relative;
     box-shadow: 
@@ -485,6 +485,8 @@ body::after {
     /* Ensure content is clipped to border radius */
     -webkit-mask-image: -webkit-radial-gradient(white, black);
     mask-image: radial-gradient(white, black);
+    /* Additional clip to prevent any edge bleeding */
+    clip-path: inset(0 round var(--radius-md));
 }
 
 /* Subtle top accent line */
@@ -568,6 +570,9 @@ body::after {
     max-width: 100%;
     /* Create a stacking context to ensure proper clipping */
     z-index: 1;
+    /* Add horizontal padding to prevent edge bleeding */
+    padding: 0 2px;
+    box-sizing: border-box;
 }
 
 .featured-slider {
@@ -578,7 +583,7 @@ body::after {
     will-change: transform;
 }
 
-/* Individual slide - strict containment */
+/* Individual slide - strict containment with clipping */
 .featured-slide {
     width: 100%;
     min-width: 100%;
@@ -588,7 +593,7 @@ body::after {
     align-items: center;
     justify-content: space-between;
     gap: var(--space-lg);
-    padding: var(--space-xs) 0;
+    padding: var(--space-xs) var(--space-xs);
     box-sizing: border-box;
     overflow: hidden;
 }
