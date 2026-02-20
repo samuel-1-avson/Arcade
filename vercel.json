@@ -107,6 +107,11 @@
       "source": "/old-index",
       "destination": "/",
       "permanent": true
+    },
+    {
+      "source": "/js/components/ErrorBoundary.js",
+      "destination": "/js/components/ErrorHandler.js",
+      "permanent": false
     }
   ]
 }
