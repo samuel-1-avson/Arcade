@@ -1,6 +1,5 @@
 /* Combined stylesheet - imports all CSS */
-/* @import url('./variables.css'); DEPRECATED */
-@import url('./style-system.css'); /* New Design System */
+@import url('./variables.css'); /* Arcade Gaming Hub Themes */
 @import url('./base.css');
 @import url('./hub.css');
 @import url('./game-common.css');

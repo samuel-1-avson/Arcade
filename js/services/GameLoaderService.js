@@ -50,6 +50,14 @@ class GameLoaderService {
             }
         });
 
+        // Exit game button
+        const exitBtn = document.getElementById('exit-game-btn');
+        if (exitBtn) {
+            exitBtn.addEventListener('click', () => {
+                this.closeGame();
+            });
+        }
+
         // Start Health Monitor
         this._startHealthMonitor();
 
@@ -76,6 +84,9 @@ class GameLoaderService {
         this.handshakeAcknowledged = false;
         this.lastHeartbeat = Date.now();
 
+        // Show loading overlay
+        this.showLoadingOverlay(game);
+
         const loadLogic = () => {
             this.viewport.classList.remove('hidden');
             this.viewport.classList.add('viewport-active');
@@ -87,7 +98,13 @@ class GameLoaderService {
             this.iframe.onload = () => {
                 this.syncSettings();
                 this.sendToGame('GAME_Resume'); // Ensure it starts unpaused
+                this.hideLoadingOverlay();
             };
+
+            // Fallback: hide loading after 10 seconds max
+            setTimeout(() => {
+                this.hideLoadingOverlay();
+            }, 10000);
         };
 
         // Use transition service if available
@@ -108,6 +125,38 @@ class GameLoaderService {
         
         backgroundService.setTheme(game.id);
         console.log(`Launched ${game.title} (SPA Mode)`);
+    }
+
+    showLoadingOverlay(game) {
+        // Create loading overlay if it doesn't exist
+        let loader = document.getElementById('game-loading-overlay');
+        if (!loader) {
+            loader = document.createElement('div');
+            loader.id = 'game-loading-overlay';
+            loader.className = 'game-loading-overlay';
+            loader.innerHTML = `
+                <div class="game-loading-content">
+                    <div class="game-loading-icon">🎮</div>
+                    <h2 class="game-loading-title">Loading ${game.title}...</h2>
+                    <div class="game-loading-spinner"></div>
+                    <p class="game-loading-hint">Press ESC anytime to pause</p>
+                </div>
+            `;
+            document.body.appendChild(loader);
+        } else {
+            // Update title
+            const titleEl = loader.querySelector('.game-loading-title');
+            if (titleEl) titleEl.textContent = `Loading ${game.title}...`;
+        }
+        
+        loader.classList.remove('hidden');
+    }
+
+    hideLoadingOverlay() {
+        const loader = document.getElementById('game-loading-overlay');
+        if (loader) {
+            loader.classList.add('hidden');
+        }
     }
 
     closeGame() {

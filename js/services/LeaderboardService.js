@@ -6,6 +6,7 @@ import { eventBus } from '../engine/EventBus.js';
 import { firebaseService } from '../engine/FirebaseService.js';
 import { globalStateManager, GAME_IDS } from './GlobalStateManager.js';
 import { publicProfileService } from './PublicProfileService.js';
+import { leaderboardCache, requestDeduplicator } from '../utils/cache.js';
 
 // Leaderboard time periods
 export const TIME_PERIODS = {
@@ -17,8 +18,9 @@ export const TIME_PERIODS = {
 class LeaderboardService {
     constructor() {
         this.cache = {};
-        this.cacheExpiry = 300000; // 5 minute cache (increased from 1 min for performance)
+        this.cacheExpiry = 300000; // 5 minute cache
         this.lastFetch = {};
+        this.paginationState = new Map(); // Store cursors for pagination
     }
 
     /**
@@ -31,66 +33,143 @@ class LeaderboardService {
     // ============ PUBLIC METHODS ============
 
     /**
-     * Get leaderboard for a specific game
+     * Get leaderboard for a specific game with pagination support
      * @param {string} gameId
      * @param {string} period - 'allTime', 'weekly', 'daily'
-     * @param {number} limit
-     * @returns {Promise<Object[]>}
+     * @param {Object} options - { limit: number, page: number, useCache: boolean }
+     * @returns {Promise<{scores: Object[], nextCursor: any, hasMore: boolean}>}
      */
-    async getGameLeaderboard(gameId, period = TIME_PERIODS.ALL_TIME, limit = 10) {
-        const cacheKey = `${gameId}_${period}`;
+    async getGameLeaderboard(gameId, period = TIME_PERIODS.ALL_TIME, options = {}) {
+        const { limit = 20, page = 1, useCache = true } = options;
+        const cacheKey = `${gameId}_${period}_page${page}`;
         
-        // Check cache
-        if (this._isCacheValid(cacheKey)) {
-            return this.cache[cacheKey];
+        // Check MemoryCache first (Phase 3 enhancement)
+        if (useCache) {
+            const cached = leaderboardCache.get(cacheKey);
+            if (cached) {
+                return cached;
+            }
         }
 
         try {
-            // Try to fetch from Firebase - only if DB is available AND user is signed in
-            if (firebaseService.db && firebaseService.isSignedIn()) {
-                const scores = await firebaseService.getLeaderboard(gameId, limit);
-                this.cache[cacheKey] = scores;
-                this.lastFetch[cacheKey] = Date.now();
-                return scores;
-            }
+            // Use request deduplication to prevent duplicate concurrent requests
+            const fetchKey = `leaderboard_${cacheKey}`;
+            return await requestDeduplicator.execute(fetchKey, async () => {
+                if (firebaseService.db) {
+                    const db = firebaseService.db;
+                    const currentUserId = firebaseService.getCurrentUser()?.uid;
+                    
+                    let query = db.collection('scores')
+                        .where('gameId', '==', gameId)
+                        .orderBy('score', 'desc')
+                        .limit(limit);
+
+                    // Apply cursor for pagination
+                    const cursorKey = `${gameId}_${period}`;
+                    const cursors = this.paginationState.get(cursorKey) || [];
+                    if (page > 1 && cursors[page - 2]) {
+                        query = query.startAfter(cursors[page - 2]);
+                    }
+
+                    const snapshot = await query.get();
+                    const scores = [];
+                    
+                    snapshot.docs.forEach((doc, index) => {
+                        const data = doc.data();
+                        scores.push({
+                            rank: (page - 1) * limit + index + 1,
+                            name: data.displayName || 'Player',
+                            avatar: data.avatar || 'gamepad',
+                            score: data.score || 0,
+                            userId: data.userId,
+                            isCurrentUser: currentUserId ? data.userId === currentUserId : false,
+                            timestamp: data.timestamp?.toDate?.() || data.timestamp
+                        });
+                    });
+
+                    // Store cursor for next page
+                    if (snapshot.docs.length > 0) {
+                        const lastDoc = snapshot.docs[snapshot.docs.length - 1];
+                        if (!cursors[page - 1]) {
+                            cursors[page - 1] = lastDoc;
+                            this.paginationState.set(cursorKey, cursors);
+                        }
+                    }
+
+                    const result = {
+                        scores,
+                        nextCursor: snapshot.docs.length === limit ? page + 1 : null,
+                        hasMore: snapshot.docs.length === limit,
+                        page
+                    };
+
+                    // Cache with short TTL for leaderboard freshness
+                    leaderboardCache.set(cacheKey, result, 60000); // 1 minute
+                    
+                    return result;
+                }
+                
+                // Fallback to local data
+                return {
+                    scores: this._getLocalLeaderboard(gameId),
+                    nextCursor: null,
+                    hasMore: false,
+                    page: 1
+                };
+            });
         } catch (e) {
             console.warn('[LeaderboardService] Failed to fetch game leaderboard:', e.message);
+            return {
+                scores: this._getLocalLeaderboard(gameId),
+                nextCursor: null,
+                hasMore: false,
+                page: 1
+            };
         }
-
-        // Fallback to local data
-        return this._getLocalLeaderboard(gameId);
     }
 
     /**
-     * Get combined leaderboard across all games (total score)
-     * @param {number} limit
-     * @returns {Promise<Object[]>}
+     * Get paginated global leaderboard
+     * @param {Object} options - { limit: number, page: number }
+     * @returns {Promise<{scores: Object[], nextCursor: any, hasMore: boolean}>}
      */
-    async getGlobalLeaderboard(limit = 10) {
-        const cacheKey = 'global_allTime';
+    async getGlobalLeaderboardPaginated(options = {}) {
+        const { limit = 20, page = 1 } = options;
+        const cacheKey = `global_paginated_page${page}`;
         
-        if (this._isCacheValid(cacheKey)) {
-            return this.cache[cacheKey];
-        }
+        const cached = leaderboardCache.get(cacheKey);
+        if (cached) return cached;
 
         try {
-            // Only fetch if DB is available
-            // Uses publicProfiles collection (publicly readable per new security rules)
-            if (firebaseService.db) {
+            const fetchKey = `global_leaderboard_${page}`;
+            return await requestDeduplicator.execute(fetchKey, async () => {
+                if (!firebaseService.db) {
+                    return {
+                        scores: this._getLocalGlobalLeaderboard(),
+                        nextCursor: null,
+                        hasMore: false,
+                        page: 1
+                    };
+                }
+
                 const db = firebaseService.db;
                 const currentUserId = firebaseService.getCurrentUser()?.uid;
                 
-                // Query publicProfiles by totalScore
-                // Note: totalScore should be added to publicProfiles schema
-                const snapshot = await db.collection('publicProfiles')
+                let query = db.collection('publicProfiles')
                     .orderBy('totalScore', 'desc')
-                    .limit(limit)
-                    .get();
+                    .limit(limit);
 
+                // Apply cursor
+                const cursors = this.paginationState.get('global') || [];
+                if (page > 1 && cursors[page - 2]) {
+                    query = query.startAfter(cursors[page - 2]);
+                }
+
+                const snapshot = await query.get();
                 const scores = snapshot.docs.map((doc, index) => {
                     const data = doc.data();
                     return {
-                        rank: index + 1,
+                        rank: (page - 1) * limit + index + 1,
                         name: data.displayName || 'Player',
                         avatar: data.avatar || 'gamepad',
                         score: data.totalScore || 0,
@@ -101,19 +180,49 @@ class LeaderboardService {
                     };
                 });
 
-                console.log(`[LeaderboardService] Fetched ${scores.length} players for global leaderboard`);
-                this.cache[cacheKey] = scores;
-                this.lastFetch[cacheKey] = Date.now();
-                return scores;
-            } else {
-                console.log('[LeaderboardService] Firebase DB not ready, using local data');
-            }
-        } catch (e) {
-            console.warn('[LeaderboardService] Failed to fetch global leaderboard:', e.message);
-        }
+                // Store cursor
+                if (snapshot.docs.length > 0) {
+                    cursors[page - 1] = snapshot.docs[snapshot.docs.length - 1];
+                    this.paginationState.set('global', cursors);
+                }
 
-        // Fallback to local only
-        return this._getLocalGlobalLeaderboard();
+                const result = {
+                    scores,
+                    nextCursor: snapshot.docs.length === limit ? page + 1 : null,
+                    hasMore: snapshot.docs.length === limit,
+                    page
+                };
+
+                leaderboardCache.set(cacheKey, result, 60000);
+                return result;
+            });
+        } catch (e) {
+            console.warn('[LeaderboardService] Failed to fetch paginated leaderboard:', e);
+            return {
+                scores: this._getLocalGlobalLeaderboard(),
+                nextCursor: null,
+                hasMore: false,
+                page: 1
+            };
+        }
+    }
+
+    /**
+     * Get combined leaderboard across all games (total score)
+     * @param {number} limit
+     * @returns {Promise<Object[]>}
+     */
+    async getGlobalLeaderboard(limit = 10) {
+        const result = await this.getGlobalLeaderboardPaginated({ limit, page: 1 });
+        return result.scores;
+    }
+
+    /**
+     * Reset pagination state for a leaderboard
+     * @param {string} gameId - 'global' for global leaderboard
+     */
+    resetPagination(gameId = 'global') {
+        this.paginationState.delete(gameId);
     }
 
     /**

@@ -28,7 +28,44 @@ export class NavigationManager {
 
     setupNavListeners() {
         this.navItems.forEach(item => {
-            item.addEventListener('click', (e) => this.handleNavClick(e.currentTarget));
+            if (item) {  // Null check
+                item.addEventListener('click', (e) => this.handleNavClick(e.currentTarget));
+            }
+        });
+
+        // Setup modal close buttons
+        this.setupModalCloseButtons();
+    }
+
+    setupModalCloseButtons() {
+        // Map close button IDs to their modal IDs
+        const closeButtonMap = {
+            'tournaments-close-btn': 'tournaments-modal',
+            'challenges-close-btn': 'challenges-modal',
+            'bracket-close-btn': 'bracket-modal',
+            'modal-close': 'auth-modal'
+        };
+
+        Object.entries(closeButtonMap).forEach(([buttonId, modalId]) => {
+            const button = document.getElementById(buttonId);
+            const modal = document.getElementById(modalId);
+            
+            if (button && modal) {
+                button.addEventListener('click', () => {
+                    modal.classList.add('hidden');
+                    audioService.playSFX('click');
+                });
+            }
+        });
+
+        // Also handle backdrop clicks for all modals
+        document.querySelectorAll('.modal, .auth-modal').forEach(modal => {
+            const backdrop = modal.querySelector('.modal-backdrop, .auth-modal-backdrop');
+            if (backdrop) {
+                backdrop.addEventListener('click', () => {
+                    modal.classList.add('hidden');
+                });
+            }
         });
     }
 

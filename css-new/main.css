@@ -1,0 +1,77 @@
+/* ==========================================================================
+   Arcade Gaming Hub - New Stylesheet
+   Phase 1: Foundation & Design Tokens
+   
+   This is the main entry point for the redesigned UI.
+   All styles are organized using the CUBE CSS methodology:
+   - Composition: Layout patterns
+   - Utilities: Helper classes  
+   - Block: Components
+   - Exception: Variants
+   ========================================================================== */
+
+/* -------------------------------------------------------------------------
+   1. Design Tokens
+   All CSS custom properties (variables) for the design system
+   ------------------------------------------------------------------------- */
+@import url('./tokens/index.css');
+
+/* -------------------------------------------------------------------------
+   2. Base Styles
+   Reset and global base styles
+   ------------------------------------------------------------------------- */
+@import url('./base/index.css');
+
+/* -------------------------------------------------------------------------
+   3. Utility Classes
+   Helper utilities for common patterns
+   ------------------------------------------------------------------------- */
+@import url('./utilities/index.css');
+
+/* -------------------------------------------------------------------------
+   4. Components
+   Reusable UI components
+   ------------------------------------------------------------------------- */
+@import url('./components/index.css');
+
+/* -------------------------------------------------------------------------
+   5. Layouts
+   Page-level layout structures
+   ------------------------------------------------------------------------- */
+@import url('./layouts/index.css');
+
+/* -------------------------------------------------------------------------
+   Utility: Visually Hidden
+   Hide content visually but keep it accessible to screen readers
+   ------------------------------------------------------------------------- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Show skip links when focused */
+.sr-only:focus-visible {
+  position: fixed;
+  top: var(--space-4);
+  left: var(--space-4);
+  width: auto;
+  height: auto;
+  padding: var(--space-3) var(--space-4);
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  z-index: 9999;
+  font: var(--typo-ui);
+  color: var(--text-primary);
+}

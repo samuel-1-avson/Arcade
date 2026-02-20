@@ -1,26 +1,45 @@
 /**
  * Environment Configuration Loader
- * Loads configuration based on current environment
+ * Browser-safe configuration - no process.env dependencies
  */
 
-// Determine current environment
-const ENV = typeof process !== 'undefined' && process.env 
-  ? process.env.NODE_ENV || 'development'
-  : 'development';
+// Determine current environment (browser-safe)
+const ENV = window.ENV?.NODE_ENV || 'production';
+
+// Firebase config from global or fallback (for production deployment)
+const getFirebaseConfig = () => {
+  // Try to get from window.ENV (injected at build time)
+  if (window.ENV?.FIREBASE_API_KEY) {
+    return {
+      apiKey: window.ENV.FIREBASE_API_KEY,
+      authDomain: window.ENV.FIREBASE_AUTH_DOMAIN,
+      databaseURL: window.ENV.FIREBASE_DATABASE_URL,
+      projectId: window.ENV.FIREBASE_PROJECT_ID,
+      storageBucket: window.ENV.FIREBASE_STORAGE_BUCKET || '',
+      messagingSenderId: window.ENV.FIREBASE_MESSAGING_SENDER_ID || '',
+      appId: window.ENV.FIREBASE_APP_ID || '',
+      measurementId: window.ENV.FIREBASE_MEASUREMENT_ID || ''
+    };
+  }
+  
+  // Fallback to hardcoded production config
+  // This is safe for client-side Firebase (API key is public)
+  return {
+    apiKey: 'AIzaSyCumtfvMCnSRXMHtOghgLv87PdvmwD3yjA',
+    authDomain: 'arcade-7f03c.firebaseapp.com',
+    databaseURL: 'https://arcade-7f03c-default-rtdb.firebaseio.com',
+    projectId: 'arcade-7f03c',
+    storageBucket: 'arcade-7f03c.appspot.com',
+    messagingSenderId: '123456789',
+    appId: '1:123456789:web:abc123',
+    measurementId: 'G-XXXXXXXXXX'
+  };
+};
 
 // Configuration for different environments
 const CONFIGS = {
   development: {
-    firebase: {
-      apiKey: process.env.FIREBASE_API_KEY || '',
-      authDomain: process.env.FIREBASE_AUTH_DOMAIN || '',
-      databaseURL: process.env.FIREBASE_DATABASE_URL || '',
-      projectId: process.env.FIREBASE_PROJECT_ID || '',
-      storageBucket: process.env.FIREBASE_STORAGE_BUCKET || '',
-      messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || '',
-      appId: process.env.FIREBASE_APP_ID || '',
-      measurementId: process.env.FIREBASE_MEASUREMENT_ID || ''
-    },
+    firebase: getFirebaseConfig(),
     features: {
       analytics: false,
       ads: false,
@@ -36,21 +55,12 @@ const CONFIGS = {
   },
   
   production: {
-    firebase: {
-      apiKey: process.env.FIREBASE_API_KEY || '',
-      authDomain: process.env.FIREBASE_AUTH_DOMAIN || '',
-      databaseURL: process.env.FIREBASE_DATABASE_URL || '',
-      projectId: process.env.FIREBASE_PROJECT_ID || '',
-      storageBucket: process.env.FIREBASE_STORAGE_BUCKET || '',
-      messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || '',
-      appId: process.env.FIREBASE_APP_ID || '',
-      measurementId: process.env.FIREBASE_MEASUREMENT_ID || ''
-    },
+    firebase: getFirebaseConfig(),
     features: {
       analytics: true,
-      ads: process.env.ENABLE_ADS === 'true',
+      ads: false,
       debug: false,
-      betaFeatures: process.env.ENABLE_BETA_FEATURES === 'true'
+      betaFeatures: false
     },
     limits: {
       maxChatMessageLength: 500,

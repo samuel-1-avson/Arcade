@@ -71,10 +71,28 @@ export class DashboardManager {
         const container = document.getElementById('leaderboard-preview');
         if (!container) return;
 
+        // Set initial loading state
+        container.innerHTML = '<div class="leaderboard-loading">Loading...</div>';
+
+        // Add timeout to prevent infinite loading
+        const timeout = setTimeout(() => {
+            container.innerHTML = `
+                <div class="leaderboard-empty">
+                    <svg class="leaderboard-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="8" x2="12" y2="12"/>
+                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    <span>Unable to load leaderboard</span>
+                    <button class="btn btn-ghost btn-sm" onclick="location.reload()">Retry</button>
+                </div>`;
+        }, 5000);
+
         try {
             const scores = await leaderboardService.getGlobalLeaderboard(3);
+            clearTimeout(timeout);
 
-            if (scores.length === 0) {
+            if (!scores || scores.length === 0) {
                 container.innerHTML = `
                     <div class="leaderboard-empty">
                         <svg class="leaderboard-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -96,7 +114,17 @@ export class DashboardManager {
                 </div>
             `).join('');
         } catch (error) {
+            clearTimeout(timeout);
             console.error('Failed to load leaderboard preview:', error);
+            container.innerHTML = `
+                <div class="leaderboard-empty">
+                    <svg class="leaderboard-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="8" x2="12" y2="12"/>
+                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    <span>Unable to load scores</span>
+                </div>`;
         }
     }
 
