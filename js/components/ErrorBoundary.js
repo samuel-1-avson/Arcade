@@ -1,5 +1,5 @@
 /**
- * Error Boundary Component
+ * Error Boundary Component v1.1
  * Catches and handles errors gracefully
  */
 
