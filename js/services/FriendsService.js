@@ -7,6 +7,8 @@
 import { eventBus } from '../engine/EventBus.js';
 import { globalStateManager } from './GlobalStateManager.js';
 import { notificationService } from './NotificationService.js';
+import { sanitizeDisplayName, escapeRegExp } from '../utils/sanitize.js';
+import { rateLimiter, RATE_LIMITS } from '../utils/rateLimiter.js';
 
 class FriendsService {
     constructor() {
@@ -174,29 +176,36 @@ class FriendsService {
         }
 
         try {
-            const profile = globalStateManager.getProfile();
-            const requestId = this.db.ref().push().key;
-            const timestamp = firebase.database.ServerValue.TIMESTAMP;
+            // Apply rate limiting
+            await rateLimiter.execute('FRIEND_REQUEST', async () => {
+                const profile = globalStateManager.getProfile();
+                const requestId = this.db.ref().push().key;
+                const timestamp = firebase.database.ServerValue.TIMESTAMP;
 
-            // Add to sender's outgoing requests
-            await this.db.ref(`friends/${this.currentUserId}/requests/outgoing/${requestId}`).set({
-                to: targetUserId,
-                timestamp
-            });
+                // Add to sender's outgoing requests
+                await this.db.ref(`friends/${this.currentUserId}/requests/outgoing/${requestId}`).set({
+                    to: targetUserId,
+                    timestamp
+                });
 
-            // Add to receiver's incoming requests
-            await this.db.ref(`friends/${targetUserId}/requests/incoming/${requestId}`).set({
-                from: this.currentUserId,
-                name: profile.displayName,
-                avatar: profile.avatar,
-                timestamp
-            });
+                // Add to receiver's incoming requests
+                await this.db.ref(`friends/${targetUserId}/requests/incoming/${requestId}`).set({
+                    from: this.currentUserId,
+                    name: sanitizeDisplayName(profile.displayName),
+                    avatar: profile.avatar,
+                    timestamp
+                });
+            }, RATE_LIMITS.FRIEND_REQUEST);
 
             notificationService.success('Friend request sent!');
             return true;
         } catch (error) {
-            console.error('[FriendsService] Send request error:', error);
-            notificationService.error('Failed to send friend request');
+            if (error.rateLimited) {
+                notificationService.error('Please wait before sending more friend requests');
+            } else {
+                console.error('[FriendsService] Send request error:', error);
+                notificationService.error('Failed to send friend request');
+            }
             return false;
         }
     }
@@ -207,29 +216,43 @@ class FriendsService {
      */
     async searchUsers(query) {
         if (!query || query.length < 2) return [];
+        
+        // Sanitize query to prevent injection
+        const sanitizedQuery = sanitizeDisplayName(query).slice(0, 20);
+        if (!sanitizedQuery) return [];
 
         try {
-            // Search in Firestore users collection
-            const db = firebase.firestore();
-            const snapshot = await db.collection('users')
-                .where('displayName', '>=', query)
-                .where('displayName', '<=', query + '\uf8ff')
-                .limit(10)
-                .get();
+            // Apply rate limiting
+            return await rateLimiter.execute('SEARCH', async () => {
+                // Search in Firestore users collection
+                const db = firebase.firestore();
+                const snapshot = await db.collection('publicProfiles')
+                    .where('displayName', '>=', sanitizedQuery)
+                    .where('displayName', '<=', sanitizedQuery + '\uf8ff')
+                    .limit(10)
+                    .get();
 
-            const results = [];
-            snapshot.forEach(doc => {
-                if (doc.id !== this.currentUserId) {
-                    results.push({
-                        id: doc.id,
-                        ...doc.data()
-                    });
-                }
-            });
+                const results = [];
+                snapshot.forEach(doc => {
+                    if (doc.id !== this.currentUserId) {
+                        const data = doc.data();
+                        results.push({
+                            id: doc.id,
+                            displayName: sanitizeDisplayName(data.displayName || 'Unknown'),
+                            avatar: data.avatar,
+                            level: data.level || 1
+                        });
+                    }
+                });
 
-            return results;
+                return results;
+            }, RATE_LIMITS.SEARCH);
         } catch (error) {
-            console.error('[FriendsService] Search error:', error);
+            if (error.rateLimited) {
+                notificationService.warning('Please slow down your search');
+            } else {
+                console.error('[FriendsService] Search error:', error);
+            }
             return [];
         }
     }
@@ -256,7 +279,7 @@ class FriendsService {
             
             // Add sender to my friends list
             updates[`friends/${this.currentUserId}/list/${request.from}`] = {
-                name: request.name,
+                name: sanitizeDisplayName(request.name),
                 avatar: request.avatar,
                 since: timestamp,
                 status: 'accepted'
@@ -264,7 +287,7 @@ class FriendsService {
 
             // Add me to sender's friends list
             updates[`friends/${request.from}/list/${this.currentUserId}`] = {
-                name: myProfile.displayName,
+                name: sanitizeDisplayName(myProfile.displayName),
                 avatar: myProfile.avatar,
                 since: timestamp,
                 status: 'accepted'

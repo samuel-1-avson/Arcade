@@ -24,15 +24,16 @@ const getFirebaseConfig = () => {
   
   // Fallback to hardcoded production config
   // This is safe for client-side Firebase (API key is public)
+  // NOTE: These should match your .env.local values
   return {
     apiKey: 'AIzaSyCumtfvMCnSRXMHtOghgLv87PdvmwD3yjA',
     authDomain: 'arcade-7f03c.firebaseapp.com',
     databaseURL: 'https://arcade-7f03c-default-rtdb.firebaseio.com',
     projectId: 'arcade-7f03c',
-    storageBucket: 'arcade-7f03c.appspot.com',
-    messagingSenderId: '123456789',
-    appId: '1:123456789:web:abc123',
-    measurementId: 'G-XXXXXXXXXX'
+    storageBucket: 'arcade-7f03c.firebasestorage.app',
+    messagingSenderId: '883884342768',
+    appId: '1:883884342768:web:8c6a43c1c3c01790d2f135',
+    measurementId: 'G-NCQBGH5RR3'
   };
 };
 

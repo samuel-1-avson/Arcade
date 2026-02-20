@@ -43,6 +43,8 @@ import { SettingsModalManager } from './modals/settings.js';
 import { FriendsManager } from './social/friends.js';
 import { LeaderboardManager } from './leaderboard.js';
 import { accessibilityManager } from './accessibility.js';
+import { ErrorBoundary } from '../components/ErrorBoundary.js';
+import { connectionDiagnostics } from '../utils/connectionDiagnostics.js';
 
 // Config
 import { GAME_ICONS } from '../config/gameRegistry.js';
@@ -84,6 +86,31 @@ export class ArcadeHub {
     }
 
     async init() {
+        // Initialize error boundary for global error handling
+        this.errorBoundary = new ErrorBoundary({
+            fallbackMessage: 'Something went wrong. Please try again.',
+            showDetails: false, // Don't show sensitive error details to users
+            onError: (error, context) => {
+                console.error(`[ArcadeHub] Error in ${context}:`, error);
+                analyticsService.track('error', {
+                    context,
+                    message: error.message,
+                    stack: error.stack
+                });
+            }
+        }).install();
+
+        // Wrap initialization in try-catch to prevent total failure
+        try {
+            await this.initializeApp();
+        } catch (error) {
+            console.error('[ArcadeHub] Fatal initialization error:', error);
+            this.errorBoundary.handleError(error, 'App Initialization');
+            notificationService.error('Failed to initialize app. Please refresh the page.');
+        }
+    }
+
+    async initializeApp() {
         this.renderGames();
         this.setupEventListeners();
         
@@ -137,6 +164,14 @@ export class ArcadeHub {
         // Initialize accessibility manager (Phase 3)
         accessibilityManager.init();
 
+        // Initialize connection diagnostics
+        connectionDiagnostics.init();
+        
+        // Show connection status in development
+        if (config.features.debug) {
+            connectionDiagnostics.createStatusIndicator();
+        }
+
         // Setup additional UI
         this.setupAchievementGallery();
         this.setupDailyChallenges();
@@ -153,6 +188,7 @@ export class ArcadeHub {
         this.setupGlobalEventListeners();
 
         console.log('Arcade Hub initialized with modular architecture');
+        }
     }
 
     setupEventListeners() {

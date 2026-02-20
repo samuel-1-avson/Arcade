@@ -7,6 +7,8 @@
 import { eventBus } from '../engine/EventBus.js';
 import { globalStateManager } from './GlobalStateManager.js';
 import { notificationService } from './NotificationService.js';
+import { sanitizeChatMessage, sanitizeDisplayName, sanitizeHTML } from '../utils/sanitize.js';
+import { rateLimiter, RATE_LIMITS } from '../utils/rateLimiter.js';
 
 class ChatService {
     constructor() {
@@ -74,37 +76,52 @@ class ChatService {
         if (!text || text.trim().length === 0) return false;
 
         try {
-            const profile = globalStateManager.getProfile();
-            const conversationId = this.getConversationId(this.currentUserId, friendId);
-            const messageRef = this.db.ref(`messages/dm/${conversationId}`).push();
-            
-            await messageRef.set({
-                from: this.currentUserId,
-                fromName: profile.displayName,
-                fromAvatar: profile.avatar,
-                text: text.trim(),
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
-                read: false
-            });
+            // Apply rate limiting
+            await rateLimiter.execute('CHAT', async () => {
+                const profile = globalStateManager.getProfile();
+                const conversationId = this.getConversationId(this.currentUserId, friendId);
+                const messageRef = this.db.ref(`messages/dm/${conversationId}`).push();
+                
+                // Sanitize message text to prevent XSS
+                const sanitizedText = sanitizeChatMessage(text);
+                if (!sanitizedText) {
+                    notificationService.error('Message cannot be empty');
+                    return false;
+                }
+                
+                await messageRef.set({
+                    from: this.currentUserId,
+                    fromName: sanitizeDisplayName(profile.displayName),
+                    fromAvatar: profile.avatar,
+                    text: sanitizedText,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    read: false
+                });
 
-            // Update conversation metadata
-            await this.db.ref(`conversations/${this.currentUserId}/${conversationId}`).update({
-                lastMessage: text.trim().substring(0, 50),
-                lastTimestamp: firebase.database.ServerValue.TIMESTAMP,
-                withUser: friendId
-            });
+                // Update conversation metadata (use sanitized preview)
+                const messagePreview = sanitizedText.substring(0, 50);
+                await this.db.ref(`conversations/${this.currentUserId}/${conversationId}`).update({
+                    lastMessage: messagePreview,
+                    lastTimestamp: firebase.database.ServerValue.TIMESTAMP,
+                    withUser: friendId
+                });
 
-            await this.db.ref(`conversations/${friendId}/${conversationId}`).update({
-                lastMessage: text.trim().substring(0, 50),
-                lastTimestamp: firebase.database.ServerValue.TIMESTAMP,
-                withUser: this.currentUserId,
-                unread: firebase.database.ServerValue.increment(1)
-            });
+                await this.db.ref(`conversations/${friendId}/${conversationId}`).update({
+                    lastMessage: messagePreview,
+                    lastTimestamp: firebase.database.ServerValue.TIMESTAMP,
+                    withUser: this.currentUserId,
+                    unread: firebase.database.ServerValue.increment(1)
+                });
+            }, RATE_LIMITS.CHAT);
 
             return true;
         } catch (error) {
-            console.error('[ChatService] Send DM error:', error);
-            notificationService.error('Failed to send message');
+            if (error.rateLimited) {
+                notificationService.error(error.message);
+            } else {
+                console.error('[ChatService] Send DM error:', error);
+                notificationService.error('Failed to send message');
+            }
             return false;
         }
     }
@@ -126,10 +143,17 @@ class ChatService {
         const listener = messagesRef.on('value', (snapshot) => {
             const messages = [];
             snapshot.forEach((child) => {
+                const msgData = child.val();
+                // Double-sanitize on receive to prevent stored XSS
                 messages.push({
                     id: child.key,
-                    ...child.val(),
-                    isOwn: child.val().from === this.currentUserId
+                    from: msgData.from,
+                    fromName: sanitizeHTML(msgData.fromName || 'Unknown'),
+                    fromAvatar: msgData.fromAvatar,
+                    text: sanitizeHTML(msgData.text || ''),
+                    timestamp: msgData.timestamp,
+                    read: msgData.read,
+                    isOwn: msgData.from === this.currentUserId
                 });
             });
             
@@ -164,10 +188,17 @@ class ChatService {
 
             const messages = [];
             snapshot.forEach((child) => {
+                const msgData = child.val();
+                // Sanitize on retrieval to prevent XSS
                 messages.push({
                     id: child.key,
-                    ...child.val(),
-                    isOwn: child.val().from === this.currentUserId
+                    from: msgData.from,
+                    fromName: sanitizeHTML(msgData.fromName || 'Unknown'),
+                    fromAvatar: msgData.fromAvatar,
+                    text: sanitizeHTML(msgData.text || ''),
+                    timestamp: msgData.timestamp,
+                    read: msgData.read,
+                    isOwn: msgData.from === this.currentUserId
                 });
             });
 
@@ -226,23 +257,33 @@ class ChatService {
      */
     async sendPartyMessage(partyId, text) {
         if (!this.db || !this.currentUserId) return false;
-        if (!text || text.trim().length === 0) return false;
+        
+        // Sanitize input
+        const sanitizedText = sanitizeChatMessage(text);
+        if (!sanitizedText) return false;
 
         try {
-            const profile = globalStateManager.getProfile();
-            const messageRef = this.db.ref(`messages/party/${partyId}`).push();
-            
-            await messageRef.set({
-                from: this.currentUserId,
-                name: profile.displayName,
-                avatar: profile.avatar,
-                text: text.trim(),
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            });
+            // Apply rate limiting
+            await rateLimiter.execute('CHAT', async () => {
+                const profile = globalStateManager.getProfile();
+                const messageRef = this.db.ref(`messages/party/${partyId}`).push();
+                
+                await messageRef.set({
+                    from: this.currentUserId,
+                    name: sanitizeDisplayName(profile.displayName),
+                    avatar: profile.avatar,
+                    text: sanitizedText,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+            }, RATE_LIMITS.CHAT);
 
             return true;
         } catch (error) {
-            console.error('[ChatService] Send party message error:', error);
+            if (error.rateLimited) {
+                notificationService.warning('Please slow down your messages');
+            } else {
+                console.error('[ChatService] Send party message error:', error);
+            }
             return false;
         }
     }
@@ -263,10 +304,16 @@ class ChatService {
         const listener = chatRef.on('value', (snapshot) => {
             const messages = [];
             snapshot.forEach((child) => {
+                const msgData = child.val();
+                // Sanitize on receive to prevent stored XSS
                 messages.push({
                     id: child.key,
-                    ...child.val(),
-                    isOwn: child.val().from === this.currentUserId
+                    from: msgData.from,
+                    name: sanitizeHTML(msgData.name || 'Unknown'),
+                    avatar: msgData.avatar,
+                    text: sanitizeHTML(msgData.text || ''),
+                    timestamp: msgData.timestamp,
+                    isOwn: msgData.from === this.currentUserId
                 });
             });
             

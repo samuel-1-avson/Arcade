@@ -298,6 +298,7 @@ class LeaderboardService {
     /**
      * Submit score to leaderboard
      * Uses transaction-based update for atomic high score handling
+     * Falls back to client-side validation if Cloud Functions unavailable
      * @param {string} gameId
      * @param {number} score
      * @param {Object} metadata
@@ -317,9 +318,23 @@ class LeaderboardService {
         // Submit to Firebase if signed in
         try {
             if (firebaseService.isSignedIn()) {
-                // Use transaction-based submission for atomic updates
-                const result = await firebaseService.submitScoreWithTransaction(gameId, score, metadata);
-                isNewBest = result.isNewBest || false;
+                // Validate score client-side first (anti-cheat)
+                const validation = this._validateScoreClientSide(gameId, score);
+                if (!validation.valid) {
+                    console.warn('[LeaderboardService] Score validation failed:', validation.errors);
+                    return { submitted: false, isNewBest: false, error: validation.errors };
+                }
+                
+                // Try Cloud Functions first (if available)
+                try {
+                    const result = await firebaseService.submitScoreWithTransaction(gameId, score, metadata);
+                    isNewBest = result.isNewBest || false;
+                } catch (cloudError) {
+                    // Cloud Functions not available, use direct Firestore write
+                    console.log('[LeaderboardService] Using client-side submission (Cloud Functions unavailable)');
+                    const result = await this._submitScoreDirect(gameId, score, metadata);
+                    isNewBest = result.isNewBest || false;
+                }
                 
                 // Invalidate cache
                 this._invalidateCache(gameId);
@@ -330,6 +345,95 @@ class LeaderboardService {
 
         // Emit event with isNewBest flag
         eventBus.emit('scoreSubmitted', { gameId, score, isNewBest });
+
+        return { submitted: true, isNewBest };
+    }
+
+    /**
+     * Client-side score validation (fallback when Cloud Functions unavailable)
+     * @private
+     */
+    _validateScoreClientSide(gameId, score) {
+        const result = { valid: false, errors: [] };
+        
+        // Must be a number
+        if (typeof score !== 'number' || isNaN(score)) {
+            result.errors.push('Score must be a number');
+            return result;
+        }
+        
+        // Must be non-negative
+        if (score < 0) {
+            result.errors.push('Score cannot be negative');
+            return result;
+        }
+        
+        // Must be integer
+        if (!Number.isInteger(score)) {
+            result.errors.push('Score must be an integer');
+            return result;
+        }
+        
+        // Game-specific max scores (anti-cheat)
+        const maxScores = {
+            'snake': 1000000,
+            '2048': 10000000,
+            'breakout': 500000,
+            'tetris': 5000000,
+            'minesweeper': 100000,
+            'pacman': 2000000,
+            'asteroids': 1000000,
+            'tower-defense': 10000000,
+            'rhythm': 1000000,
+            'roguelike': 500000,
+            'toonshooter': 1000000
+        };
+        
+        const maxScore = maxScores[gameId] || 1000000;
+        if (score > maxScore) {
+            result.errors.push(`Score exceeds maximum for ${gameId}`);
+            return result;
+        }
+        
+        result.valid = true;
+        return result;
+    }
+
+    /**
+     * Direct Firestore score submission (fallback when Cloud Functions unavailable)
+     * @private
+     */
+    async _submitScoreDirect(gameId, score, metadata = {}) {
+        if (!firebaseService.db || !firebaseService.isSignedIn()) {
+            return { submitted: false, isNewBest: false };
+        }
+
+        const user = firebaseService.getCurrentUser();
+        const scoreDoc = {
+            gameId,
+            score,
+            userId: user.uid,
+            userName: user.displayName || 'Anonymous',
+            userPhoto: user.photoURL || null,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            verified: false, // Mark as unverified (no server validation)
+            ...metadata
+        };
+
+        // Add to scores collection
+        await firebaseService.db.collection('scores').add(scoreDoc);
+
+        // Update personal best
+        const userRef = firebaseService.db.collection('users').doc(user.uid);
+        const userDoc = await userRef.get();
+        const currentBest = userDoc.exists ? (userDoc.data().highScores?.[gameId] || 0) : 0;
+        
+        const isNewBest = score > currentBest;
+        if (isNewBest) {
+            await userRef.set({
+                highScores: { [gameId]: score }
+            }, { merge: true });
+        }
 
         return { submitted: true, isNewBest };
     }
