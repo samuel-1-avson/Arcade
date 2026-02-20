@@ -186,7 +186,7 @@
 
 /* Content Area */
 .auth-modal-content {
-  padding: 24px 32px 32px;
+  padding: 20px 32px 28px;
   position: relative;
 }
 
@@ -407,17 +407,24 @@
   height: 18px;
 }
 
-/* Ghost Button - Guest */
+/* Ghost Button - Guest - Compact */
 .auth-btn-ghost {
   background: transparent;
   color: var(--retro-text-muted);
   border: 1px dashed var(--retro-border);
+  padding: 10px 16px;
+  font-size: 13px;
 }
 
 .auth-btn-ghost:hover {
   color: var(--retro-text);
   border-color: var(--retro-text-muted);
   background: var(--retro-surface-hover);
+}
+
+.auth-btn-ghost svg {
+  width: 14px;
+  height: 14px;
 }
 
 /* Divider - Retro Style */
@@ -454,9 +461,9 @@
 .auth-features {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 24px;
-  padding-top: 24px;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 20px;
   border-top: 1px solid var(--retro-border);
 }
 
