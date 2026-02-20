@@ -49,17 +49,17 @@ import { GAME_ICONS } from '../config/gameRegistry.js';
 
 // Game catalog
 const GAMES = [
-    { id: 'snake', title: 'Snake', description: 'Eat food, grow longer, don\'t hit yourself!', difficulty: 'easy', path: 'games/snake/', icon: '🐍', rating: 5, hudMode: 'GAME_MINIMAL' },
-    { id: '2048', title: '2048', description: 'Slide tiles and merge them to reach 2048!', difficulty: 'easy', path: 'games/2048/', icon: '🔢', rating: 5 },
-    { id: 'breakout', title: 'Breakout', description: 'Break all the bricks with the ball!', difficulty: 'easy', path: 'games/breakout/', icon: '🎯', rating: 5 },
-    { id: 'minesweeper', title: 'Minesweeper', description: 'Find all the mines without exploding!', difficulty: 'easy', path: 'games/minesweeper/', icon: '💣', rating: 5 },
-    { id: 'tetris', title: 'Tetris', description: 'Stack blocks and clear lines!', difficulty: 'medium', path: 'games/tetris/', icon: '🧱', rating: 5 },
-    { id: 'pacman', title: 'Pac-Man', description: 'Eat dots and avoid ghosts!', difficulty: 'medium', path: 'games/pacman/', icon: '👻', rating: 5 },
-    { id: 'asteroids', title: 'Asteroids', description: 'Shoot asteroids in deep space!', difficulty: 'medium', path: 'games/asteroids/', icon: '☄️', rating: 5 },
-    { id: 'tower-defense', title: 'Tower Defense', description: 'Build towers and stop the enemies!', difficulty: 'hard', path: 'games/tower-defense/', icon: '🏰', rating: 5 },
-    { id: 'rhythm', title: 'Rhythm', description: 'Hit notes to the beat!', difficulty: 'hard', path: 'games/rhythm/', icon: '🎵', rating: 5 },
-    { id: 'roguelike', title: 'Roguelike', description: 'Explore procedural dungeons!', difficulty: 'hard', path: 'games/roguelike/', icon: '⚔️', rating: 5 },
-    { id: 'toonshooter', title: 'Toon Shooter', description: 'Duel in a tiny toon arena!', difficulty: 'medium', path: 'games/toonshooter/', icon: '🔫', rating: 5 }
+    { id: 'snake', title: 'Snake', description: 'Eat food, grow longer, don\'t hit yourself!', difficulty: 'easy', path: 'games/snake/', rating: 5, hudMode: 'GAME_MINIMAL' },
+    { id: '2048', title: '2048', description: 'Slide tiles and merge them to reach 2048!', difficulty: 'easy', path: 'games/2048/', rating: 5 },
+    { id: 'breakout', title: 'Breakout', description: 'Break all the bricks with the ball!', difficulty: 'easy', path: 'games/breakout/', rating: 5 },
+    { id: 'minesweeper', title: 'Minesweeper', description: 'Find all the mines without exploding!', difficulty: 'easy', path: 'games/minesweeper/', rating: 5 },
+    { id: 'tetris', title: 'Tetris', description: 'Stack blocks and clear lines!', difficulty: 'medium', path: 'games/tetris/', rating: 5 },
+    { id: 'pacman', title: 'Pac-Man', description: 'Eat dots and avoid ghosts!', difficulty: 'medium', path: 'games/pacman/', rating: 5 },
+    { id: 'asteroids', title: 'Asteroids', description: 'Shoot asteroids in deep space!', difficulty: 'medium', path: 'games/asteroids/', rating: 5 },
+    { id: 'tower-defense', title: 'Tower Defense', description: 'Build towers and stop the enemies!', difficulty: 'hard', path: 'games/tower-defense/', rating: 5 },
+    { id: 'rhythm', title: 'Rhythm', description: 'Hit notes to the beat!', difficulty: 'hard', path: 'games/rhythm/', rating: 5 },
+    { id: 'roguelike', title: 'Roguelike', description: 'Explore procedural dungeons!', difficulty: 'hard', path: 'games/roguelike/', rating: 5 },
+    { id: 'toonshooter', title: 'Toon Shooter', description: 'Duel in a tiny toon arena!', difficulty: 'medium', path: 'games/toonshooter/', rating: 5 }
 ];
 
 export class ArcadeHub {

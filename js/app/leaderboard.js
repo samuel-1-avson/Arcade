@@ -5,6 +5,7 @@
 
 import { LeaderboardList } from '../components/LeaderboardList.js';
 import { leaderboardService } from '../services/LeaderboardService.js';
+import { GAME_ICONS } from '../config/gameRegistry.js';
 
 export class LeaderboardManager {
     constructor(app) {
@@ -36,8 +37,9 @@ export class LeaderboardManager {
             const tab = document.createElement('button');
             tab.className = 'leaderboard-tab';
             tab.dataset.game = game.id;
+            const svgIcon = GAME_ICONS[game.id] || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 1em; height: 1em; vertical-align: middle;"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M15 10v4"/><path d="M13 12h4"/></svg>';
             tab.innerHTML = `
-                <span class="tab-icon">${game.icon}</span>
+                <span class="tab-icon" style="width:16px;height:16px;display:inline-block;">${svgIcon}</span>
                 ${game.title}
             `;
             this.tabsContainer.appendChild(tab);
