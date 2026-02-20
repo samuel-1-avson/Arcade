@@ -510,7 +510,6 @@ body::after {
     background: var(--neon-cyan);
     border-radius: 50%;
     animation: liveIndicator 1.5s ease-in-out infinite;
-    box-shadow: 0 0 6px var(--neon-cyan);
 }
 
 .hero-title {
@@ -725,10 +724,9 @@ body::after {
 
 .xp-fill {
     height: 100%;
-    background: var(--gradient-cyber);
+    background: var(--neon-cyan);
     border-radius: var(--radius-full);
     transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 0 8px rgba(0,245,255,0.5);
 }
 
 .profile-stats {
@@ -953,7 +951,6 @@ body::after {
     background: rgba(0,245,255,0.12);
     color: var(--neon-cyan);
     border-color: rgba(0,245,255,0.4);
-    box-shadow: 0 0 12px rgba(0,245,255,0.15);
 }
 
 /* ============================================================
@@ -1005,7 +1002,7 @@ body::after {
         right: 0;
         bottom: 0;
         transform: translateX(100%);
-        box-shadow: -8px 0 40px rgba(0,0,0,0.5);
+        border-left: 1px solid var(--border-subtle);
         z-index: var(--z-overlay);
     }
 }
@@ -1254,7 +1251,7 @@ body::after {
 .challenge-card.weekly::before { background: var(--neon-pink); }
 .challenge-card.completed::before { background: var(--neon-green); }
 
-.challenge-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.challenge-card:hover { border-color: var(--border-default); }
 
 .challenge-header {
     display: flex;
@@ -1344,7 +1341,6 @@ body::after {
 .game-select-option.selected {
     background: rgba(0,245,255,0.1);
     border-color: var(--neon-cyan);
-    box-shadow: 0 0 12px rgba(0,245,255,0.2);
 }
 
 .game-select-icon-wrapper {
@@ -1400,12 +1396,11 @@ body::after {
 .play-fab {
     width: 56px;
     height: 56px;
-    background: var(--gradient-cyber);
+    background: var(--neon-cyan);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: var(--shadow-md), 0 0 20px rgba(0,245,255,0.5);
     margin-top: -20px;
     border: 3px solid var(--bg-void);
     transition: all var(--transition-bounce);
@@ -1434,8 +1429,7 @@ body::after {
     right: 0;
     background: var(--bg-elevated);
     border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
-    border-top: 1px solid rgba(0,245,255,0.2);
-    box-shadow: 0 -12px 40px rgba(0,0,0,0.5);
+    border-top: 1px solid var(--neon-cyan);
     padding: var(--space-lg);
     padding-bottom: calc(var(--space-lg) + 80px);
     transform: translateY(100%);
@@ -1556,8 +1550,7 @@ body::after {
 }
 
 .form-group input:focus, .form-group select:focus, .form-select:focus {
-    border-color: rgba(0,245,255,0.5);
-    box-shadow: 0 0 0 3px rgba(0,245,255,0.08);
+    border-color: var(--neon-cyan);
 }
 
 /* Toggle switch */
@@ -1600,7 +1593,6 @@ body::after {
 .toggle input:checked + .toggle-slider::after {
     transform: translateX(20px);
     background: var(--neon-cyan);
-    box-shadow: 0 0 8px rgba(0,245,255,0.6);
 }
 
 /* Avatar grid */
@@ -1628,7 +1620,6 @@ body::after {
 .avatar-option:hover { border-color: rgba(0,245,255,0.4); transform: scale(1.08); }
 .avatar-option.selected {
     border-color: var(--neon-cyan);
-    box-shadow: 0 0 14px rgba(0,245,255,0.35);
     background: rgba(0,245,255,0.08);
 }
 

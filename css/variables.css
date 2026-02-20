@@ -133,21 +133,21 @@
     --space-3xl: 4rem;      /* 64px */
 
     /* =========================================================================
-       BORDER RADIUS
+       BORDER RADIUS — STRICT RETRO MINIMAL
        ========================================================================= */
     --radius-sm:   0px;
-    --radius-md:   2px;
-    --radius-lg:   4px;
-    --radius-xl:   6px;
-    --radius-2xl:  8px;
-    --radius-full: 9999px;
+    --radius-md:   0px;
+    --radius-lg:   0px;
+    --radius-xl:   0px;
+    --radius-2xl:  0px;
+    --radius-full: 0px;
 
     /* =========================================================================
        TYPOGRAPHY
        ========================================================================= */
     --font-display: 'Orbitron', system-ui, sans-serif;
-    --font-body:    system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-    --font-mono:    'Share Tech Mono', 'Courier New', monospace;
+    --font-body:    'Space Mono', 'Courier New', monospace;
+    --font-mono:    'Space Mono', 'Courier New', monospace;
 
     /* =========================================================================
        TRANSITIONS
