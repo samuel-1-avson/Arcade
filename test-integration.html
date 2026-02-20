@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New UI Integration Test</title>
+    <link rel="stylesheet" href="css-new/main.css">
+    <style>
+        body {
+            padding: 20px;
+            font-family: var(--font-sans);
+        }
+        .test-section {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: var(--radius-md);
+        }
+        .test-pass {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--status-success);
+        }
+        .test-fail {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--status-danger);
+        }
+        .component-demo {
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎮 New UI Integration Test</h1>
+    <p>This page tests the new UI components and integration.</p>
+
+    <!-- Test Results -->
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <div id="test-results"></div>
+    </div>
+
+    <!-- Component Demos -->
+    <div class="test-section">
+        <h2>Component Demos</h2>
+        
+        <!-- Buttons -->
+        <div class="component-demo">
+            <h3>Buttons</h3>
+            <button class="btn btn--primary">Primary</button>
+            <button class="btn btn--secondary">Secondary</button>
+            <button class="btn btn--ghost">Ghost</button>
+            <button class="btn btn--destructive">Destructive</button>
+        </div>
+
+        <!-- Pills -->
+        <div class="component-demo">
+            <h3>Pills</h3>
+            <div class="pill-group">
+                <button class="pill pill--active">All Games</button>
+                <button class="pill">Favorites</button>
+                <button class="pill">Tournaments</button>
+            </div>
+        </div>
+
+        <!-- Inputs -->
+        <div class="component-demo">
+            <h3>Inputs</h3>
+            <input type="text" class="input" placeholder="Text input">
+            <br><br>
+            <label class="toggle">
+                <input type="checkbox" class="toggle__input" checked>
+                <span class="toggle__slider"></span>
+                <span class="toggle__label">Toggle</span>
+            </label>
+        </div>
+
+        <!-- Cards -->
+        <div class="component-demo">
+            <h3>Game Card</h3>
+            <article class="game-card" style="max-width: 320px;">
+                <div class="game-card__header">
+                    <div class="game-card__icon">🐍</div>
+                    <div class="game-card__info">
+                        <h3 class="game-card__title">Snake</h3>
+                        <span class="game-card__category">Classic</span>
+                    </div>
+                    <span class="game-card__difficulty game-card__difficulty--easy"></span>
+                </div>
+                <div class="game-card__body">
+                    <p class="game-card__description">Eat food, grow longer, and avoid collisions!</p>
+                </div>
+                <div class="game-card__footer">
+                    <div class="game-card__stat">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
+                        </svg>
+                        <span class="game-card__stat-value">1,250</span>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </div>
+
+    <!-- Integration Status -->
+    <div class="test-section">
+        <h2>Integration Status</h2>
+        <div id="integration-status"></div>
+        <button class="btn btn--primary" id="test-bridge">Test Bridge Connection</button>
+    </div>
+
+    <!-- Load new UI -->
+    <script type="module">
+        import { app } from './js-new/index.js';
+        import { bridge } from './js-new/integration/index.js';
+        
+        const resultsEl = document.getElementById('test-results');
+        const statusEl = document.getElementById('integration-status');
+        
+        function addTest(name, passed, message = '') {
+            const div = document.createElement('div');
+            div.className = `test-result ${passed ? 'test-pass' : 'test-fail'}`;
+            div.innerHTML = `${passed ? '✅' : '❌'} <strong>${name}</strong>${message ? `: ${message}` : ''}`;
+            resultsEl.appendChild(div);
+        }
+        
+        // Run tests
+        async function runTests() {
+            // Test 1: App loaded
+            addTest('App loaded', !!app, app ? 'App instance created' : 'Failed');
+            
+            // Test 2: Components initialized
+            const componentsLoaded = app.components && app.components.size > 0;
+            addTest('Components loaded', componentsLoaded, 
+                componentsLoaded ? `${app.components.size} components` : 'No components');
+            
+            // Test 3: Bridge loaded
+            addTest('Bridge loaded', !!bridge, bridge ? 'Bridge ready' : 'Failed');
+            
+            // Test 4: CSS variables
+            const rootStyles = getComputedStyle(document.documentElement);
+            const primaryColor = rootStyles.getPropertyValue('--accent-primary');
+            addTest('CSS variables', !!primaryColor, primaryColor ? `Primary: ${primaryColor}` : 'Missing');
+            
+            // Test 5: Set games
+            try {
+                app.setGames([
+                    { id: 'test', title: 'Test Game', description: 'Test', difficulty: 'easy', icon: '🎮' }
+                ]);
+                addTest('Set games', true, 'Games data set successfully');
+            } catch (e) {
+                addTest('Set games', false, e.message);
+            }
+            
+            // Test 6: Set user
+            try {
+                app.setUser({ name: 'Test', xp: 100 });
+                addTest('Set user', true, 'User data set successfully');
+            } catch (e) {
+                addTest('Set user', false, e.message);
+            }
+            
+            // Integration status
+            statusEl.innerHTML = `
+                <p><strong>Bridge Status:</strong> ${bridge.isInitialized ? 'Initialized' : 'Not initialized'}</p>
+                <p><strong>ArcadeHub:</strong> ${window.arcadeHub ? 'Found' : 'Not found'}</p>
+                <p><strong>Ready to migrate:</strong> ${!bridge.isInitialized && !window.arcadeHub ? 'Yes (standalone mode)' : 'Waiting for ArcadeHub'}</p>
+            `;
+        }
+        
+        // Test bridge button
+        document.getElementById('test-bridge').addEventListener('click', async () => {
+            try {
+                await bridge.init();
+                addTest('Bridge init', true, 'Bridge initialized successfully');
+                statusEl.innerHTML += '<p class="test-pass">Bridge connected!</p>';
+            } catch (e) {
+                addTest('Bridge init', false, e.message);
+            }
+        });
+        
+        // Run tests on load
+        runTests();
+        
+        console.log('🧪 Integration test page loaded');
+        console.log('App:', app);
+        console.log('Bridge:', bridge);
+    </script>
+</body>
+</html>

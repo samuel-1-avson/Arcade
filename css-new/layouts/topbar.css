@@ -1,0 +1,332 @@
+/* ==========================================================================
+   Top Bar Layout
+   Main header/navigation bar for the Arcade Gaming Hub
+   ========================================================================== */
+
+/* -------------------------------------------------------------------------
+   Top Bar Container
+   ------------------------------------------------------------------------- */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--topbar-height);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  z-index: var(--z-sticky);
+}
+
+.topbar__container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  height: 100%;
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: 0 var(--container-padding);
+}
+
+@media (min-width: 768px) {
+  .topbar__container {
+    padding: 0 var(--container-padding-md);
+  }
+}
+
+@media (min-width: 1024px) {
+  .topbar__container {
+    padding: 0 var(--container-padding-lg);
+  }
+}
+
+/* -------------------------------------------------------------------------
+   Logo Section
+   ------------------------------------------------------------------------- */
+.topbar__logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+.topbar__logo-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  transition: var(--transition-opacity);
+}
+
+.topbar__logo-link:hover {
+  opacity: 0.8;
+}
+
+.topbar__logo-icon {
+  width: 36px;
+  height: 36px;
+  color: var(--accent-primary);
+  filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.3));
+}
+
+.topbar__logo-text {
+  display: none;
+  font: var(--typo-heading-sm);
+  color: var(--text-primary);
+  letter-spacing: var(--tracking-tight);
+}
+
+@media (min-width: 480px) {
+  .topbar__logo-text {
+    display: block;
+  }
+}
+
+/* -------------------------------------------------------------------------
+   Search Section
+   ------------------------------------------------------------------------- */
+.topbar__search {
+  flex: 1;
+  max-width: 400px;
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .topbar__search {
+    display: block;
+  }
+}
+
+/* -------------------------------------------------------------------------
+   Actions Section
+   ------------------------------------------------------------------------- */
+.topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+/* Quick Stats (Desktop only) */
+.topbar__stats {
+  display: none;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-4);
+  background: var(--bg-input);
+  border-radius: var(--radius-full);
+}
+
+@media (min-width: 1024px) {
+  .topbar__stats {
+    display: flex;
+  }
+}
+
+.topbar__stat {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  font: var(--typo-mono-xs);
+  color: var(--text-secondary);
+}
+
+.topbar__stat-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--status-warning);
+}
+
+.topbar__stat-value {
+  color: var(--text-primary);
+  font-weight: var(--font-semibold);
+}
+
+/* Sync Indicator */
+.topbar__sync {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-input);
+  border-radius: var(--radius-full);
+  color: var(--text-muted);
+  transition: var(--transition-colors);
+}
+
+.topbar__sync:hover {
+  color: var(--text-primary);
+}
+
+.topbar__sync--online {
+  color: var(--status-success);
+}
+
+.topbar__sync--syncing {
+  color: var(--accent-primary);
+  animation: spin 1s linear infinite;
+}
+
+.topbar__sync--offline {
+  color: var(--status-warning);
+}
+
+/* User Avatar */
+.topbar__user {
+  position: relative;
+}
+
+.topbar__avatar {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--accent-primary-dim), var(--accent-secondary-dim));
+  border: 2px solid var(--border-default);
+  border-radius: 50%;
+  font-size: var(--text-xl);
+  transition: var(--transition-all);
+}
+
+.topbar__avatar:hover {
+  border-color: var(--accent-primary);
+  box-shadow: var(--glow-primary-sm);
+}
+
+/* Settings Button */
+.topbar__settings {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-input);
+  border-radius: var(--radius-full);
+  color: var(--text-tertiary);
+  transition: var(--transition-all);
+}
+
+.topbar__settings:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  transform: rotate(30deg);
+}
+
+/* Mobile Menu Button */
+.topbar__menu {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-input);
+  border-radius: var(--radius-full);
+  color: var(--text-tertiary);
+  transition: var(--transition-all);
+}
+
+@media (min-width: 768px) {
+  .topbar__menu {
+    display: none;
+  }
+}
+
+.topbar__menu:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+/* -------------------------------------------------------------------------
+   User Dropdown
+   ------------------------------------------------------------------------- */
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  min-width: 240px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: opacity var(--duration-fast) var(--ease-out),
+              visibility var(--duration-fast) var(--ease-out),
+              transform var(--duration-fast) var(--ease-out);
+  z-index: var(--z-dropdown);
+}
+
+.user-dropdown--visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.user-dropdown__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.user-dropdown__avatar {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-input);
+  border-radius: 50%;
+  font-size: var(--text-2xl);
+}
+
+.user-dropdown__info {
+  flex: 1;
+}
+
+.user-dropdown__name {
+  font: var(--typo-ui);
+  color: var(--text-primary);
+  font-weight: var(--font-semibold);
+}
+
+.user-dropdown__email {
+  font: var(--typo-caption);
+  color: var(--text-tertiary);
+}
+
+.user-dropdown__menu {
+  padding: var(--space-2);
+}
+
+.user-dropdown__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  font: var(--typo-body-sm);
+  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  transition: var(--transition-all);
+}
+
+.user-dropdown__item:hover {
+  background: var(--bg-input);
+  color: var(--text-primary);
+}
+
+.user-dropdown__item-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.user-dropdown__divider {
+  height: 1px;
+  margin: var(--space-2) 0;
+  background: var(--border-subtle);
+}
