@@ -10,8 +10,8 @@ import {
   deleteDoc,
   onSnapshot,
   serverTimestamp,
-  arrayUnion,
-  arrayRemove
+  orderBy,
+  limit as firestoreLimit,
 } from 'firebase/firestore';
 import { getFirebaseDb } from '../config';
 
@@ -52,219 +52,264 @@ export interface PartyMessage {
 export const partyService = {
   // Create a new party
   createParty: async (leaderId: string, leaderName: string, leaderPhoto?: string): Promise<{ partyId: string; code: string } | null> => {
-    const db = await getFirebaseDb();
-    if (!db) return null;
+    try {
+      const db = await getFirebaseDb();
+      if (!db) return null;
 
-    // Generate random 6-character code
-    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      // Generate random 6-character code
+      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const now = new Date();
 
-    const partyRef = doc(collection(db, PARTIES_COLLECTION));
-    const partyId = partyRef.id;
+      const partyRef = doc(collection(db, PARTIES_COLLECTION));
+      const partyId = partyRef.id;
 
-    await setDoc(partyRef, {
-      code,
-      leaderId,
-      leaderName,
-      members: [{
-        userId: leaderId,
-        displayName: leaderName,
-        photoURL: leaderPhoto,
-        isReady: false,
-        joinedAt: serverTimestamp(),
-      }],
-      memberIds: [leaderId],
-      status: 'waiting',
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
+      // NOTE: serverTimestamp() CANNOT be used inside arrays in Firestore
+      // Use a regular Date for joinedAt inside the members array
+      await setDoc(partyRef, {
+        code,
+        leaderId,
+        leaderName,
+        members: [{
+          userId: leaderId,
+          displayName: leaderName,
+          photoURL: leaderPhoto || null,
+          isReady: false,
+          joinedAt: now,
+        }],
+        memberIds: [leaderId],
+        status: 'waiting',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
 
-    return { partyId, code };
+      return { partyId, code };
+    } catch (error) {
+      console.error('[Party] createParty error:', error);
+      return null;
+    }
   },
 
   // Join a party by code
   joinParty: async (code: string, userId: string, displayName: string, photoURL?: string): Promise<{ success: boolean; party?: Party; error?: string }> => {
-    const db = await getFirebaseDb();
-    if (!db) return { success: false, error: 'Database not available' };
+    try {
+      const db = await getFirebaseDb();
+      if (!db) return { success: false, error: 'Database not available' };
 
-    // Find party by code
-    const partiesRef = collection(db, PARTIES_COLLECTION);
-    const q = query(partiesRef, where('code', '==', code.toUpperCase()));
-    const snapshot = await getDocs(q);
+      // Find party by code
+      const partiesRef = collection(db, PARTIES_COLLECTION);
+      const q = query(partiesRef, where('code', '==', code.toUpperCase()));
+      const snapshot = await getDocs(q);
 
-    if (snapshot.empty) return { success: false, error: 'Party not found' };
+      if (snapshot.empty) return { success: false, error: 'Party not found' };
 
-    const partyDoc = snapshot.docs[0];
-    const partyData = partyDoc.data();
+      const partyDoc = snapshot.docs[0];
+      const partyData = partyDoc.data();
 
-    if (partyData.status !== 'waiting') return { success: false, error: 'Party already started' };
-    if (partyData.memberIds.includes(userId)) return { success: false, error: 'Already in party' };
-    if (partyData.members.length >= 8) return { success: false, error: 'Party is full' };
+      if (partyData.status !== 'waiting') return { success: false, error: 'Party already started' };
+      if (partyData.memberIds?.includes(userId)) return { success: false, error: 'Already in party' };
+      if (partyData.members?.length >= 8) return { success: false, error: 'Party is full' };
 
-    // Add member
-    await updateDoc(doc(db, PARTIES_COLLECTION, partyDoc.id), {
-      members: arrayUnion({
+      const now = new Date();
+
+      // Add member — use direct array manipulation instead of arrayUnion
+      // because arrayUnion doesn't support serverTimestamp() inside objects
+      const updatedMembers = [...(partyData.members || []), {
         userId,
         displayName,
-        photoURL,
+        photoURL: photoURL || null,
         isReady: false,
-        joinedAt: serverTimestamp(),
-      }),
-      memberIds: arrayUnion(userId),
-      updatedAt: serverTimestamp(),
-    });
+        joinedAt: now,
+      }];
+      const updatedMemberIds = [...(partyData.memberIds || []), userId];
 
-    const party = await partyService.getParty(partyDoc.id);
-    return { success: true, party: party || undefined };
+      await updateDoc(doc(db, PARTIES_COLLECTION, partyDoc.id), {
+        members: updatedMembers,
+        memberIds: updatedMemberIds,
+        updatedAt: serverTimestamp(),
+      });
+
+      const party = await partyService.getParty(partyDoc.id);
+      return { success: true, party: party || undefined };
+    } catch (error) {
+      console.error('[Party] joinParty error:', error);
+      return { success: false, error: 'Failed to join party' };
+    }
   },
 
   // Get party by ID
   getParty: async (partyId: string): Promise<Party | null> => {
-    const db = await getFirebaseDb();
-    if (!db) return null;
+    try {
+      const db = await getFirebaseDb();
+      if (!db) return null;
 
-    const partyDoc = await getDoc(doc(db, PARTIES_COLLECTION, partyId));
-    if (!partyDoc.exists()) return null;
+      const partyDoc = await getDoc(doc(db, PARTIES_COLLECTION, partyId));
+      if (!partyDoc.exists()) return null;
 
-    const data = partyDoc.data();
-    return {
-      id: partyDoc.id,
-      code: data.code,
-      leaderId: data.leaderId,
-      leaderName: data.leaderName,
-      members: data.members.map((m: any) => ({
-        ...m,
-        joinedAt: m.joinedAt?.toDate() || new Date(),
-      })),
-      memberIds: data.memberIds,
-      status: data.status,
-      gameId: data.gameId,
-      createdAt: data.createdAt?.toDate() || new Date(),
-      updatedAt: data.updatedAt?.toDate() || new Date(),
-    };
+      const data = partyDoc.data();
+      return {
+        id: partyDoc.id,
+        code: data.code,
+        leaderId: data.leaderId,
+        leaderName: data.leaderName,
+        members: (data.members || []).map((m: any) => ({
+          ...m,
+          joinedAt: m.joinedAt?.toDate?.() || (m.joinedAt instanceof Date ? m.joinedAt : new Date()),
+        })),
+        memberIds: data.memberIds || [],
+        status: data.status,
+        gameId: data.gameId,
+        createdAt: data.createdAt?.toDate?.() || new Date(),
+        updatedAt: data.updatedAt?.toDate?.() || new Date(),
+      };
+    } catch (error) {
+      console.error('[Party] getParty error:', error);
+      return null;
+    }
   },
 
   // Leave party
   leaveParty: async (partyId: string, userId: string): Promise<boolean> => {
-    const db = await getFirebaseDb();
-    if (!db) return false;
+    try {
+      const db = await getFirebaseDb();
+      if (!db) return false;
 
-    const partyRef = doc(db, PARTIES_COLLECTION, partyId);
-    const partyDoc = await getDoc(partyRef);
+      const partyRef = doc(db, PARTIES_COLLECTION, partyId);
+      const partyDoc = await getDoc(partyRef);
 
-    if (!partyDoc.exists()) return false;
-    const data = partyDoc.data();
+      if (!partyDoc.exists()) return false;
+      const data = partyDoc.data();
 
-    // If leader leaves, disband party
-    if (data.leaderId === userId) {
-      await deleteDoc(partyRef);
-      return true;
-    }
+      // If leader leaves, disband party
+      if (data.leaderId === userId) {
+        await deleteDoc(partyRef);
+        return true;
+      }
 
-    // Remove member
-    const member = data.members.find((m: any) => m.userId === userId);
-    if (member) {
+      // Remove member — filter arrays instead of arrayRemove  
+      // (arrayRemove requires exact object match including timestamps which fails)
+      const updatedMembers = (data.members || []).filter((m: any) => m.userId !== userId);
+      const updatedMemberIds = (data.memberIds || []).filter((id: string) => id !== userId);
+
       await updateDoc(partyRef, {
-        members: arrayRemove(member),
-        memberIds: arrayRemove(userId),
+        members: updatedMembers,
+        memberIds: updatedMemberIds,
         updatedAt: serverTimestamp(),
       });
-    }
 
-    return true;
+      return true;
+    } catch (error) {
+      console.error('[Party] leaveParty error:', error);
+      return false;
+    }
   },
 
   // Set member ready status
   setReady: async (partyId: string, userId: string, isReady: boolean): Promise<boolean> => {
-    const db = await getFirebaseDb();
-    if (!db) return false;
+    try {
+      const db = await getFirebaseDb();
+      if (!db) return false;
 
-    const partyRef = doc(db, PARTIES_COLLECTION, partyId);
-    const partyDoc = await getDoc(partyRef);
+      const partyRef = doc(db, PARTIES_COLLECTION, partyId);
+      const partyDoc = await getDoc(partyRef);
 
-    if (!partyDoc.exists()) return false;
-    const data = partyDoc.data();
+      if (!partyDoc.exists()) return false;
+      const data = partyDoc.data();
 
-    const updatedMembers = data.members.map((m: any) => 
-      m.userId === userId ? { ...m, isReady } : m
-    );
+      const updatedMembers = (data.members || []).map((m: any) => 
+        m.userId === userId ? { ...m, isReady } : m
+      );
 
-    await updateDoc(partyRef, {
-      members: updatedMembers,
-      updatedAt: serverTimestamp(),
-    });
+      await updateDoc(partyRef, {
+        members: updatedMembers,
+        updatedAt: serverTimestamp(),
+      });
 
-    return true;
+      return true;
+    } catch (error) {
+      console.error('[Party] setReady error:', error);
+      return false;
+    }
   },
 
   // Start game (leader only)
   startGame: async (partyId: string, userId: string, gameId: string): Promise<boolean> => {
-    const db = await getFirebaseDb();
-    if (!db) return false;
+    try {
+      const db = await getFirebaseDb();
+      if (!db) return false;
 
-    const partyRef = doc(db, PARTIES_COLLECTION, partyId);
-    const partyDoc = await getDoc(partyRef);
+      const partyRef = doc(db, PARTIES_COLLECTION, partyId);
+      const partyDoc = await getDoc(partyRef);
 
-    if (!partyDoc.exists()) return false;
-    const data = partyDoc.data();
+      if (!partyDoc.exists()) return false;
+      const data = partyDoc.data();
 
-    if (data.leaderId !== userId) return false;
+      if (data.leaderId !== userId) return false;
 
-    await updateDoc(partyRef, {
-      status: 'playing',
-      gameId,
-      updatedAt: serverTimestamp(),
-    });
+      await updateDoc(partyRef, {
+        status: 'playing',
+        gameId,
+        updatedAt: serverTimestamp(),
+      });
 
-    return true;
+      return true;
+    } catch (error) {
+      console.error('[Party] startGame error:', error);
+      return false;
+    }
   },
 
   // Send message to party
   sendMessage: async (partyId: string, userId: string, displayName: string, text: string, photoURL?: string): Promise<boolean> => {
-    const db = await getFirebaseDb();
-    if (!db) return false;
+    try {
+      const db = await getFirebaseDb();
+      if (!db) return false;
 
-    // Verify user is in party
-    const party = await partyService.getParty(partyId);
-    if (!party || !party.memberIds.includes(userId)) return false;
+      const messagesRef = collection(db, PARTY_MESSAGES_COLLECTION);
+      await setDoc(doc(messagesRef), {
+        partyId,
+        userId,
+        displayName,
+        photoURL: photoURL || null,
+        text: text.slice(0, 500),
+        timestamp: serverTimestamp(),
+      });
 
-    const messagesRef = collection(db, PARTY_MESSAGES_COLLECTION);
-    await setDoc(doc(messagesRef), {
-      partyId,
-      userId,
-      displayName,
-      photoURL,
-      text: text.slice(0, 500), // Limit message length
-      timestamp: serverTimestamp(),
-    });
-
-    return true;
+      return true;
+    } catch (error) {
+      console.error('[Party] sendMessage error:', error);
+      return false;
+    }
   },
 
   // Get party messages
   getMessages: async (partyId: string, limitCount: number = 50): Promise<PartyMessage[]> => {
-    const db = await getFirebaseDb();
-    if (!db) return [];
+    try {
+      const db = await getFirebaseDb();
+      if (!db) return [];
 
-    const messagesRef = collection(db, PARTY_MESSAGES_COLLECTION);
-    const q = query(
-      messagesRef,
-      where('partyId', '==', partyId),
-      // Note: Would need index for orderBy + where
-    );
-    const snapshot = await getDocs(q);
+      const messagesRef = collection(db, PARTY_MESSAGES_COLLECTION);
+      const q = query(
+        messagesRef,
+        where('partyId', '==', partyId),
+      );
+      const snapshot = await getDocs(q);
 
-    return snapshot.docs
-      .map(doc => ({
-        id: doc.id,
-        partyId: doc.data().partyId,
-        userId: doc.data().userId,
-        displayName: doc.data().displayName,
-        photoURL: doc.data().photoURL,
-        text: doc.data().text,
-        timestamp: doc.data().timestamp?.toDate() || new Date(),
-      }))
-      .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
-      .slice(-limitCount);
+      return snapshot.docs
+        .map(d => ({
+          id: d.id,
+          partyId: d.data().partyId,
+          userId: d.data().userId,
+          displayName: d.data().displayName,
+          photoURL: d.data().photoURL,
+          text: d.data().text,
+          timestamp: d.data().timestamp?.toDate?.() || new Date(),
+        }))
+        .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
+        .slice(-limitCount);
+    } catch (error) {
+      console.error('[Party] getMessages error:', error);
+      return [];
+    }
   },
 
   // Subscribe to party updates
@@ -276,28 +321,32 @@ export const partyService = {
 
       unsubscribe = onSnapshot(
         doc(db, PARTIES_COLLECTION, partyId),
-        (doc) => {
-          if (!doc.exists()) {
+        (docSnap) => {
+          if (!docSnap.exists()) {
             callback(null);
             return;
           }
 
-          const data = doc.data();
+          const data = docSnap.data();
           callback({
-            id: doc.id,
+            id: docSnap.id,
             code: data.code,
             leaderId: data.leaderId,
             leaderName: data.leaderName,
-            members: data.members.map((m: any) => ({
+            members: (data.members || []).map((m: any) => ({
               ...m,
-              joinedAt: m.joinedAt?.toDate() || new Date(),
+              joinedAt: m.joinedAt?.toDate?.() || (m.joinedAt instanceof Date ? m.joinedAt : new Date()),
             })),
-            memberIds: data.memberIds,
+            memberIds: data.memberIds || [],
             status: data.status,
             gameId: data.gameId,
-            createdAt: data.createdAt?.toDate() || new Date(),
-            updatedAt: data.updatedAt?.toDate() || new Date(),
+            createdAt: data.createdAt?.toDate?.() || new Date(),
+            updatedAt: data.updatedAt?.toDate?.() || new Date(),
           });
+        },
+        (error) => {
+          console.error('[Party] subscribeToParty error:', error);
+          callback(null);
         }
       );
     });
@@ -315,21 +364,27 @@ export const partyService = {
       const messagesRef = collection(db, PARTY_MESSAGES_COLLECTION);
       const q = query(messagesRef, where('partyId', '==', partyId));
 
-      unsubscribe = onSnapshot(q, (snapshot) => {
-        const messages = snapshot.docs
-          .map(doc => ({
-            id: doc.id,
-            partyId: doc.data().partyId,
-            userId: doc.data().userId,
-            displayName: doc.data().displayName,
-            photoURL: doc.data().photoURL,
-            text: doc.data().text,
-            timestamp: doc.data().timestamp?.toDate() || new Date(),
-          }))
-          .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-        
-        callback(messages);
-      });
+      unsubscribe = onSnapshot(q, 
+        (snapshot) => {
+          const messages = snapshot.docs
+            .map(d => ({
+              id: d.id,
+              partyId: d.data().partyId,
+              userId: d.data().userId,
+              displayName: d.data().displayName,
+              photoURL: d.data().photoURL,
+              text: d.data().text,
+              timestamp: d.data().timestamp?.toDate?.() || new Date(),
+            }))
+            .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+          
+          callback(messages);
+        },
+        (error) => {
+          console.error('[Party] subscribeToMessages error:', error);
+          callback([]);
+        }
+      );
     });
 
     return () => unsubscribe();
@@ -337,28 +392,56 @@ export const partyService = {
 
   // Kick member (leader only)
   kickMember: async (partyId: string, userId: string, leaderId?: string): Promise<boolean> => {
-    const db = await getFirebaseDb();
-    if (!db) return false;
+    try {
+      const db = await getFirebaseDb();
+      if (!db) return false;
 
-    const partyRef = doc(db, PARTIES_COLLECTION, partyId);
-    const partyDoc = await getDoc(partyRef);
+      const partyRef = doc(db, PARTIES_COLLECTION, partyId);
+      const partyDoc = await getDoc(partyRef);
 
-    if (!partyDoc.exists()) return false;
-    const data = partyDoc.data();
+      if (!partyDoc.exists()) return false;
+      const data = partyDoc.data();
 
-    // Only leader can kick (or if no leaderId provided, allow for now)
-    if (leaderId && data.leaderId !== leaderId) return false;
+      // Only leader can kick
+      if (leaderId && data.leaderId !== leaderId) return false;
 
-    // Remove member
-    const member = data.members.find((m: any) => m.userId === userId);
-    if (member) {
+      // Remove member — filter arrays instead of arrayRemove
+      const updatedMembers = (data.members || []).filter((m: any) => m.userId !== userId);
+      const updatedMemberIds = (data.memberIds || []).filter((id: string) => id !== userId);
+
       await updateDoc(partyRef, {
-        members: arrayRemove(member),
-        memberIds: arrayRemove(userId),
+        members: updatedMembers,
+        memberIds: updatedMemberIds,
         updatedAt: serverTimestamp(),
       });
-    }
 
-    return true;
+      return true;
+    } catch (error) {
+      console.error('[Party] kickMember error:', error);
+      return false;
+    }
+  },
+
+  // Invite friend to party (send as party message with invite type)
+  inviteToParty: async (partyId: string, fromUserId: string, fromDisplayName: string, targetUserId: string, targetDisplayName: string): Promise<boolean> => {
+    try {
+      const db = await getFirebaseDb();
+      if (!db) return false;
+
+      const messagesRef = collection(db, PARTY_MESSAGES_COLLECTION);
+      await setDoc(doc(messagesRef), {
+        partyId,
+        userId: fromUserId,
+        displayName: fromDisplayName,
+        text: `🎮 Invited ${targetDisplayName} to play a game!`,
+        type: 'system',
+        timestamp: serverTimestamp(),
+      });
+
+      return true;
+    } catch (error) {
+      console.error('[Party] inviteToParty error:', error);
+      return false;
+    }
   },
 };

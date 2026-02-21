@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Users, Send, LogOut, Crown, Check, X, Loader2, MessageCircle, Copy, CheckCircle2 } from 'lucide-react';
+import { Users, Send, LogOut, Crown, Check, X, Loader2, MessageCircle, Copy, CheckCircle2, UserPlus, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePartyStore } from '@/lib/store/party-store';
 import { useAuthStore } from '@/lib/store/auth-store';
@@ -293,7 +293,48 @@ export function PartyFAB() {
                         )}
                         <span className="text-sm text-primary">{member.displayName}</span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
+                        {/* Action buttons for other members */}
+                        {member.userId !== user?.id && (
+                          <>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const { friendsService } = await import('@/lib/firebase/services/friends');
+                                  const result = await friendsService.sendFriendRequest(user!.id, member.userId);
+                                  if (result.success) {
+                                    alert(`Friend request sent to ${member.displayName}!`);
+                                  } else {
+                                    alert(result.error || 'Could not send request');
+                                  }
+                                } catch (e) {
+                                  alert('Failed to send friend request');
+                                }
+                              }}
+                              className="p-1.5 rounded hover:bg-white/10 transition-colors text-muted-foreground hover:text-accent"
+                              title="Add Friend"
+                            >
+                              <UserPlus className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const { messagesService } = await import('@/lib/firebase/services/messages');
+                                  const conv = await messagesService.getOrCreateConversation(user!.id, member.userId);
+                                  if (conv) {
+                                    alert(`Chat opened with ${member.displayName}! Go to Friends → Messages to continue.`);
+                                  }
+                                } catch (e) {
+                                  alert('Failed to open chat');
+                                }
+                              }}
+                              className="p-1.5 rounded hover:bg-white/10 transition-colors text-muted-foreground hover:text-accent"
+                              title="Send Message"
+                            >
+                              <MessageSquare className="w-3.5 h-3.5" />
+                            </button>
+                          </>
+                        )}
                         {member.isReady ? (
                           <span className="flex items-center gap-1 text-xs text-green-400">
                             <Check className="w-3 h-3" />
