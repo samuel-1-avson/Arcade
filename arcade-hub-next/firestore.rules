@@ -277,6 +277,30 @@ service cloud.firestore {
     }
     
     // ============================================
+    // MESSAGING SYSTEM
+    // ============================================
+    
+    match /conversations/{conversationId} {
+      allow read: if isSignedIn() && 
+        resource.data.participants.hasAny([request.auth.uid]);
+      allow create: if isSignedIn() 
+        && request.resource.data.participants.hasAny([request.auth.uid]);
+      allow update: if isSignedIn() && 
+        resource.data.participants.hasAny([request.auth.uid]);
+      allow delete: if false;
+    }
+    
+    match /messages/{messageId} {
+      allow read: if isSignedIn() && 
+        get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.participants.hasAny([request.auth.uid]);
+      allow create: if isSignedIn() 
+        && request.resource.data.senderId == request.auth.uid
+        && get(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)).data.participants.hasAny([request.auth.uid]);
+      allow update: if false;
+      allow delete: if false;
+    }
+    
+    // ============================================
     // PARTY SYSTEM
     // ============================================
     

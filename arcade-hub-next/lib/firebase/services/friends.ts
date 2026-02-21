@@ -315,6 +315,42 @@ export const friendsService = {
     return () => unsubscribes.forEach(unsub => unsub());
   },
 
+  // Subscribe to online users (real-time)
+  subscribeToOnlineUsers: (callback: (users: UserPresence[]) => void): (() => void) => {
+    let unsubscribe = () => {};
+    
+    getFirebaseDb().then(db => {
+      if (!db) return;
+
+      const presenceRef = collection(db, PRESENCE_COLLECTION);
+      const q = query(presenceRef, where('online', '==', true));
+      
+      unsubscribe = onSnapshot(q, async (snapshot) => {
+        const onlineUsers: UserPresence[] = [];
+        
+        for (const docSnap of snapshot.docs) {
+          const data = docSnap.data();
+          const userDoc = await getDoc(doc(db, 'users', docSnap.id));
+          const userData = userDoc.exists() ? userDoc.data() : {};
+          
+          onlineUsers.push({
+            userId: docSnap.id,
+            displayName: userData.displayName || 'Anonymous',
+            photoURL: userData.photoURL,
+            online: data.online,
+            lastSeen: data.lastSeen?.toDate() || new Date(),
+            currentGame: data.currentGame,
+            lastChanged: data.lastChanged?.toDate() || new Date(),
+          });
+        }
+        
+        callback(onlineUsers);
+      });
+    });
+
+    return () => unsubscribe();
+  },
+
   // Search users by display name
   searchUsers: async (searchTerm: string, currentUserId: string): Promise<{id: string; displayName: string; photoURL?: string; level: number}[]> => {
     const db = await getFirebaseDb();

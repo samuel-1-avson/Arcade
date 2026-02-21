@@ -1,16 +1,32 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Users, UserPlus, Search, MessageSquare, Gamepad2, Circle, X, Check } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { 
+  Users, 
+  UserPlus, 
+  Search, 
+  MessageSquare, 
+  Gamepad2, 
+  Circle, 
+  X, 
+  Check,
+  BarChart3,
+  Send,
+  Loader2,
+  ChevronLeft
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Modal } from '@/components/ui/modal';
+import { Modal, ModalFooter } from '@/components/ui/modal';
 import { useAuth } from '@/hooks/useAuth';
 import { friendsService, Friend, FriendRequest } from '@/lib/firebase/services/friends';
+import { messagesService, Message, Conversation } from '@/lib/firebase/services/messages';
 import { cn } from '@/lib/utils';
 
 export default function FriendsPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [friends, setFriends] = useState<Friend[]>([]);
   const [requests, setRequests] = useState<FriendRequest[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<{userId: string; displayName: string; photoURL?: string; currentGame?: string}[]>([]);
@@ -20,24 +36,36 @@ export default function FriendsPage() {
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'friends' | 'online' | 'requests'>('friends');
 
+  // Messaging state
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [messageText, setMessageText] = useState('');
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [messageUnsubscribe, setMessageUnsubscribe] = useState<(() => void) | null>(null);
+
   const loadData = useCallback(async () => {
     if (!user?.id) return;
     
     setIsLoading(true);
     try {
-      const [friendsData, requestsData, onlineData] = await Promise.all([
+      const [friendsData, requestsData, onlineData, convData] = await Promise.all([
         friendsService.getFriends(user.id),
         friendsService.getPendingRequests(user.id),
         friendsService.getOnlineUsers(),
+        messagesService.getConversations(user.id),
       ]);
       
       setFriends(friendsData);
       setRequests(requestsData);
+      setConversations(convData);
+      
       // Filter out current user and friends from online users
       const friendIds = new Set(friendsData.map(f => f.id));
       setOnlineUsers(onlineData.filter(u => u.userId !== user.id && !friendIds.has(u.userId)));
     } catch (error) {
-      // Error loading friends data
+      console.error('[Friends] Error loading data:', error);
     } finally {
       setIsLoading(false);
     }
@@ -48,10 +76,27 @@ export default function FriendsPage() {
     
     // Subscribe to friends updates
     if (user?.id) {
-      const unsubscribe = friendsService.subscribeToFriends(user.id, (updatedFriends) => {
+      const unsubscribeFriends = friendsService.subscribeToFriends(user.id, (updatedFriends) => {
         setFriends(updatedFriends);
       });
-      return unsubscribe;
+      
+      // Subscribe to online users
+      const unsubscribeOnline = friendsService.subscribeToOnlineUsers((onlineUsers) => {
+        const friendIds = new Set(friends.map(f => f.id));
+        setOnlineUsers(onlineUsers.filter(u => u.userId !== user.id && !friendIds.has(u.userId)));
+      });
+      
+      // Subscribe to conversations
+      const unsubscribeConv = messagesService.subscribeToConversations(user.id, (convs) => {
+        setConversations(convs);
+      });
+      
+      return () => {
+        unsubscribeFriends();
+        unsubscribeOnline();
+        unsubscribeConv();
+        if (messageUnsubscribe) messageUnsubscribe();
+      };
     }
   }, [user?.id, loadData]);
 
@@ -99,6 +144,73 @@ export default function FriendsPage() {
     if (success) {
       loadData();
     }
+  };
+
+  const handleViewProfile = (userId: string) => {
+    router.push(`/hub/profile/${userId}/`);
+  };
+
+  const handleOpenMessages = async (friend: Friend) => {
+    if (!user?.id) return;
+    
+    // Get or create conversation
+    const conversationId = await messagesService.getOrCreateConversation(user.id, friend.id);
+    if (!conversationId) return;
+    
+    // Find or create conversation object
+    const existingConv = conversations.find(c => c.id === conversationId);
+    const conv = existingConv || {
+      id: conversationId,
+      participants: [user.id, friend.id],
+      participantNames: [user.displayName || 'You', friend.displayName],
+      participantPhotos: [user.avatar, friend.photoURL],
+      unreadCount: {},
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    setSelectedConversation(conv);
+    setShowMessageModal(true);
+    
+    // Load messages
+    const msgs = await messagesService.getMessages(conversationId);
+    setMessages(msgs);
+    
+    // Mark as read
+    await messagesService.markAsRead(conversationId, user.id);
+    
+    // Subscribe to new messages
+    if (messageUnsubscribe) messageUnsubscribe();
+    const unsub = messagesService.subscribeToMessages(conversationId, (newMessages) => {
+      setMessages(newMessages);
+    });
+    setMessageUnsubscribe(() => unsub);
+  };
+
+  const handleSendMessage = async () => {
+    if (!user?.id || !selectedConversation || !messageText.trim()) return;
+    
+    setIsSendingMessage(true);
+    try {
+      const success = await messagesService.sendMessage(
+        selectedConversation.id,
+        user.id,
+        messageText.trim()
+      );
+      
+      if (success) {
+        setMessageText('');
+      }
+    } finally {
+      setIsSendingMessage(false);
+    }
+  };
+
+  const getUnreadCount = (friendId: string) => {
+    const conv = conversations.find(c => 
+      c.participants.includes(friendId) && c.participants.includes(user?.id || '')
+    );
+    return conv?.unreadCount?.[user?.id || ''] || 0;
   };
 
   if (!user) {
@@ -221,8 +333,24 @@ export default function FriendsPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button size="sm" variant="secondary">
+                        {getUnreadCount(friend.id) > 0 && (
+                          <span className="bg-accent text-accent-foreground text-xs px-2 py-0.5 rounded-full">
+                            {getUnreadCount(friend.id)}
+                          </span>
+                        )}
+                        <Button 
+                          size="sm" 
+                          variant="secondary"
+                          onClick={() => handleOpenMessages(friend)}
+                        >
                           <MessageSquare className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          onClick={() => handleViewProfile(friend.id)}
+                        >
+                          <BarChart3 className="w-4 h-4" />
                         </Button>
                         <Button 
                           size="sm" 
@@ -244,6 +372,7 @@ export default function FriendsPage() {
                   <div className="p-8 text-center text-muted-foreground bg-elevated border border-white/[0.06]">
                     <Circle className="w-12 h-12 mx-auto mb-4 opacity-30" />
                     <p>No other players online</p>
+                    <p className="text-sm mt-2">Check back later or invite friends!</p>
                   </div>
                 ) : (
                   onlineUsers.map((onlineUser) => (
@@ -272,13 +401,23 @@ export default function FriendsPage() {
                           )}
                         </div>
                       </div>
-                      <Button 
-                        size="sm" 
-                        onClick={() => handleSendRequest(onlineUser.userId)}
-                      >
-                        <UserPlus className="w-4 h-4 mr-1" />
-                        Add
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          onClick={() => handleViewProfile(onlineUser.userId)}
+                        >
+                          <BarChart3 className="w-4 h-4 mr-1" />
+                          View
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleSendRequest(onlineUser.userId)}
+                        >
+                          <UserPlus className="w-4 h-4 mr-1" />
+                          Add
+                        </Button>
+                      </div>
                     </div>
                   ))
                 )}
@@ -381,14 +520,90 @@ export default function FriendsPage() {
                     <p className="text-xs text-muted-foreground">Level {result.level}</p>
                   </div>
                 </div>
-                <Button size="sm" onClick={() => handleSendRequest(result.id)}>
-                  Add
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    size="sm" 
+                    variant="ghost"
+                    onClick={() => handleViewProfile(result.id)}
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                  </Button>
+                  <Button size="sm" onClick={() => handleSendRequest(result.id)}>
+                    Add
+                  </Button>
+                </div>
               </div>
             ))}
             {searchResults.length === 0 && searchQuery.length >= 3 && (
               <p className="text-center text-muted-foreground py-4">No users found</p>
             )}
+          </div>
+        </div>
+      </Modal>
+
+      {/* Message Modal */}
+      <Modal
+        isOpen={showMessageModal}
+        onClose={() => {
+          setShowMessageModal(false);
+          setSelectedConversation(null);
+          setMessages([]);
+          if (messageUnsubscribe) {
+            messageUnsubscribe();
+            setMessageUnsubscribe(null);
+          }
+        }}
+        title={selectedConversation?.participantNames.find(n => n !== user?.displayName) || 'Messages'}
+        size="md"
+      >
+        <div className="space-y-4">
+          {/* Messages */}
+          <div className="h-64 overflow-y-auto space-y-3 p-2 bg-surface border border-white/[0.06]">
+            {messages.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No messages yet. Say hello!</p>
+            ) : (
+              messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={cn(
+                    'flex flex-col',
+                    msg.senderId === user?.id ? 'items-end' : 'items-start'
+                  )}
+                >
+                  <div className={cn(
+                    'max-w-[80%] px-3 py-2 rounded-lg',
+                    msg.senderId === user?.id
+                      ? 'bg-accent text-accent-foreground'
+                      : 'bg-elevated text-primary'
+                  )}>
+                    <p className="text-sm">{msg.text}</p>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground mt-1">
+                    {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Input */}
+          <div className="flex gap-2">
+            <Input
+              placeholder="Type a message..."
+              value={messageText}
+              onChange={(e) => setMessageText(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+            />
+            <Button 
+              onClick={handleSendMessage}
+              disabled={isSendingMessage || !messageText.trim()}
+            >
+              {isSendingMessage ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+            </Button>
           </div>
         </div>
       </Modal>
