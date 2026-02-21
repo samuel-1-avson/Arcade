@@ -334,4 +334,31 @@ export const partyService = {
 
     return () => unsubscribe();
   },
+
+  // Kick member (leader only)
+  kickMember: async (partyId: string, userId: string, leaderId?: string): Promise<boolean> => {
+    const db = await getFirebaseDb();
+    if (!db) return false;
+
+    const partyRef = doc(db, PARTIES_COLLECTION, partyId);
+    const partyDoc = await getDoc(partyRef);
+
+    if (!partyDoc.exists()) return false;
+    const data = partyDoc.data();
+
+    // Only leader can kick (or if no leaderId provided, allow for now)
+    if (leaderId && data.leaderId !== leaderId) return false;
+
+    // Remove member
+    const member = data.members.find((m: any) => m.userId === userId);
+    if (member) {
+      await updateDoc(partyRef, {
+        members: arrayRemove(member),
+        memberIds: arrayRemove(userId),
+        updatedAt: serverTimestamp(),
+      });
+    }
+
+    return true;
+  },
 };
