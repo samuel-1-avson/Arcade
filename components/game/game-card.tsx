@@ -12,18 +12,35 @@ interface GameCardProps {
 }
 
 export function GameCard({ game, className }: GameCardProps) {
+  // Determine difficulty label and color
+  const difficultyConfig = {
+    easy: { label: 'Easy', colorClass: 'text-success border-success/30' },
+    medium: { label: 'Medium', colorClass: 'text-warning border-warning/30' },
+    hard: { label: 'Hard', colorClass: 'text-danger border-danger/30' },
+  };
+  
+  const difficulty = difficultyConfig[game.difficulty];
+
   return (
-    <Link href={`/game/${game.id}/`}>
-      <div
+    <Link 
+      href={`/game/${game.id}/`}
+      className="group block"
+      aria-label={`Play ${game.name} - ${game.description}. Difficulty: ${difficulty.label}`}
+    >
+      <article
         className={cn(
-          'group relative bg-elevated border border-white/[0.06] overflow-hidden cursor-pointer',
+          'relative bg-elevated border border-white/[0.06] overflow-hidden',
           'transition-all duration-300 ease-out',
           'hover:-translate-y-1 hover:border-white/[0.12]',
+          'focus-within:ring-2 focus-within:ring-accent focus-within:ring-offset-2 focus-within:ring-offset-background',
           className
         )}
       >
         {/* Art area */}
-        <div className="relative h-32 bg-surface flex items-center justify-center overflow-hidden">
+        <div 
+          className="relative h-32 bg-surface flex items-center justify-center overflow-hidden"
+          aria-hidden="true"
+        >
           <div 
             className="absolute inset-0 opacity-20"
             style={{
@@ -35,18 +52,19 @@ export function GameCard({ game, className }: GameCardProps) {
             }}
           />
           <div className="relative transition-transform duration-300 group-hover:scale-110">
-            <GameIcon icon={game.icon} size={48} className="text-primary" />
+            <GameIcon icon={game.icon} size={48} className="text-primary" aria-hidden="true" />
           </div>
           
           {/* Difficulty badge */}
-          <span className={cn(
-            'absolute top-2 left-2 px-2 py-1 text-[10px] font-bold uppercase tracking-wider',
-            'bg-black/70 border border-white/10',
-            game.difficulty === 'easy' && 'text-success border-success/30',
-            game.difficulty === 'medium' && 'text-warning border-warning/30',
-            game.difficulty === 'hard' && 'text-danger border-danger/30',
-          )}>
-            {game.difficulty}
+          <span 
+            className={cn(
+              'absolute top-2 left-2 px-2 py-1 text-[10px] font-bold uppercase tracking-wider',
+              'bg-black/70 border',
+              difficulty.colorClass
+            )}
+            aria-label={`Difficulty: ${difficulty.label}`}
+          >
+            {difficulty.label}
           </span>
         </div>
 
@@ -60,25 +78,38 @@ export function GameCard({ game, className }: GameCardProps) {
           </p>
 
           {/* Meta */}
-          <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/[0.04]">
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Trophy className="w-3 h-3 text-warning" />
+          <div 
+            className="flex items-center justify-between mt-3 pt-3 border-t border-white/[0.04]"
+            aria-label="Game statistics"
+          >
+            <div 
+              className="flex items-center gap-1 text-xs text-muted-foreground"
+              aria-label={`High score: ${game.highScore?.toLocaleString() || 'None'}`}
+            >
+              <Trophy className="w-3 h-3 text-warning" aria-hidden="true" />
               <span>{game.highScore ? game.highScore.toLocaleString() : '—'}</span>
             </div>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Users className="w-3 h-3" />
-              <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+            <div 
+              className="flex items-center gap-1 text-xs text-muted-foreground"
+              aria-label="Players online"
+            >
+              <Users className="w-3 h-3" aria-hidden="true" />
+              <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" aria-hidden="true" />
+              <span className="sr-only">Active players indicator</span>
             </div>
           </div>
         </div>
 
-        {/* Play button (appears on hover) */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-elevated to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-          <button className="w-full py-2 bg-surface border border-white/[0.08] text-accent text-xs font-display uppercase tracking-wider hover:bg-accent-dim hover:border-accent-border transition-colors">
+        {/* Play button (appears on hover/focus) */}
+        <div 
+          className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-elevated to-transparent opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
+          aria-hidden="true"
+        >
+          <span className="block w-full py-2 bg-surface border border-white/[0.08] text-accent text-xs font-display uppercase tracking-wider text-center hover:bg-accent-dim hover:border-accent-border transition-colors">
             Play Now
-          </button>
+          </span>
         </div>
-      </div>
+      </article>
     </Link>
   );
 }
