@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { CommandPalette } from '@/components/features/command-palette';
 import { AuthModal } from '@/components/features/auth-modal';
+import { ThemeSwitcher } from '@/components/theme-switcher';
 
 export function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -43,6 +44,9 @@ export function Header() {
         </h1>
         
         <div className="flex items-center gap-4">
+          {/* Theme Switcher */}
+          <ThemeSwitcher />
+          
           {/* Search Trigger */}
           <button
             onClick={() => setIsSearchOpen(true)}

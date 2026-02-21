@@ -5,13 +5,91 @@
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
 :root {
+  /* Default Cyberpunk Theme (Dark) */
   --background: #000000;
   --surface: #0a0a0a;
   --elevated: #111111;
   --raised: #1a1a1a;
-  --accent: #00e5ff;
+  
+  --accent: #00e5ff; /* Cyan */
   --accent-dim: rgba(0, 229, 255, 0.12);
   --accent-border: rgba(0, 229, 255, 0.30);
+  
+  --success: #39d98a;
+  --warning: #f5a623;
+  --danger: #e85555;
+  --violet: #9d6fff;
+  --pink: #e0508a;
+
+  --muted: #52526a;
+  --muted-foreground: #9898b0;
+  --border: rgba(255, 255, 255, 0.08);
+}
+
+/* Neon Pink Theme */
+.theme-neon-pink {
+  --background: #0d0221;
+  --surface: #140330;
+  --elevated: #1c0542;
+  --raised: #250757;
+  
+  --accent: #ff007f; /* Bright Pink */
+  --accent-dim: rgba(255, 0, 127, 0.12);
+  --accent-border: rgba(255, 0, 127, 0.30);
+
+  --success: #00ffcc;
+  --warning: #ffb703;
+  --danger: #ff0055;
+  --violet: #b5179e;
+  --pink: #ff007f;
+
+  --muted: #6b4d8a;
+  --muted-foreground: #b18bd3;
+  --border: rgba(255, 0, 127, 0.15);
+}
+
+/* Retro 80s Theme */
+.theme-retro-80s {
+  --background: #11001c;
+  --surface: #1f0033;
+  --elevated: #2d004d;
+  --raised: #3c0066;
+  
+  --accent: #ff4d00; /* Neon Orange */
+  --accent-dim: rgba(255, 77, 0, 0.12);
+  --accent-border: rgba(255, 77, 0, 0.30);
+
+  --success: #0aff99;
+  --warning: #ffee32;
+  --danger: #ff206e;
+  --violet: #8338ec;
+  --pink: #ff006e;
+
+  --muted: #725e82;
+  --muted-foreground: #bcaebf;
+  --border: rgba(255, 77, 0, 0.2);
+}
+
+/* Matrix Green Theme */
+.theme-matrix {
+  --background: #000a00;
+  --surface: #001400;
+  --elevated: #001f00;
+  --raised: #002e00;
+  
+  --accent: #00ff00; /* Terminal Green */
+  --accent-dim: rgba(0, 255, 0, 0.12);
+  --accent-border: rgba(0, 255, 0, 0.30);
+
+  --success: #00cc00;
+  --warning: #cccc00;
+  --danger: #cc0000;
+  --violet: #00ffcc;
+  --pink: #ccff00;
+
+  --muted: #336633;
+  --muted-foreground: #88cc88;
+  --border: rgba(0, 255, 0, 0.15);
 }
 
 * {

@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Providers } from '@/components/providers';
+import { Canvas } from '@react-three/fiber';
+import { AbstractBackground } from '@/components/abstract-background';
 
 export const metadata: Metadata = {
   title: 'Arcade Gaming Hub',
@@ -21,10 +23,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <body className="antialiased">
         <Providers>
-          {children}
+          <div className="fixed inset-0 pointer-events-none z-0">
+            <Canvas>
+              <AbstractBackground />
+            </Canvas>
+          </div>
+          <div className="relative z-10">
+            {children}
+          </div>
         </Providers>
       </body>
     </html>
