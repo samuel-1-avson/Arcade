@@ -4,18 +4,7 @@ import { GameClient } from './game-client';
 // Generate static params for all games
 export function generateStaticParams() {
   return [
-    { gameId: 'snake' },
-    { gameId: 'pacman' },
-    { gameId: 'tetris' },
-    { gameId: 'breakout' },
-    { gameId: 'asteroids' },
-    { gameId: 'minesweeper' },
-    { gameId: '2048' },
-    { gameId: 'tictactoe' },
-    { gameId: 'rhythm' },
-    { gameId: 'roguelike' },
-    { gameId: 'toonshooter' },
-    { gameId: 'tower-defense' },
+    // Games will be added here
   ];
 }
 
