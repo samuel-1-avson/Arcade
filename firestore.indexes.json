@@ -34,20 +34,7 @@
         { "fieldPath": "expiresAt", "order": "ASCENDING" }
       ]
     },
-    {
-      "collectionGroup": "userAchievements",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "userId", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "userChallenges",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "userId", "order": "ASCENDING" }
-      ]
-    },
+
     {
       "collectionGroup": "tournamentParticipants",
       "queryScope": "COLLECTION",
@@ -64,13 +51,7 @@
         { "fieldPath": "startTime", "order": "ASCENDING" }
       ]
     },
-    {
-      "collectionGroup": "tournaments",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "startTime", "order": "ASCENDING" }
-      ]
-    },
+
     {
       "collectionGroup": "tournaments",
       "queryScope": "COLLECTION",
