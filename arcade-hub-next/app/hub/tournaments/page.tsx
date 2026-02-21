@@ -471,6 +471,7 @@ export default function TournamentsPage() {
             <p className="text-sm text-red-400">{createError}</p>
           </div>
         )}
+        </div>
         
         <ModalFooter>
           <Button
