@@ -10,7 +10,7 @@ export default function HubLayout({
 }) {
   return (
     <PresenceProvider>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <Sidebar />
         <div className="ml-16 transition-all duration-300">
           <Header />
