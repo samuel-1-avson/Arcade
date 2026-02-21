@@ -54,41 +54,62 @@ export interface UserPresence {
 export const friendsService = {
   // Send a friend request
   sendFriendRequest: async (fromUserId: string, toUserId: string): Promise<{ success: boolean; error?: string }> => {
-    const db = await getFirebaseDb();
-    if (!db) return { success: false, error: 'Database not available' };
-    if (fromUserId === toUserId) return { success: false, error: 'Cannot friend yourself' };
+    try {
+      const db = await getFirebaseDb();
+      if (!db) return { success: false, error: 'Database not available' };
+      if (fromUserId === toUserId) return { success: false, error: 'Cannot friend yourself' };
 
-    // Check if already friends
-    const existingFriend = await friendsService.areFriends(fromUserId, toUserId);
-    if (existingFriend) return { success: false, error: 'Already friends' };
+      // Check if already friends (from localStorage fallback)
+      const localKey = `friends_${fromUserId}`;
+      const localData = typeof window !== 'undefined' ? localStorage.getItem(localKey) : null;
+      const localFriends = localData ? JSON.parse(localData) : [];
+      if (localFriends.some((f: any) => f.id === toUserId)) {
+        return { success: false, error: 'Already friends' };
+      }
 
-    // Check for existing request
-    const requestsRef = collection(db, FRIEND_REQUESTS_COLLECTION);
-    const q = query(
-      requestsRef,
-      where('fromUserId', 'in', [fromUserId, toUserId]),
-      where('toUserId', 'in', [fromUserId, toUserId]),
-      where('status', '==', 'pending')
-    );
-    const existing = await getDocs(q);
-    if (!existing.empty) return { success: false, error: 'Request already pending' };
+      // Check for existing request
+      try {
+        const requestsRef = collection(db, FRIEND_REQUESTS_COLLECTION);
+        const q = query(
+          requestsRef,
+          where('fromUserId', 'in', [fromUserId, toUserId]),
+          where('toUserId', 'in', [fromUserId, toUserId]),
+          where('status', '==', 'pending')
+        );
+        const existing = await getDocs(q);
+        if (!existing.empty) return { success: false, error: 'Request already pending' };
+      } catch (e) {
+        // Continue without duplicate check if query fails
+      }
 
-    // Get sender info
-    const senderDoc = await getDoc(doc(db, 'users', fromUserId));
-    const senderData = senderDoc.exists() ? senderDoc.data() : {};
+      // Get sender info
+      let senderName = 'Anonymous';
+      let senderPhoto = null;
+      
+      try {
+        const senderDoc = await getDoc(doc(db, 'users', fromUserId));
+        const senderData = senderDoc.exists() ? senderDoc.data() : {};
+        senderName = senderData.displayName || 'Anonymous';
+        senderPhoto = senderData.photoURL || null;
+      } catch (e) {
+        // Use defaults
+      }
 
-    // Create request
-    const requestRef = doc(collection(db, FRIEND_REQUESTS_COLLECTION));
-    await setDoc(requestRef, {
-      fromUserId,
-      fromUserName: senderData.displayName || 'Anonymous',
-      fromUserPhoto: senderData.photoURL || null,
-      toUserId,
-      status: 'pending',
-      createdAt: serverTimestamp(),
-    });
+      // Create request
+      const requestRef = doc(collection(db, FRIEND_REQUESTS_COLLECTION));
+      await setDoc(requestRef, {
+        fromUserId,
+        fromUserName: senderName,
+        fromUserPhoto: senderPhoto,
+        toUserId,
+        status: 'pending',
+        createdAt: serverTimestamp(),
+      });
 
-    return { success: true };
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: 'Failed to send request' };
+    }
   },
 
   // Accept a friend request
@@ -135,72 +156,123 @@ export const friendsService = {
 
   // Get friends list
   getFriends: async (userId: string): Promise<Friend[]> => {
-    const db = await getFirebaseDb();
-    if (!db) return [];
+    try {
+      const db = await getFirebaseDb();
+      
+      // Try localStorage fallback
+      const localKey = `friends_${userId}`;
+      const localData = typeof window !== 'undefined' ? localStorage.getItem(localKey) : null;
+      
+      if (!db) {
+        return localData ? JSON.parse(localData) : [];
+      }
 
-    // Query friendships where user is either user1 or user2
-    const friendsRef = collection(db, FRIENDS_COLLECTION);
-    const [q1, q2] = await Promise.all([
-      getDocs(query(friendsRef, where('user1Id', '==', userId))),
-      getDocs(query(friendsRef, where('user2Id', '==', userId)))
-    ]);
-
-    const friendIds: string[] = [];
-    q1.docs.forEach(d => friendIds.push(d.data().user2Id));
-    q2.docs.forEach(d => friendIds.push(d.data().user1Id));
-
-    // Get friend details and presence
-    const friends: Friend[] = [];
-    for (const friendId of friendIds) {
-      const [userDoc, presenceDoc] = await Promise.all([
-        getDoc(doc(db, 'users', friendId)),
-        getDoc(doc(db, PRESENCE_COLLECTION, friendId))
+      // Query friendships where user is either user1 or user2
+      const friendsRef = collection(db, FRIENDS_COLLECTION);
+      const [q1, q2] = await Promise.all([
+        getDocs(query(friendsRef, where('user1Id', '==', userId))),
+        getDocs(query(friendsRef, where('user2Id', '==', userId)))
       ]);
 
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        const presenceData = presenceDoc.exists() ? presenceDoc.data() : {};
-        
-        friends.push({
-          id: friendId,
-          userId: friendId,
-          displayName: userData.displayName || 'Anonymous',
-          photoURL: userData.photoURL,
-          level: userData.level || 1,
-          isOnline: presenceData.online || false,
-          lastSeen: presenceData.lastSeen?.toDate() || new Date(),
-          currentGame: presenceData.currentGame,
-          friendshipId: q1.docs.find(d => d.data().user2Id === friendId)?.id || 
-                       q2.docs.find(d => d.data().user1Id === friendId)?.id || '',
-        });
-      }
-    }
+      const friendIds: string[] = [];
+      const friendshipMap = new Map();
+      
+      q1.docs.forEach(d => {
+        friendIds.push(d.data().user2Id);
+        friendshipMap.set(d.data().user2Id, d.id);
+      });
+      q2.docs.forEach(d => {
+        friendIds.push(d.data().user1Id);
+        friendshipMap.set(d.data().user1Id, d.id);
+      });
 
-    return friends.sort((a, b) => (b.isOnline ? 1 : 0) - (a.isOnline ? 1 : 0));
+      // Get friend details and presence
+      const friends: Friend[] = [];
+      for (const friendId of friendIds) {
+        try {
+          const [userDoc, presenceDoc] = await Promise.all([
+            getDoc(doc(db, 'users', friendId)),
+            getDoc(doc(db, PRESENCE_COLLECTION, friendId))
+          ]);
+
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            const presenceData = presenceDoc.exists() ? presenceDoc.data() : {};
+            
+            friends.push({
+              id: friendId,
+              userId: friendId,
+              displayName: userData.displayName || 'Anonymous',
+              photoURL: userData.photoURL,
+              level: userData.level || 1,
+              isOnline: presenceData.online || false,
+              lastSeen: presenceData.lastSeen?.toDate() || new Date(),
+              currentGame: presenceData.currentGame,
+              friendshipId: friendshipMap.get(friendId) || '',
+            });
+          }
+        } catch (e) {
+          // Skip this friend if error
+        }
+      }
+
+      // Cache to localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(localKey, JSON.stringify(friends));
+      }
+
+      return friends.sort((a, b) => (b.isOnline ? 1 : 0) - (a.isOnline ? 1 : 0));
+    } catch (error) {
+      // Fallback to localStorage
+      const localKey = `friends_${userId}`;
+      const localData = typeof window !== 'undefined' ? localStorage.getItem(localKey) : null;
+      return localData ? JSON.parse(localData) : [];
+    }
   },
 
   // Get pending friend requests
   getPendingRequests: async (userId: string): Promise<FriendRequest[]> => {
-    const db = await getFirebaseDb();
-    if (!db) return [];
+    try {
+      const db = await getFirebaseDb();
+      
+      // Try localStorage fallback
+      const localKey = `friendRequests_${userId}`;
+      const localData = typeof window !== 'undefined' ? localStorage.getItem(localKey) : null;
+      
+      if (!db) {
+        return localData ? JSON.parse(localData) : [];
+      }
 
-    const requestsRef = collection(db, FRIEND_REQUESTS_COLLECTION);
-    const q = query(
-      requestsRef,
-      where('toUserId', '==', userId),
-      where('status', '==', 'pending')
-    );
-    const snapshot = await getDocs(q);
+      const requestsRef = collection(db, FRIEND_REQUESTS_COLLECTION);
+      const q = query(
+        requestsRef,
+        where('toUserId', '==', userId),
+        where('status', '==', 'pending')
+      );
+      const snapshot = await getDocs(q);
 
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      fromUserId: doc.data().fromUserId,
-      fromUserName: doc.data().fromUserName,
-      fromUserPhoto: doc.data().fromUserPhoto,
-      toUserId: doc.data().toUserId,
-      status: doc.data().status,
-      createdAt: doc.data().createdAt?.toDate() || new Date(),
-    }));
+      const requests = snapshot.docs.map(doc => ({
+        id: doc.id,
+        fromUserId: doc.data().fromUserId,
+        fromUserName: doc.data().fromUserName,
+        fromUserPhoto: doc.data().fromUserPhoto,
+        toUserId: doc.data().toUserId,
+        status: doc.data().status,
+        createdAt: doc.data().createdAt?.toDate() || new Date(),
+      }));
+      
+      // Cache to localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(localKey, JSON.stringify(requests));
+      }
+
+      return requests;
+    } catch (error) {
+      // Fallback to localStorage
+      const localKey = `friendRequests_${userId}`;
+      const localData = typeof window !== 'undefined' ? localStorage.getItem(localKey) : null;
+      return localData ? JSON.parse(localData) : [];
+    }
   },
 
   // Check if two users are friends
@@ -244,32 +316,40 @@ export const friendsService = {
 
   // Get online users
   getOnlineUsers: async (): Promise<UserPresence[]> => {
-    const db = await getFirebaseDb();
-    if (!db) return [];
+    try {
+      const db = await getFirebaseDb();
+      if (!db) return [];
 
-    const presenceRef = collection(db, PRESENCE_COLLECTION);
-    const q = query(presenceRef, where('online', '==', true));
-    const snapshot = await getDocs(q);
+      const presenceRef = collection(db, PRESENCE_COLLECTION);
+      const q = query(presenceRef, where('online', '==', true));
+      const snapshot = await getDocs(q);
 
-    // Fetch user details for each online user
-    const onlineUsers: UserPresence[] = [];
-    for (const docSnap of snapshot.docs) {
-      const data = docSnap.data();
-      const userDoc = await getDoc(doc(db, 'users', docSnap.id));
-      const userData = userDoc.exists() ? userDoc.data() : {};
-      
-      onlineUsers.push({
-        userId: docSnap.id,
-        displayName: userData.displayName || 'Anonymous',
-        photoURL: userData.photoURL,
-        online: data.online,
-        lastSeen: data.lastSeen?.toDate() || new Date(),
-        currentGame: data.currentGame,
-        lastChanged: data.lastChanged?.toDate() || new Date(),
-      });
+      // Fetch user details for each online user
+      const onlineUsers: UserPresence[] = [];
+      for (const docSnap of snapshot.docs) {
+        try {
+          const data = docSnap.data();
+          const userDoc = await getDoc(doc(db, 'users', docSnap.id));
+          const userData = userDoc.exists() ? userDoc.data() : {};
+          
+          onlineUsers.push({
+            userId: docSnap.id,
+            displayName: userData.displayName || 'Anonymous',
+            photoURL: userData.photoURL,
+            online: data.online,
+            lastSeen: data.lastSeen?.toDate() || new Date(),
+            currentGame: data.currentGame,
+            lastChanged: data.lastChanged?.toDate() || new Date(),
+          });
+        } catch (e) {
+          // Skip this user if error
+        }
+      }
+
+      return onlineUsers;
+    } catch (error) {
+      return [];
     }
-
-    return onlineUsers;
   },
 
   // Subscribe to friends presence changes

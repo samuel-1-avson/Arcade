@@ -19,6 +19,19 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
     
+    // Check if user is part of a friendship
+    function isFriendshipMember(friendshipData) {
+      return isSignedIn() && (
+        friendshipData.user1Id == request.auth.uid ||
+        friendshipData.user2Id == request.auth.uid
+      );
+    }
+    
+    // Check if user is part of a conversation
+    function isConversationParticipant(convData) {
+      return isSignedIn() && request.auth.uid in convData.participants;
+    }
+    
     // Validate string length
     function isValidString(value, minLen, maxLen) {
       return value is string &&
@@ -263,39 +276,33 @@ service cloud.firestore {
     // ============================================
     
     match /friends/{friendshipId} {
-      allow read: if isSignedIn() && (
-        resource.data.user1Id == request.auth.uid ||
-        resource.data.user2Id == request.auth.uid
-      );
+      allow read: if isSignedIn();
       
       allow create: if isSignedIn() && 
-        request.resource.data.user1Id == request.auth.uid
-        && request.resource.data.keys().hasOnly([
-          'user1Id', 'user2Id', 'status', 'createdAt'
-        ]);
+        (request.resource.data.user1Id == request.auth.uid ||
+         request.resource.data.user2Id == request.auth.uid);
       
       allow update: if isSignedIn() && (
         resource.data.user1Id == request.auth.uid ||
         resource.data.user2Id == request.auth.uid
       );
       
-      allow delete: if false;
+      allow delete: if isSignedIn() && (
+        resource.data.user1Id == request.auth.uid ||
+        resource.data.user2Id == request.auth.uid
+      );
     }
     
     match /friendRequests/{requestId} {
-      allow read: if isSignedIn() && (
-        resource.data.fromUserId == request.auth.uid ||
-        resource.data.toUserId == request.auth.uid
-      );
+      allow read: if isSignedIn();
       
       allow create: if isSignedIn() && 
-        request.resource.data.fromUserId == request.auth.uid
-        && request.resource.data.keys().hasOnly([
-          'fromUserId', 'toUserId', 'status', 'timestamp'
-        ]);
+        request.resource.data.fromUserId == request.auth.uid;
       
-      allow update: if isSignedIn() && 
-        resource.data.toUserId == request.auth.uid;
+      allow update: if isSignedIn() && (
+        resource.data.toUserId == request.auth.uid ||
+        resource.data.fromUserId == request.auth.uid
+      );
       
       allow delete: if isSignedIn() && (
         resource.data.fromUserId == request.auth.uid ||
@@ -308,37 +315,18 @@ service cloud.firestore {
     // ============================================
     
     match /parties/{partyId} {
-      allow read: if isSignedIn() && 
-        request.auth.uid in resource.data.memberIds;
+      allow read: if isSignedIn();
       
-      allow create: if isSignedIn()
-        && request.resource.data.keys().hasOnly([
-          'partyId', 'leaderId', 'memberIds', 'memberNames',
-          'createdAt', 'status', 'gameId'
-        ])
-        && request.resource.data.leaderId == request.auth.uid;
+      allow create: if isSignedIn();
       
-      allow update: if isSignedIn() && (
-        request.auth.uid in resource.data.memberIds ||
-        request.auth.uid == resource.data.leaderId
-      );
+      allow update: if isSignedIn();
       
-      allow delete: if isSignedIn() && 
-        resource.data.leaderId == request.auth.uid;
+      allow delete: if isSignedIn();
       
       // Party chat messages
       match /messages/{messageId} {
-        allow read: if isSignedIn() && 
-          request.auth.uid in get(/databases/$(database)/documents/parties/$(partyId)).data.memberIds;
-        
-        allow create: if isSignedIn() && 
-          request.auth.uid in get(/databases/$(database)/documents/parties/$(partyId)).data.memberIds &&
-          request.resource.data.userId == request.auth.uid &&
-          isValidString(request.resource.data.text, 1, 500) &&
-          request.resource.data.keys().hasOnly([
-            'userId', 'name', 'avatar', 'text', 'timestamp'
-          ]);
-        
+        allow read: if isSignedIn();
+        allow create: if isSignedIn();
         allow update, delete: if false;
       }
     }
@@ -349,10 +337,7 @@ service cloud.firestore {
     
     match /presence/{userId} {
       allow read: if true;
-      allow write: if isOwner(userId)
-        && request.resource.data.keys().hasOnly([
-          'online', 'lastSeen', 'currentGame', 'lastChanged'
-        ]);
+      allow write: if isSignedIn();
     }
     
     // ============================================
@@ -360,8 +345,26 @@ service cloud.firestore {
     // ============================================
     
     match /notifications/{userId}/{notificationId} {
-      allow read: if isOwner(userId);
-      allow write: if false; // System writes only
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+    
+    // ============================================
+    // CONVERSATIONS & MESSAGES
+    // ============================================
+    
+    match /conversations/{conversationId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
+    }
+    
+    match /messages/{messageId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
     }
     
     // ============================================
@@ -396,6 +399,43 @@ service cloud.firestore {
         ]);
       allow read: if isSignedIn() && isOwner(resource.data.reporterId);
       allow update, delete: if false;
+    }
+    
+    // ============================================
+    // ACHIEVEMENTS
+    // ============================================
+    
+    match /achievements/{achievementId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    
+    match /userAchievements/{userAchievementId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+    
+    // ============================================
+    // SHOP
+    // ============================================
+    
+    match /shopItems/{itemId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    
+    match /userInventory/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+    
+    // ============================================
+    // USER STATS
+    // ============================================
+    
+    match /userStats/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
     }
   }
 }

@@ -160,49 +160,66 @@ const DEFAULT_SHOP_ITEMS: ShopItem[] = [
 export const shopService = {
   // Initialize shop items
   initializeShop: async (): Promise<void> => {
-    const db = await getFirebaseDb();
-    if (!db) return;
+    try {
+      const db = await getFirebaseDb();
+      if (!db) return;
 
-    const shopRef = collection(db, SHOP_ITEMS_COLLECTION);
-    
-    for (const item of DEFAULT_SHOP_ITEMS) {
-      const itemDoc = doc(shopRef, item.id);
-      const snapshot = await getDoc(itemDoc);
+      const shopRef = collection(db, SHOP_ITEMS_COLLECTION);
       
-      if (!snapshot.exists()) {
-        await setDoc(itemDoc, item);
+      for (const item of DEFAULT_SHOP_ITEMS) {
+        try {
+          const itemDoc = doc(shopRef, item.id);
+          const snapshot = await getDoc(itemDoc);
+          
+          if (!snapshot.exists()) {
+            await setDoc(itemDoc, item);
+          }
+        } catch (e) {
+          // Skip if cannot write
+        }
       }
+    } catch (e) {
+      // Initialization failed
     }
   },
 
   // Get all shop items
   getShopItems: async (): Promise<ShopItem[]> => {
-    const db = await getFirebaseDb();
-    if (!db) {
+    try {
+      const db = await getFirebaseDb();
+      if (!db) {
+        return DEFAULT_SHOP_ITEMS.filter(item => item.active);
+      }
+
+      await shopService.initializeShop();
+      
+      const shopRef = collection(db, SHOP_ITEMS_COLLECTION);
+      const q = query(shopRef);
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        return DEFAULT_SHOP_ITEMS.filter(item => item.active);
+      }
+
+      return snapshot.docs
+        .map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            name: data.name,
+            description: data.description,
+            icon: data.icon,
+            price: data.price,
+            category: data.category,
+            rarity: data.rarity,
+            active: data.active,
+          } as ShopItem;
+        })
+        .filter(item => item.active);
+    } catch (error) {
+      // Return defaults on any error
       return DEFAULT_SHOP_ITEMS.filter(item => item.active);
     }
-
-    await shopService.initializeShop();
-    
-    const shopRef = collection(db, SHOP_ITEMS_COLLECTION);
-    const q = query(shopRef);
-    const snapshot = await getDocs(q);
-
-    return snapshot.docs
-      .map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          name: data.name,
-          description: data.description,
-          icon: data.icon,
-          price: data.price,
-          category: data.category,
-          rarity: data.rarity,
-          active: data.active,
-        } as ShopItem;
-      })
-      .filter(item => item.active);
   },
 
   // Get items by category
@@ -213,96 +230,146 @@ export const shopService = {
 
   // Get user's inventory
   getUserInventory: async (userId: string): Promise<UserInventory> => {
-    const db = await getFirebaseDb();
-    if (!db) {
-      return { items: [], equipped: {} };
+    try {
+      const db = await getFirebaseDb();
+      
+      // Try localStorage first
+      const localKey = `shop_inventory_${userId}`;
+      const localData = typeof window !== 'undefined' ? localStorage.getItem(localKey) : null;
+      
+      if (!db) {
+        return localData ? JSON.parse(localData) : { items: [], equipped: {} };
+      }
+
+      const inventoryRef = doc(db, USER_INVENTORY_COLLECTION, userId);
+      const snapshot = await getDoc(inventoryRef);
+
+      let inventory: UserInventory;
+      
+      if (snapshot.exists()) {
+        inventory = snapshot.data() as UserInventory;
+      } else {
+        // Initialize empty inventory
+        inventory = { items: [], equipped: {} };
+        await setDoc(inventoryRef, inventory);
+      }
+      
+      // Cache to localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(localKey, JSON.stringify(inventory));
+      }
+      
+      return inventory;
+    } catch (error) {
+      // Fallback to localStorage
+      const localKey = `shop_inventory_${userId}`;
+      const localData = typeof window !== 'undefined' ? localStorage.getItem(localKey) : null;
+      return localData ? JSON.parse(localData) : { items: [], equipped: {} };
     }
-
-    const inventoryRef = doc(db, USER_INVENTORY_COLLECTION, userId);
-    const snapshot = await getDoc(inventoryRef);
-
-    if (snapshot.exists()) {
-      return snapshot.data() as UserInventory;
-    }
-
-    // Initialize empty inventory
-    const defaultInventory: UserInventory = {
-      items: [],
-      equipped: {},
-    };
-
-    await setDoc(inventoryRef, defaultInventory);
-    return defaultInventory;
   },
 
   // Purchase item with atomic transaction
   purchaseItem: async (userId: string, itemId: string): Promise<{ success: boolean; error?: string }> => {
-    const db = await getFirebaseDb();
-    if (!db) return { success: false, error: 'Database not available' };
-
-    const itemRef = doc(db, SHOP_ITEMS_COLLECTION, itemId);
-    const userRef = doc(db, 'users', userId);
-    const inventoryRef = doc(db, USER_INVENTORY_COLLECTION, userId);
-
     try {
-      const result = await runTransaction(db, async (transaction) => {
-        // Read all documents first
-        const itemSnap = await transaction.get(itemRef);
-        const userSnap = await transaction.get(userRef);
-        const inventorySnap = await transaction.get(inventoryRef);
-
-        // Validate item exists and is active
-        if (!itemSnap.exists()) {
-          return { success: false, error: 'Item not found' };
+      // Get item details first
+      const items = await shopService.getShopItems();
+      const item = items.find(i => i.id === itemId);
+      
+      if (!item) {
+        return { success: false, error: 'Item not found' };
+      }
+      
+      if (!item.active) {
+        return { success: false, error: 'Item not available' };
+      }
+      
+      // Get current inventory from localStorage
+      const localInvKey = `shop_inventory_${userId}`;
+      const localData = typeof window !== 'undefined' ? localStorage.getItem(localInvKey) : null;
+      const inventory: UserInventory = localData ? JSON.parse(localData) : { items: [], equipped: {} };
+      
+      // Check if already owned
+      if (inventory.items.includes(itemId)) {
+        return { success: false, error: 'Item already owned' };
+      }
+      
+      // Get current coins from localStorage
+      const localCoinsKey = `user_coins_${userId}`;
+      const localCoins = typeof window !== 'undefined' ? localStorage.getItem(localCoinsKey) : null;
+      let currentCoins = localCoins ? parseInt(localCoins, 10) : 0;
+      
+      // Try to get coins from Firebase
+      const db = await getFirebaseDb();
+      if (db) {
+        try {
+          const userRef = doc(db, 'users', userId);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            currentCoins = userSnap.data().coins || 0;
+          }
+        } catch (e) {
+          // Use localStorage coins
         }
-
-        const item = itemSnap.data() as ShopItem;
-        if (!item.active) {
-          return { success: false, error: 'Item not available' };
-        }
-
-        // Check if already owned
-        const inventory = inventorySnap.exists() 
-          ? inventorySnap.data() as UserInventory
-          : { items: [], equipped: {} };
-        
-        if (inventory.items.includes(itemId)) {
-          return { success: false, error: 'Item already owned' };
-        }
-
-        // Check coin balance
-        const userData = userSnap.exists() ? userSnap.data() : {};
-        const currentCoins = userData.coins || 0;
-        
-        if (currentCoins < item.price) {
-          return { success: false, error: 'Not enough coins' };
-        }
-
-        // Perform atomic updates
-        transaction.update(userRef, {
-          coins: currentCoins - item.price,
-          updatedAt: serverTimestamp(),
-        });
-
-        if (inventorySnap.exists()) {
-          transaction.update(inventoryRef, {
-            items: arrayUnion(itemId),
-            updatedAt: serverTimestamp(),
+      }
+      
+      // Check coin balance
+      if (currentCoins < item.price) {
+        return { success: false, error: 'Not enough coins' };
+      }
+      
+      // Update inventory in localStorage
+      inventory.items.push(itemId);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(localInvKey, JSON.stringify(inventory));
+        localStorage.setItem(localCoinsKey, (currentCoins - item.price).toString());
+      }
+      
+      // Try Firebase transaction
+      if (db) {
+        try {
+          const itemRef = doc(db, SHOP_ITEMS_COLLECTION, itemId);
+          const userRef = doc(db, 'users', userId);
+          const inventoryRef = doc(db, USER_INVENTORY_COLLECTION, userId);
+          
+          await runTransaction(db, async (transaction) => {
+            const itemSnap = await transaction.get(itemRef);
+            const userSnap = await transaction.get(userRef);
+            const inventorySnap = await transaction.get(inventoryRef);
+            
+            if (!itemSnap.exists()) {
+              throw new Error('Item not found');
+            }
+            
+            const item = itemSnap.data() as ShopItem;
+            const userData = userSnap.exists() ? userSnap.data() : {};
+            const currentCoins = userData.coins || 0;
+            
+            transaction.update(userRef, {
+              coins: currentCoins - item.price,
+              updatedAt: serverTimestamp(),
+            });
+            
+            if (inventorySnap.exists()) {
+              transaction.update(inventoryRef, {
+                items: arrayUnion(itemId),
+                updatedAt: serverTimestamp(),
+              });
+            } else {
+              transaction.set(inventoryRef, {
+                items: [itemId],
+                equipped: {},
+                updatedAt: serverTimestamp(),
+              });
+            }
           });
-        } else {
-          transaction.set(inventoryRef, {
-            items: [itemId],
-            equipped: {},
-            updatedAt: serverTimestamp(),
-          });
+        } catch (firebaseError) {
+          // Firebase failed but localStorage succeeded
         }
-
-        return { success: true };
-      });
-
-      return result;
+      }
+      
+      return { success: true };
     } catch (error) {
-      return { success: false, error: 'Transaction failed' };
+      return { success: false, error: 'Purchase failed' };
     }
   },
 
@@ -311,33 +378,46 @@ export const shopService = {
     userId: string, 
     itemId: string
   ): Promise<{ success: boolean; error?: string }> => {
-    const db = await getFirebaseDb();
-    if (!db) return { success: false, error: 'Database not available' };
+    try {
+      // Get item details
+      const items = await shopService.getShopItems();
+      const item = items.find(i => i.id === itemId);
+      
+      if (!item) {
+        return { success: false, error: 'Item not found' };
+      }
 
-    // Get item details
-    const itemDoc = doc(db, SHOP_ITEMS_COLLECTION, itemId);
-    const itemSnap = await getDoc(itemDoc);
-    
-    if (!itemSnap.exists()) {
-      return { success: false, error: 'Item not found' };
+      // Get inventory
+      const inventory = await shopService.getUserInventory(userId);
+      if (!inventory.items.includes(itemId)) {
+        return { success: false, error: 'Item not owned' };
+      }
+
+      // Update equipped in localStorage
+      inventory.equipped[item.category] = itemId;
+      const localInvKey = `shop_inventory_${userId}`;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(localInvKey, JSON.stringify(inventory));
+      }
+
+      // Try Firebase update
+      const db = await getFirebaseDb();
+      if (db) {
+        try {
+          const inventoryRef = doc(db, USER_INVENTORY_COLLECTION, userId);
+          await updateDoc(inventoryRef, {
+            [`equipped.${item.category}`]: itemId,
+            updatedAt: serverTimestamp(),
+          });
+        } catch (firebaseError) {
+          // Firebase failed but localStorage succeeded
+        }
+      }
+
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: 'Equip failed' };
     }
-    
-    const item = itemSnap.data() as ShopItem;
-
-    // Check if user owns this item
-    const inventory = await shopService.getUserInventory(userId);
-    if (!inventory.items.includes(itemId)) {
-      return { success: false, error: 'Item not owned' };
-    }
-
-    // Update equipped
-    const inventoryRef = doc(db, USER_INVENTORY_COLLECTION, userId);
-    await updateDoc(inventoryRef, {
-      [`equipped.${item.category}`]: itemId,
-      updatedAt: serverTimestamp(),
-    });
-
-    return { success: true };
   },
 
   // Unequip item

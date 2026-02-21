@@ -1,9 +1,11 @@
 'use client';
 
-import { Volume2, Music, Bell, Moon, Monitor, LogOut } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Volume2, Music, Bell, Moon, Monitor, LogOut, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { Input } from '@/components/ui/input';
 
 interface SettingItem {
   id: string;
@@ -11,7 +13,6 @@ interface SettingItem {
   description: string;
   icon: React.ElementType;
   type: 'toggle' | 'button';
-  value?: boolean;
 }
 
 const SETTINGS: SettingItem[] = [
@@ -21,7 +22,6 @@ const SETTINGS: SettingItem[] = [
     description: 'Play sounds for game actions',
     icon: Volume2,
     type: 'toggle',
-    value: true,
   },
   {
     id: 'music',
@@ -29,7 +29,6 @@ const SETTINGS: SettingItem[] = [
     description: 'Play music in games',
     icon: Music,
     type: 'toggle',
-    value: true,
   },
   {
     id: 'notifications',
@@ -37,7 +36,6 @@ const SETTINGS: SettingItem[] = [
     description: 'Show achievement popups and alerts',
     icon: Bell,
     type: 'toggle',
-    value: true,
   },
   {
     id: 'darkmode',
@@ -45,7 +43,6 @@ const SETTINGS: SettingItem[] = [
     description: 'Always use dark theme',
     icon: Moon,
     type: 'toggle',
-    value: true,
   },
 ];
 
@@ -69,11 +66,59 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (value: boo
 }
 
 export default function SettingsPage() {
-  const { signOut } = useAuth();
+  const { user, signOut, updateProfile } = useAuth();
+  const [settings, setSettings] = useState<Record<string, boolean>>({
+    sound: true,
+    music: true,
+    notifications: true,
+    darkmode: true,
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [displayName, setDisplayName] = useState('');
+  const [showEditProfile, setShowEditProfile] = useState(false);
+
+  // Load settings from localStorage on mount
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('arcade_hub_settings');
+    if (savedSettings) {
+      try {
+        const parsed = JSON.parse(savedSettings);
+        setSettings(prev => ({ ...prev, ...parsed }));
+      } catch (e) {
+        // Invalid settings
+      }
+    }
+    
+    if (user?.displayName) {
+      setDisplayName(user.displayName);
+    }
+  }, [user?.displayName]);
 
   const handleToggle = (id: string, value: boolean) => {
-    // TODO: Update user preferences
-    // Toggle setting changed
+    const newSettings = { ...settings, [id]: value };
+    setSettings(newSettings);
+    
+    // Save to localStorage
+    localStorage.setItem('arcade_hub_settings', JSON.stringify(newSettings));
+    
+    // Apply dark mode immediately
+    if (id === 'darkmode') {
+      document.documentElement.classList.toggle('dark', value);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!displayName.trim()) return;
+    
+    setIsLoading(true);
+    try {
+      await updateProfile?.(displayName.trim());
+      setShowEditProfile(false);
+    } catch (error) {
+      alert('Failed to update profile');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -111,7 +156,7 @@ export default function SettingsPage() {
                 </div>
                 {setting.type === 'toggle' && (
                   <Toggle
-                    checked={setting.value || false}
+                    checked={settings[setting.id] ?? true}
                     onChange={(value) => handleToggle(setting.id, value)}
                   />
                 )}
@@ -128,21 +173,43 @@ export default function SettingsPage() {
             Account
           </h2>
         </div>
-        <div className="p-4">
+        <div className="p-4 space-y-4">
+          {/* Profile Info */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 bg-surface border border-white/[0.08] flex items-center justify-center">
-                <Monitor className="w-5 h-5 text-muted-foreground" />
+                <User className="w-5 h-5 text-muted-foreground" />
               </div>
               <div>
-                <h3 className="font-medium text-primary text-sm">Profile</h3>
-                <p className="text-xs text-muted-foreground">Edit your profile information</p>
+                <h3 className="font-medium text-primary text-sm">Display Name</h3>
+                <p className="text-xs text-muted-foreground">{user?.displayName || 'Not set'}</p>
               </div>
             </div>
-            <Button variant="secondary" size="sm">
-              Edit
+            <Button variant="secondary" size="sm" onClick={() => setShowEditProfile(!showEditProfile)}>
+              {showEditProfile ? 'Cancel' : 'Edit'}
             </Button>
           </div>
+          
+          {/* Edit Profile Form */}
+          {showEditProfile && (
+            <div className="pl-14 space-y-3">
+              <Input
+                placeholder="Enter display name..."
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                maxLength={20}
+              />
+              <div className="flex gap-2">
+                <Button 
+                  size="sm" 
+                  onClick={handleSaveProfile}
+                  disabled={isLoading || !displayName.trim()}
+                >
+                  {isLoading ? 'Saving...' : 'Save'}
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

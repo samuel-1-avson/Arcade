@@ -129,56 +129,90 @@ const DEFAULT_ACHIEVEMENTS: Achievement[] = [
 export const achievementsService = {
   // Initialize default achievements in Firestore
   initializeAchievements: async (): Promise<void> => {
-    const db = await getFirebaseDb();
-    if (!db) return;
+    try {
+      const db = await getFirebaseDb();
+      if (!db) return;
 
-    const achievementsRef = collection(db, ACHIEVEMENTS_COLLECTION);
-    
-    for (const achievement of DEFAULT_ACHIEVEMENTS) {
-      const achievementDoc = doc(achievementsRef, achievement.id);
-      const snapshot = await getDoc(achievementDoc);
+      const achievementsRef = collection(db, ACHIEVEMENTS_COLLECTION);
       
-      if (!snapshot.exists()) {
-        await setDoc(achievementDoc, achievement);
+      for (const achievement of DEFAULT_ACHIEVEMENTS) {
+        try {
+          const achievementDoc = doc(achievementsRef, achievement.id);
+          const snapshot = await getDoc(achievementDoc);
+          
+          if (!snapshot.exists()) {
+            await setDoc(achievementDoc, achievement);
+          }
+        } catch (e) {
+          // Skip if cannot write
+        }
       }
+    } catch (e) {
+      // Initialization failed, use defaults
     }
   },
 
   // Get all achievements
   getAllAchievements: async (): Promise<Achievement[]> => {
-    const db = await getFirebaseDb();
-    if (!db) return DEFAULT_ACHIEVEMENTS;
+    try {
+      const db = await getFirebaseDb();
+      if (!db) return DEFAULT_ACHIEVEMENTS;
 
-    const achievementsRef = collection(db, ACHIEVEMENTS_COLLECTION);
-    const snapshot = await getDocs(achievementsRef);
-    
-    if (snapshot.empty) {
-      // Initialize if not exists
-      await achievementsService.initializeAchievements();
+      const achievementsRef = collection(db, ACHIEVEMENTS_COLLECTION);
+      const snapshot = await getDocs(achievementsRef);
+      
+      if (snapshot.empty) {
+        // Try to initialize if not exists
+        await achievementsService.initializeAchievements();
+        return DEFAULT_ACHIEVEMENTS;
+      }
+
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Achievement[];
+    } catch (error) {
+      // Return defaults on any error
       return DEFAULT_ACHIEVEMENTS;
     }
-
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Achievement[];
   },
 
   // Get user's achievements
   getUserAchievements: async (userId: string): Promise<UserAchievement[]> => {
-    const db = await getFirebaseDb();
-    if (!db) return [];
+    try {
+      const db = await getFirebaseDb();
+      
+      // Try localStorage first
+      const localKey = `achievements_${userId}`;
+      const localData = typeof window !== 'undefined' ? localStorage.getItem(localKey) : null;
+      
+      if (!db) {
+        return localData ? JSON.parse(localData) : [];
+      }
 
-    const userAchievementsRef = collection(db, USER_ACHIEVEMENTS_COLLECTION);
-    const q = query(userAchievementsRef, where('userId', '==', userId));
-    const snapshot = await getDocs(q);
+      const userAchievementsRef = collection(db, USER_ACHIEVEMENTS_COLLECTION);
+      const q = query(userAchievementsRef, where('userId', '==', userId));
+      const snapshot = await getDocs(q);
 
-    return snapshot.docs.map(doc => ({
-      achievementId: doc.data().achievementId,
-      progress: doc.data().progress || 0,
-      unlocked: doc.data().unlocked || false,
-      unlockedAt: doc.data().unlockedAt?.toDate(),
-    }));
+      const achievements = snapshot.docs.map(doc => ({
+        achievementId: doc.data().achievementId,
+        progress: doc.data().progress || 0,
+        unlocked: doc.data().unlocked || false,
+        unlockedAt: doc.data().unlockedAt?.toDate(),
+      }));
+      
+      // Cache to localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(localKey, JSON.stringify(achievements));
+      }
+      
+      return achievements;
+    } catch (error) {
+      // Fallback to localStorage
+      const localKey = `achievements_${userId}`;
+      const localData = typeof window !== 'undefined' ? localStorage.getItem(localKey) : null;
+      return localData ? JSON.parse(localData) : [];
+    }
   },
 
   // Update achievement progress
@@ -187,45 +221,71 @@ export const achievementsService = {
     achievementId: string, 
     progress: number
   ): Promise<boolean> => {
-    const db = await getFirebaseDb();
-    if (!db) return false;
-
-    // Get achievement details
-    const achievementDoc = doc(db, ACHIEVEMENTS_COLLECTION, achievementId);
-    const achievementSnap = await getDoc(achievementDoc);
-    
-    if (!achievementSnap.exists()) return false;
-    
-    const achievement = achievementSnap.data() as Achievement;
-    
-    // Get or create user achievement
-    const userAchievementRef = doc(
-      db, 
-      USER_ACHIEVEMENTS_COLLECTION, 
-      `${userId}_${achievementId}`
-    );
-    const userAchievementSnap = await getDoc(userAchievementRef);
-    
-    const currentProgress = userAchievementSnap.exists() 
-      ? userAchievementSnap.data().progress || 0 
-      : 0;
-    
-    // Only update if progress increased
-    if (progress <= currentProgress) return false;
-    
-    const newProgress = Math.min(progress, achievement.maxProgress);
-    const unlocked = newProgress >= achievement.maxProgress;
-    
-    await setDoc(userAchievementRef, {
-      userId,
-      achievementId,
-      progress: newProgress,
-      unlocked,
-      unlockedAt: unlocked ? serverTimestamp() : null,
-      updatedAt: serverTimestamp(),
-    });
-    
-    return unlocked; // Return true if newly unlocked
+    try {
+      const db = await getFirebaseDb();
+      
+      // Get achievement details
+      let achievement: Achievement | undefined;
+      
+      if (db) {
+        const achievementDoc = doc(db, ACHIEVEMENTS_COLLECTION, achievementId);
+        const achievementSnap = await getDoc(achievementDoc);
+        if (achievementSnap.exists()) {
+          achievement = achievementSnap.data() as Achievement;
+        }
+      }
+      
+      // Fallback to default achievements
+      if (!achievement) {
+        achievement = DEFAULT_ACHIEVEMENTS.find(a => a.id === achievementId);
+      }
+      
+      if (!achievement) return false;
+      
+      // Get current progress from localStorage
+      const localKey = `achievements_progress_${userId}`;
+      const localData = typeof window !== 'undefined' ? localStorage.getItem(localKey) : null;
+      const progressMap = localData ? JSON.parse(localData) : {};
+      const currentProgress = progressMap[achievementId] || 0;
+      
+      // Only update if progress increased
+      if (progress <= currentProgress) return false;
+      
+      const newProgress = Math.min(progress, achievement.maxProgress);
+      const unlocked = newProgress >= achievement.maxProgress;
+      
+      // Update localStorage
+      progressMap[achievementId] = newProgress;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(localKey, JSON.stringify(progressMap));
+      }
+      
+      // Try to update Firebase
+      if (db) {
+        try {
+          const userAchievementRef = doc(
+            db, 
+            USER_ACHIEVEMENTS_COLLECTION, 
+            `${userId}_${achievementId}`
+          );
+          
+          await setDoc(userAchievementRef, {
+            userId,
+            achievementId,
+            progress: newProgress,
+            unlocked,
+            unlockedAt: unlocked ? serverTimestamp() : null,
+            updatedAt: serverTimestamp(),
+          });
+        } catch (firebaseError) {
+          // Firebase update failed but localStorage succeeded
+        }
+      }
+      
+      return unlocked;
+    } catch (error) {
+      return false;
+    }
   },
 
   // Track game played for achievements

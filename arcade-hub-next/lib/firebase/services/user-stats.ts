@@ -21,12 +21,84 @@ export interface UserStats {
   lastPlayed: Date;
 }
 
+const getLocalStats = (userId: string): UserStats | null => {
+  const localKey = `user_stats_${userId}`;
+  const localData = typeof window !== 'undefined' ? localStorage.getItem(localKey) : null;
+  return localData ? JSON.parse(localData) : null;
+};
+
+const setLocalStats = (userId: string, stats: UserStats): void => {
+  const localKey = `user_stats_${userId}`;
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(localKey, JSON.stringify(stats));
+  }
+};
+
 export const userStatsService = {
   // Get user stats
   getUserStats: async (userId: string): Promise<UserStats> => {
-    const db = await getFirebaseDb();
-    if (!db) {
-      return {
+    try {
+      const db = await getFirebaseDb();
+      const localStats = getLocalStats(userId);
+      
+      if (!db) {
+        return localStats || {
+          totalScore: 0,
+          gamesPlayed: 0,
+          totalPlayTime: 0,
+          achievementsUnlocked: 0,
+          coins: 0,
+          level: 1,
+          xp: 0,
+          lastPlayed: new Date(),
+        };
+      }
+
+      const userRef = doc(db, USERS_COLLECTION, userId);
+      const snapshot = await getDoc(userRef);
+
+      let stats: UserStats;
+
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        stats = {
+          totalScore: data.totalScore || 0,
+          gamesPlayed: data.gamesPlayed || 0,
+          totalPlayTime: data.totalPlayTime || 0,
+          achievementsUnlocked: data.achievementsUnlocked || 0,
+          coins: data.coins || 0,
+          level: data.level || 1,
+          xp: data.xp || 0,
+          lastPlayed: data.lastPlayed?.toDate() || new Date(),
+        };
+      } else {
+        // Initialize new user stats
+        stats = {
+          totalScore: 0,
+          gamesPlayed: 0,
+          totalPlayTime: 0,
+          achievementsUnlocked: 0,
+          coins: 0,
+          level: 1,
+          xp: 0,
+          lastPlayed: new Date(),
+        };
+
+        await setDoc(userRef, {
+          ...stats,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      }
+      
+      // Cache to localStorage
+      setLocalStats(userId, stats);
+      
+      return stats;
+    } catch (error) {
+      // Fallback to localStorage
+      const localStats = getLocalStats(userId);
+      return localStats || {
         totalScore: 0,
         gamesPlayed: 0,
         totalPlayTime: 0,
@@ -37,43 +109,6 @@ export const userStatsService = {
         lastPlayed: new Date(),
       };
     }
-
-    const userRef = doc(db, USERS_COLLECTION, userId);
-    const snapshot = await getDoc(userRef);
-
-    if (snapshot.exists()) {
-      const data = snapshot.data();
-      return {
-        totalScore: data.totalScore || 0,
-        gamesPlayed: data.gamesPlayed || 0,
-        totalPlayTime: data.totalPlayTime || 0,
-        achievementsUnlocked: data.achievementsUnlocked || 0,
-        coins: data.coins || 0,
-        level: data.level || 1,
-        xp: data.xp || 0,
-        lastPlayed: data.lastPlayed?.toDate() || new Date(),
-      };
-    }
-
-    // Initialize new user stats
-    const defaultStats: UserStats = {
-      totalScore: 0,
-      gamesPlayed: 0,
-      totalPlayTime: 0,
-      achievementsUnlocked: 0,
-      coins: 0,
-      level: 1,
-      xp: 0,
-      lastPlayed: new Date(),
-    };
-
-    await setDoc(userRef, {
-      ...defaultStats,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-
-    return defaultStats;
   },
 
   // Update user stats after game
@@ -138,14 +173,36 @@ export const userStatsService = {
 
   // Add coins (for completing challenges, etc.)
   addCoins: async (userId: string, amount: number): Promise<void> => {
-    const db = await getFirebaseDb();
-    if (!db) return;
+    try {
+      // Update localStorage first
+      const localStats = getLocalStats(userId);
+      if (localStats) {
+        localStats.coins += amount;
+        setLocalStats(userId, localStats);
+      } else {
+        setLocalStats(userId, {
+          totalScore: 0,
+          gamesPlayed: 0,
+          totalPlayTime: 0,
+          achievementsUnlocked: 0,
+          coins: amount,
+          level: 1,
+          xp: 0,
+          lastPlayed: new Date(),
+        });
+      }
+      
+      const db = await getFirebaseDb();
+      if (!db) return;
 
-    const userRef = doc(db, USERS_COLLECTION, userId);
-    await updateDoc(userRef, {
-      coins: increment(amount),
-      updatedAt: serverTimestamp(),
-    });
+      const userRef = doc(db, USERS_COLLECTION, userId);
+      await updateDoc(userRef, {
+        coins: increment(amount),
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      // localStorage was already updated
+    }
   },
 
   // Spend coins (for shop purchases)

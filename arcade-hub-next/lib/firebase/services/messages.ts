@@ -45,78 +45,95 @@ export interface Message {
 export const messagesService = {
   // Get or create a conversation between two users
   getOrCreateConversation: async (userId1: string, userId2: string): Promise<string | null> => {
-    const db = await getFirebaseDb();
-    if (!db) return null;
+    try {
+      const db = await getFirebaseDb();
+      if (!db) return null;
 
-    // Check for existing conversation
-    const conversationsRef = collection(db, CONVERSATIONS_COLLECTION);
-    const q = query(
-      conversationsRef,
-      where('participants', 'array-contains', userId1)
-    );
-    const snapshot = await getDocs(q);
-    
-    const existingConv = snapshot.docs.find(doc => {
-      const participants = doc.data().participants as string[];
-      return participants.includes(userId2);
-    });
+      // Check for existing conversation
+      const conversationsRef = collection(db, CONVERSATIONS_COLLECTION);
+      const q = query(
+        conversationsRef,
+        where('participants', 'array-contains', userId1)
+      );
+      const snapshot = await getDocs(q);
+      
+      const existingConv = snapshot.docs.find(doc => {
+        const participants = doc.data().participants as string[];
+        return participants.includes(userId2);
+      });
 
-    if (existingConv) {
-      return existingConv.id;
+      if (existingConv) {
+        return existingConv.id;
+      }
+
+      // Get user details
+      let user1Name = 'Anonymous';
+      let user2Name = 'Anonymous';
+      let user1Photo = '';
+      let user2Photo = '';
+      
+      try {
+        const [user1Doc, user2Doc] = await Promise.all([
+          getDoc(doc(db, 'users', userId1)),
+          getDoc(doc(db, 'users', userId2))
+        ]);
+        
+        if (user1Doc.exists()) {
+          user1Name = user1Doc.data().displayName || 'Anonymous';
+          user1Photo = user1Doc.data().photoURL || '';
+        }
+        if (user2Doc.exists()) {
+          user2Name = user2Doc.data().displayName || 'Anonymous';
+          user2Photo = user2Doc.data().photoURL || '';
+        }
+      } catch (e) {
+        // Use defaults
+      }
+
+      // Create new conversation
+      const newConvRef = await addDoc(conversationsRef, {
+        participants: [userId1, userId2],
+        participantNames: [user1Name, user2Name],
+        participantPhotos: [user1Photo, user2Photo],
+        unreadCount: { [userId1]: 0, [userId2]: 0 },
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
+      return newConvRef.id;
+    } catch (error) {
+      return null;
     }
-
-    // Get user details
-    const [user1Doc, user2Doc] = await Promise.all([
-      getDoc(doc(db, 'users', userId1)),
-      getDoc(doc(db, 'users', userId2))
-    ]);
-
-    const user1Data = user1Doc.exists() ? user1Doc.data() : {};
-    const user2Data = user2Doc.exists() ? user2Doc.data() : {};
-
-    // Create new conversation
-    const newConvRef = await addDoc(conversationsRef, {
-      participants: [userId1, userId2],
-      participantNames: [
-        user1Data.displayName || 'Anonymous',
-        user2Data.displayName || 'Anonymous'
-      ],
-      participantPhotos: [
-        user1Data.photoURL || '',
-        user2Data.photoURL || ''
-      ],
-      unreadCount: { [userId1]: 0, [userId2]: 0 },
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-
-    return newConvRef.id;
   },
 
   // Get user's conversations
   getConversations: async (userId: string): Promise<Conversation[]> => {
-    const db = await getFirebaseDb();
-    if (!db) return [];
+    try {
+      const db = await getFirebaseDb();
+      if (!db) return [];
 
-    const conversationsRef = collection(db, CONVERSATIONS_COLLECTION);
-    const q = query(
-      conversationsRef,
-      where('participants', 'array-contains', userId),
-      orderBy('updatedAt', 'desc')
-    );
-    const snapshot = await getDocs(q);
+      const conversationsRef = collection(db, CONVERSATIONS_COLLECTION);
+      const q = query(
+        conversationsRef,
+        where('participants', 'array-contains', userId),
+        orderBy('updatedAt', 'desc')
+      );
+      const snapshot = await getDocs(q);
 
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      participants: doc.data().participants,
-      participantNames: doc.data().participantNames,
-      participantPhotos: doc.data().participantPhotos,
-      lastMessage: doc.data().lastMessage,
-      lastMessageTime: doc.data().lastMessageTime?.toDate(),
-      unreadCount: doc.data().unreadCount || {},
-      createdAt: doc.data().createdAt?.toDate() || new Date(),
-      updatedAt: doc.data().updatedAt?.toDate() || new Date(),
-    }));
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        participants: doc.data().participants,
+        participantNames: doc.data().participantNames,
+        participantPhotos: doc.data().participantPhotos,
+        lastMessage: doc.data().lastMessage,
+        lastMessageTime: doc.data().lastMessageTime?.toDate(),
+        unreadCount: doc.data().unreadCount || {},
+        createdAt: doc.data().createdAt?.toDate() || new Date(),
+        updatedAt: doc.data().updatedAt?.toDate() || new Date(),
+      }));
+    } catch (error) {
+      return [];
+    }
   },
 
   // Send a message
@@ -125,41 +142,55 @@ export const messagesService = {
     senderId: string, 
     text: string
   ): Promise<boolean> => {
-    const db = await getFirebaseDb();
-    if (!db) return false;
+    try {
+      const db = await getFirebaseDb();
+      if (!db) return false;
 
-    // Get sender details
-    const senderDoc = await getDoc(doc(db, 'users', senderId));
-    const senderData = senderDoc.exists() ? senderDoc.data() : {};
+      // Get sender details
+      let senderName = 'Anonymous';
+      let senderPhoto = null;
+      
+      try {
+        const senderDoc = await getDoc(doc(db, 'users', senderId));
+        if (senderDoc.exists()) {
+          senderName = senderDoc.data().displayName || 'Anonymous';
+          senderPhoto = senderDoc.data().photoURL || null;
+        }
+      } catch (e) {
+        // Use defaults
+      }
 
-    // Get conversation to find other participant
-    const convDoc = await getDoc(doc(db, CONVERSATIONS_COLLECTION, conversationId));
-    if (!convDoc.exists()) return false;
-    
-    const convData = convDoc.data();
-    const otherParticipantId = convData.participants.find((id: string) => id !== senderId);
+      // Get conversation to find other participant
+      const convDoc = await getDoc(doc(db, CONVERSATIONS_COLLECTION, conversationId));
+      if (!convDoc.exists()) return false;
+      
+      const convData = convDoc.data();
+      const otherParticipantId = convData.participants.find((id: string) => id !== senderId);
 
-    // Add message
-    await addDoc(collection(db, MESSAGES_COLLECTION), {
-      conversationId,
-      senderId,
-      senderName: senderData.displayName || 'Anonymous',
-      senderPhoto: senderData.photoURL || null,
-      text: text.slice(0, 1000), // Limit message length
-      timestamp: serverTimestamp(),
-      read: false,
-    });
+      // Add message
+      await addDoc(collection(db, MESSAGES_COLLECTION), {
+        conversationId,
+        senderId,
+        senderName,
+        senderPhoto,
+        text: text.slice(0, 1000), // Limit message length
+        timestamp: serverTimestamp(),
+        read: false,
+      });
 
-    // Update conversation
-    const currentUnread = convData.unreadCount || {};
-    await updateDoc(doc(db, CONVERSATIONS_COLLECTION, conversationId), {
-      lastMessage: text.slice(0, 100),
-      lastMessageTime: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      [`unreadCount.${otherParticipantId}`]: (currentUnread[otherParticipantId] || 0) + 1,
-    });
+      // Update conversation
+      const currentUnread = convData.unreadCount || {};
+      await updateDoc(doc(db, CONVERSATIONS_COLLECTION, conversationId), {
+        lastMessage: text.slice(0, 100),
+        lastMessageTime: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        [`unreadCount.${otherParticipantId}`]: (currentUnread[otherParticipantId] || 0) + 1,
+      });
 
-    return true;
+      return true;
+    } catch (error) {
+      return false;
+    }
   },
 
   // Get messages for a conversation
