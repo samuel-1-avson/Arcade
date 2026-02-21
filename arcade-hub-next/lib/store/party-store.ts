@@ -49,9 +49,9 @@ export const usePartyStore = create<PartyState>()(
       
       try {
         const result = await partyService.createParty(
-          user.uid,
+          user.id,
           user.displayName || 'Player',
-          user.photoURL || undefined
+          user.avatar || undefined
         );
         
         if (!result) {
@@ -99,9 +99,9 @@ export const usePartyStore = create<PartyState>()(
       try {
         const result = await partyService.joinParty(
           code,
-          user.uid,
+          user.id,
           user.displayName || 'Player',
-          user.photoURL || undefined
+          user.avatar || undefined
         );
         
         if (!result.success) {
@@ -152,7 +152,7 @@ export const usePartyStore = create<PartyState>()(
       }
       
       if (currentParty && user) {
-        await partyService.leaveParty(currentParty.id, user.uid);
+        await partyService.leaveParty(currentParty.id, user.id);
       }
       
       set({ 
@@ -173,10 +173,10 @@ export const usePartyStore = create<PartyState>()(
       try {
         await partyService.sendMessage(
           currentParty.id,
-          user.uid,
+          user.id,
           user.displayName || 'Player',
           text,
-          user.photoURL || undefined
+          user.avatar || undefined
         );
       } catch (error) {
         console.error('Failed to send message:', error);
@@ -190,7 +190,7 @@ export const usePartyStore = create<PartyState>()(
       if (!currentParty || !user) return;
       
       try {
-        await partyService.setReady(currentParty.id, user.uid, ready);
+        await partyService.setReady(currentParty.id, user.id, ready);
       } catch (error) {
         console.error('Failed to set ready status:', error);
       }
@@ -202,7 +202,7 @@ export const usePartyStore = create<PartyState>()(
       if (!currentParty || !user) return;
       
       try {
-        await partyService.kickMember(currentParty.id, userId, user.uid);
+        await partyService.kickMember(currentParty.id, userId, user.id);
       } catch (error) {
         console.error('Failed to kick member:', error);
       }
