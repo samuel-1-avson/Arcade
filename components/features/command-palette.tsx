@@ -166,27 +166,30 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                   </div>
                 ) : (
                   <div className="py-2">
-                    {filteredCommands.map((cmd, idx) => (
-                      <button
-                        key={cmd.id}
-                        className={cn(
-                          'w-full flex items-center gap-3 px-4 py-3 text-left transition-colors',
-                          idx === selectedIndex 
-                            ? 'bg-accent/10 text-accent' 
-                            : 'text-primary hover:bg-elevated/80'
-                        )}
-                        onClick={cmd.action}
-                        onMouseEnter={() => setSelectedIndex(idx)}
-                      >
-                        <cmd.icon className="w-4 h-4" />
-                        <span className="flex-1">{cmd.label}</span>
-                        {cmd.shortcut && (
-                          <kbd className="px-2 py-0.5 bg-white/[0.06] text-[10px] text-muted-foreground font-mono">
-                            {cmd.shortcut}
-                          </kbd>
-                        )}
-                      </button>
-                    ))}
+                    {filteredCommands.map((cmd, idx) => {
+                      const Icon = cmd.icon as any;
+                      return (
+                        <button
+                          key={cmd.id}
+                          className={cn(
+                            'w-full flex items-center gap-3 px-4 py-3 text-left transition-colors',
+                            idx === selectedIndex 
+                              ? 'bg-accent/10 text-accent' 
+                              : 'text-primary hover:bg-elevated/80'
+                          )}
+                          onClick={cmd.action}
+                          onMouseEnter={() => setSelectedIndex(idx)}
+                        >
+                          <Icon className="w-4 h-4" />
+                          <span className="flex-1">{cmd.label}</span>
+                          {cmd.shortcut && (
+                            <kbd className="px-2 py-0.5 bg-white/[0.06] text-[10px] text-muted-foreground font-mono">
+                              {cmd.shortcut}
+                            </kbd>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </div>

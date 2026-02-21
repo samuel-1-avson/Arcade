@@ -80,7 +80,7 @@ export function Sidebar() {
 }
 
 interface NavItemProps {
-  icon: React.ElementType;
+  icon: any;
   label: string;
   href: string;
   isActive: boolean;

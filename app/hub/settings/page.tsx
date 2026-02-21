@@ -176,7 +176,7 @@ export default function SettingsPage() {
         </div>
         <div className="divide-y divide-white/[0.03]">
           {SETTINGS_CONFIG.map((setting) => {
-            const Icon = setting.icon;
+            const Icon = setting.icon as any;
             return (
               <div key={setting.id} className="flex items-center justify-between px-4 py-4">
                 <div className="flex items-center gap-4">

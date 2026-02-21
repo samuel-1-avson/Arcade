@@ -16,14 +16,16 @@ const iconMap: Record<string, React.ElementType> = {
   Medal,
 };
 
-const rarityStyles = {
+type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
+
+const rarityStyles: Record<Rarity, string> = {
   common: 'border-white/[0.08] bg-elevated',
   rare: 'border-accent-border bg-accent-dim',
   epic: 'border-violet/30 bg-violet/10',
   legendary: 'border-warning/30 bg-warning/10',
 };
 
-const rarityText = {
+const rarityText: Record<Rarity, string> = {
   common: 'text-muted-foreground',
   rare: 'text-accent',
   epic: 'text-violet',
@@ -130,7 +132,7 @@ export default function AchievementsPage() {
       {/* Achievements Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {achievements.map((achievement) => {
-          const Icon = iconMap[achievement.icon] || Trophy;
+          const Icon = (iconMap[achievement.icon] || Trophy) as any;
           const progressPercent = Math.min(100, (achievement.progress / achievement.maxProgress) * 100);
 
           return (
@@ -163,7 +165,7 @@ export default function AchievementsPage() {
                 )}>
                   <Icon className={cn(
                     'w-6 h-6',
-                    achievement.unlocked ? rarityText[achievement.rarity] : 'text-muted-foreground'
+                    achievement.unlocked ? rarityText[achievement.rarity as Rarity] : 'text-muted-foreground'
                   )} />
                 </div>
 

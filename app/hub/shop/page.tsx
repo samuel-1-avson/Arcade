@@ -187,7 +187,7 @@ export default function ShopPage() {
       {/* Items Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filteredItems.map((item) => {
-          const ItemIcon = iconMap[item.icon] || UserCircle;
+          const ItemIcon = (iconMap[item.icon] || UserCircle) as any;
           const isOwned = inventory.items.includes(item.id);
           const isEquipped = inventory.equipped[item.category] === item.id;
           const canAfford = coins >= item.price;

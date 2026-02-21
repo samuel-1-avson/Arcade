@@ -310,7 +310,7 @@ interface StatCardProps {
   value: string;
 }
 
-function StatCard({ icon: Icon, label, value }: StatCardProps) {
+function StatCard({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
   return (
     <div className="bg-elevated border border-white/[0.06] p-4 text-center">
       <Icon className="w-5 h-5 text-accent mx-auto mb-2" />

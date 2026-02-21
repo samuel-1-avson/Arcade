@@ -144,9 +144,9 @@ export default function ChallengesPage() {
           </div>
         ) : (
           challenges.map((challenge) => {
-            const Icon = iconMap[challenge.game === 'snake' ? 'Target' : 
+            const Icon = (iconMap[challenge.game === 'snake' ? 'Target' : 
                                  challenge.game === 'pacman' ? 'Zap' :
-                                 challenge.game === 'tetris' ? 'Clock' : 'Trophy'] || Target;
+                                 challenge.game === 'tetris' ? 'Clock' : 'Trophy'] || Target) as any;
             const progressPercent = Math.min(100, (challenge.progress / challenge.target) * 100);
             const canClaim = challenge.completed && !challenge.claimed;
 
