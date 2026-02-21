@@ -57,7 +57,8 @@ service cloud.firestore {
     // ============================================
     
     match /users/{userId} {
-      allow read: if isOwner(userId);
+      // Allow anyone to read user profiles
+      allow read: if true;
       allow create: if isSignedIn() && isOwner(userId)
         && isValidDisplayName(request.resource.data.displayName);
       allow update: if isOwner(userId)
@@ -225,11 +226,8 @@ service cloud.firestore {
     // ============================================
     
     match /friends/{friendshipId} {
-      // Allow read if user is part of the friendship
-      allow read: if isSignedIn() && (
-        resource.data.user1Id == request.auth.uid ||
-        resource.data.user2Id == request.auth.uid
-      );
+      // Allow read for any signed in user (filtered in app)
+      allow read: if isSignedIn();
       // Allow create for any authenticated user
       allow create: if isSignedIn();
       allow update: if false;
@@ -241,10 +239,7 @@ service cloud.firestore {
     }
     
     match /friendRequests/{requestId} {
-      allow read: if isSignedIn() && (
-        resource.data.fromUserId == request.auth.uid ||
-        resource.data.toUserId == request.auth.uid
-      );
+      allow read: if isSignedIn();
       allow create: if isSignedIn() 
         && request.resource.data.fromUserId == request.auth.uid;
       allow update: if isSignedIn() && (
