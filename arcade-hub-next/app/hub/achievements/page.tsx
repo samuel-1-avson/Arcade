@@ -1,91 +1,20 @@
 'use client';
 
-import { Award, Lock, Star, Trophy, Zap, Target, Flame, Crown } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Award, Lock, Trophy, Target, Crown, Gamepad2, Star, Zap, Medal } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
+import { achievementsService, Achievement, UserAchievement } from '@/lib/firebase/services/achievements';
 
-interface Achievement {
-  id: string;
-  name: string;
-  description: string;
-  icon: React.ElementType;
-  unlocked: boolean;
-  progress: number;
-  maxProgress: number;
-  rarity: 'common' | 'rare' | 'epic' | 'legendary';
-}
-
-const ACHIEVEMENTS: Achievement[] = [
-  {
-    id: 'first-game',
-    name: 'First Steps',
-    description: 'Play your first game',
-    icon: GamepadIcon,
-    unlocked: false,
-    progress: 0,
-    maxProgress: 1,
-    rarity: 'common',
-  },
-  {
-    id: 'score-1000',
-    name: 'Score Hunter',
-    description: 'Score 1,000 points in any game',
-    icon: Trophy,
-    unlocked: false,
-    progress: 0,
-    maxProgress: 1000,
-    rarity: 'common',
-  },
-  {
-    id: 'streak-7',
-    name: 'Week Warrior',
-    description: 'Play for 7 days in a row',
-    icon: Flame,
-    unlocked: false,
-    progress: 0,
-    maxProgress: 7,
-    rarity: 'rare',
-  },
-  {
-    id: 'all-games',
-    name: 'Explorer',
-    description: 'Play every game in the hub',
-    icon: Target,
-    unlocked: false,
-    progress: 0,
-    maxProgress: 8,
-    rarity: 'rare',
-  },
-  {
-    id: 'top-10',
-    name: 'Top 10',
-    description: 'Reach top 10 on any leaderboard',
-    icon: Star,
-    unlocked: false,
-    progress: 0,
-    maxProgress: 1,
-    rarity: 'epic',
-  },
-  {
-    id: 'master',
-    name: 'Arcade Master',
-    description: 'Unlock all other achievements',
-    icon: Crown,
-    unlocked: false,
-    progress: 0,
-    maxProgress: 5,
-    rarity: 'legendary',
-  },
-];
-
-function GamepadIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <rect x="2" y="6" width="20" height="12" rx="2" />
-      <circle cx="8" cy="12" r="2" />
-      <path d="M15 10v4M13 12h4" />
-    </svg>
-  );
-}
+const iconMap: Record<string, React.ElementType> = {
+  Gamepad2,
+  Trophy,
+  Target,
+  Crown,
+  Star,
+  Zap,
+  Medal,
+};
 
 const rarityStyles = {
   common: 'border-white/[0.08] bg-elevated',
@@ -102,8 +31,65 @@ const rarityText = {
 };
 
 export default function AchievementsPage() {
-  const unlockedCount = ACHIEVEMENTS.filter(a => a.unlocked).length;
-  const totalCount = ACHIEVEMENTS.length;
+  const { user } = useAuth();
+  const [achievements, setAchievements] = useState<(Achievement & UserAchievement)[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadAchievements = async () => {
+      setIsLoading(true);
+      try {
+        // Get all achievements
+        const allAchievements = await achievementsService.getAllAchievements();
+        
+        // Get user's progress
+        const userAchievements = user 
+          ? await achievementsService.getUserAchievements(user.id)
+          : [];
+
+        // Merge achievement data with user progress
+        const merged = allAchievements.map(achievement => {
+          const userProgress = userAchievements.find(
+            ua => ua.achievementId === achievement.id
+          );
+          return {
+            ...achievement,
+            achievementId: achievement.id,
+            progress: userProgress?.progress || 0,
+            unlocked: userProgress?.unlocked || false,
+            unlockedAt: userProgress?.unlockedAt,
+          };
+        });
+
+        setAchievements(merged as (Achievement & UserAchievement)[]);
+      } catch (error) {
+        console.error('Error loading achievements:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadAchievements();
+  }, [user]);
+
+  const unlockedCount = achievements.filter(a => a.unlocked).length;
+  const totalCount = achievements.length;
+  const progressPercent = totalCount > 0 ? Math.round((unlockedCount / totalCount) * 100) : 0;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <div className="flex items-center justify-between">
+          <h1 className="font-display text-2xl font-bold uppercase tracking-wider text-primary">
+            Achievements
+          </h1>
+        </div>
+        <div className="p-8 text-center text-muted-foreground">
+          Loading achievements...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -114,7 +100,7 @@ export default function AchievementsPage() {
             Achievements
           </h1>
           <p className="text-muted-foreground text-sm">
-            Unlock badges by playing games
+            {user ? 'Unlock badges by playing games' : 'Sign in to track your progress'}
           </p>
         </div>
         <div className="text-right">
@@ -131,21 +117,21 @@ export default function AchievementsPage() {
       <div className="bg-elevated border border-white/[0.06] p-4">
         <div className="flex justify-between text-xs text-muted-foreground mb-2">
           <span>Progress</span>
-          <span>{Math.round((unlockedCount / totalCount) * 100)}%</span>
+          <span>{progressPercent}%</span>
         </div>
         <div className="h-2 bg-surface overflow-hidden">
           <div
             className="h-full bg-accent transition-all duration-500"
-            style={{ width: `${(unlockedCount / totalCount) * 100}%` }}
+            style={{ width: `${progressPercent}%` }}
           />
         </div>
       </div>
 
       {/* Achievements Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {ACHIEVEMENTS.map((achievement) => {
-          const Icon = achievement.icon;
-          const progressPercent = (achievement.progress / achievement.maxProgress) * 100;
+        {achievements.map((achievement) => {
+          const Icon = iconMap[achievement.icon] || Trophy;
+          const progressPercent = Math.min(100, (achievement.progress / achievement.maxProgress) * 100);
 
           return (
             <div
@@ -159,6 +145,13 @@ export default function AchievementsPage() {
               {!achievement.unlocked && (
                 <div className="absolute top-2 right-2">
                   <Lock className="w-4 h-4 text-muted-foreground" />
+                </div>
+              )}
+
+              {/* Unlocked indicator */}
+              {achievement.unlocked && (
+                <div className="absolute top-2 right-2">
+                  <Award className="w-4 h-4 text-accent" />
                 </div>
               )}
 
@@ -176,7 +169,7 @@ export default function AchievementsPage() {
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <h3 className="font-display text-sm font-bold uppercase tracking-wide text-primary">
                       {achievement.name}
                     </h3>
@@ -188,11 +181,19 @@ export default function AchievementsPage() {
                     {achievement.description}
                   </p>
 
+                  {/* Rewards */}
+                  {achievement.unlocked && (
+                    <div className="flex gap-3 mb-3 text-xs">
+                      <span className="text-accent">+{achievement.xpReward} XP</span>
+                      <span className="text-yellow-400">+{achievement.coinReward} Coins</span>
+                    </div>
+                  )}
+
                   {/* Progress */}
                   <div className="space-y-1">
                     <div className="flex justify-between text-xs">
                       <span className="text-muted-foreground">
-                        {achievement.progress}/{achievement.maxProgress}
+                        {achievement.progress.toLocaleString()}/{achievement.maxProgress.toLocaleString()}
                       </span>
                       <span className={achievement.unlocked ? 'text-accent' : 'text-muted-foreground'}>
                         {Math.round(progressPercent)}%

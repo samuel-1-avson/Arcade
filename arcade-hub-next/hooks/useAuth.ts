@@ -11,16 +11,25 @@ export function useAuth() {
     try {
       console.log('Starting Google sign-in...');
       const user = await authService.signInWithGoogle();
-      // For redirect flow, this returns null - auth state will update after redirect
+      // For popup flow, user is returned directly
       if (user) {
-        console.log('Popup sign-in successful:', user.email);
+        console.log('Sign-in successful:', user.email);
         setUser(user);
-      } else {
-        console.log('Redirect sign-in initiated...');
       }
       return user;
-    } catch (error) {
-      console.error('Google sign in error:', error);
+    } catch (error: any) {
+      console.error('Google sign in error:', error?.code, error?.message);
+      
+      // Show user-friendly error
+      if (error?.code === 'auth/popup-blocked') {
+        alert('Please allow popups for this site to sign in with Google.');
+      } else if (error?.code === 'auth/cancelled-popup-request') {
+        // User cancelled, don't show error
+        console.log('User cancelled sign-in');
+      } else {
+        alert('Sign-in failed. Please try again.');
+      }
+      
       throw error;
     }
   }, [setUser]);

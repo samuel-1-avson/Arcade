@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/lib/store';
 import { getFirebaseAuth } from '@/lib/firebase/config';
-import { onAuthStateChanged, getRedirectResult } from 'firebase/auth';
+import { onAuthStateChanged } from 'firebase/auth';
 
 export function FirebaseInit({ children }: { children: React.ReactNode }) {
   const { setUser, setLoading } = useAuthStore();
@@ -23,23 +23,7 @@ export function FirebaseInit({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // Check for redirect result FIRST (before setting up listener)
-      try {
-        console.log('Checking redirect result...');
-        const result = await getRedirectResult(auth);
-        if (result?.user) {
-          console.log('Redirect result found:', result.user.email);
-        } else {
-          console.log('No redirect result');
-        }
-      } catch (error: any) {
-        console.error('Redirect error:', error?.code, error?.message);
-        if (error?.code === 'auth/unauthorized-domain') {
-          alert('This domain is not authorized. Please add it to Firebase Console.');
-        }
-      }
-
-      // Set up auth state listener AFTER checking redirect
+      // Set up auth state listener
       console.log('Setting up auth listener...');
       unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
         console.log('Auth state:', firebaseUser?.email || 'null');

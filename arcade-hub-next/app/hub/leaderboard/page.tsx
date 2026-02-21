@@ -1,18 +1,27 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Trophy, Medal } from 'lucide-react';
+import { Trophy, Medal, User } from 'lucide-react';
 import { useLeaderboardStore } from '@/lib/store';
 import { useGames } from '@/hooks/useGames';
+import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
 export default function LeaderboardPage() {
-  const { entries, isLoading, selectedGame, setSelectedGame, fetchLeaderboard } = useLeaderboardStore();
+  const { 
+    entries, 
+    isLoading, 
+    selectedGame, 
+    currentUserRank,
+    setSelectedGame, 
+    fetchLeaderboard 
+  } = useLeaderboardStore();
   const { allGames } = useGames();
+  const { user } = useAuth();
   
   useEffect(() => {
-    fetchLeaderboard(selectedGame);
-  }, [selectedGame, fetchLeaderboard]);
+    fetchLeaderboard(selectedGame, user?.id);
+  }, [selectedGame, fetchLeaderboard, user?.id]);
 
   const getRankStyle = (rank: number) => {
     switch (rank) {
@@ -95,7 +104,7 @@ export default function LeaderboardPage() {
           <div className="divide-y divide-white/[0.03]">
             {entries.map((entry) => (
               <div
-                key={entry.userId}
+                key={`${entry.userId}-${entry.rank}`}
                 className={cn(
                   'grid grid-cols-12 gap-4 px-4 py-4 items-center hover:bg-white/[0.02] transition-colors',
                   entry.rank <= 3 && 'bg-white/[0.02]'
@@ -108,13 +117,21 @@ export default function LeaderboardPage() {
                   </div>
                 </div>
                 <div className="col-span-7 flex items-center gap-3">
-                  <div className="w-10 h-10 bg-surface border border-white/[0.08] flex items-center justify-center text-lg">
-                    {entry.avatar}
+                  <div className="w-10 h-10 bg-surface border border-white/[0.08] flex items-center justify-center overflow-hidden">
+                    {entry.photoURL ? (
+                      <img 
+                        src={entry.photoURL} 
+                        alt={entry.displayName}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="w-5 h-5 text-muted-foreground" />
+                    )}
                   </div>
                   <div>
                     <p className="font-medium text-primary">{entry.displayName}</p>
                     <p className="text-xs text-muted-foreground">
-                      {entry.timestamp.toLocaleDateString()}
+                      {entry.timestamp?.toLocaleDateString?.() || 'Recently'}
                     </p>
                   </div>
                 </div>
@@ -135,11 +152,21 @@ export default function LeaderboardPage() {
           <Trophy className="w-8 h-8 text-accent" />
           <div>
             <p className="text-sm text-muted-foreground">Your Rank</p>
-            <p className="font-display text-xl font-bold text-primary">Not Ranked</p>
+            {user ? (
+              <p className="font-display text-xl font-bold text-primary">
+                {currentUserRank ? `#${currentUserRank}` : 'Not Ranked'}
+              </p>
+            ) : (
+              <p className="font-display text-xl font-bold text-primary">Sign in to rank</p>
+            )}
           </div>
         </div>
         <p className="text-sm text-muted-foreground">
-          Play games to climb the leaderboard!
+          {user 
+            ? currentUserRank 
+              ? 'Keep playing to climb higher!' 
+              : 'Play games to climb the leaderboard!'
+            : 'Sign in to track your progress'}
         </p>
       </div>
     </div>

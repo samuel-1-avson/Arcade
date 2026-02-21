@@ -1,6 +1,6 @@
 import { 
-  signInWithRedirect, 
   signInWithPopup,
+  signInWithRedirect,
   getRedirectResult,
   GoogleAuthProvider, 
   signInAnonymously,
@@ -15,27 +15,30 @@ import { User, UserPreferences } from '@/types/user';
 
 const googleProvider = new GoogleAuthProvider();
 
-// Always use redirect for production to avoid COOP issues
-const isProduction = typeof window !== 'undefined' && 
-  (window.location.hostname.includes('vercel.app') || 
-   !window.location.hostname.includes('localhost'));
-
 export const authService = {
+  // Use POPUP by default - it's more reliable for this use case
   signInWithGoogle: async (): Promise<User | null> => {
-    console.log('Sign-in initiated, production:', isProduction);
+    console.log('Starting Google sign-in with popup...');
     const auth = await getFirebaseAuth();
     if (!auth) {
       throw new Error('Firebase Auth not initialized');
     }
     
-    if (isProduction) {
-      console.log('Using redirect flow...');
-      await signInWithRedirect(auth, googleProvider);
-      return null;
-    } else {
-      console.log('Using popup flow...');
+    try {
       const result = await signInWithPopup(auth, googleProvider);
+      console.log('Popup sign-in successful:', result.user.email);
       return mapFirebaseUser(result.user);
+    } catch (error: any) {
+      console.error('Popup sign-in error:', error?.code, error?.message);
+      
+      // If popup is blocked, fall back to redirect
+      if (error?.code === 'auth/popup-blocked') {
+        console.log('Popup blocked, falling back to redirect...');
+        await signInWithRedirect(auth, googleProvider);
+        return null;
+      }
+      
+      throw error;
     }
   },
 
@@ -57,10 +60,6 @@ export const authService = {
       return null;
     } catch (error: any) {
       console.error('Redirect result error:', error?.code, error?.message);
-      if (error?.code === 'auth/unauthorized-domain') {
-        console.error('Domain not authorized in Firebase Console!');
-        alert('This domain is not authorized for authentication.');
-      }
       return null;
     }
   },
@@ -83,7 +82,6 @@ export const authService = {
   },
   
   onAuthChange: (callback: (user: User | null) => void) => {
-    // Return a function that will set up the listener once auth is ready
     let unsubscribe: (() => void) | null = null;
     
     getFirebaseAuth().then((auth) => {
@@ -99,7 +97,6 @@ export const authService = {
       });
     });
     
-    // Return unsubscribe function
     return () => {
       if (unsubscribe) {
         unsubscribe();

@@ -1,24 +1,91 @@
 'use client';
 
-import { useState } from 'react';
-import { User, Edit2, Trophy, Gamepad2, Clock, Award, LogIn } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { User, Edit2, Trophy, Gamepad2, Clock, Award, LogIn, Ghost, Grid3x3, Target, Circle, Bot, Sparkles, Coins, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { useAuth } from '@/hooks/useAuth';
+import { userStatsService, UserStats } from '@/lib/firebase/services/user-stats';
+import { achievementsService } from '@/lib/firebase/services/achievements';
 
-const AVATARS = ['🎮', '👾', '🕹️', '🎯', '🎲', '🤖', '👽', '🥷', '🤠', '🎸'];
+// Avatar icons for selection
+const AVATAR_ICONS = [
+  { name: 'User', Icon: User },
+  { name: 'Ghost', Icon: Ghost },
+  { name: 'Gamepad2', Icon: Gamepad2 },
+  { name: 'Grid3x3', Icon: Grid3x3 },
+  { name: 'Target', Icon: Target },
+  { name: 'Circle', Icon: Circle },
+  { name: 'Bot', Icon: Bot },
+  { name: 'Sparkles', Icon: Sparkles },
+  { name: 'Trophy', Icon: Trophy },
+  { name: 'Award', Icon: Award },
+];
 
 export default function ProfilePage() {
   const { user, isAuthenticated, isLoading, signInWithGoogle, signInAsGuest, updateProfile } = useAuth();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editName, setEditName] = useState(user?.displayName || '');
-  const [selectedAvatar, setSelectedAvatar] = useState(user?.avatar || '🎮');
+  const [selectedAvatar, setSelectedAvatar] = useState(user?.avatar || 'User');
+  const [userStats, setUserStats] = useState<UserStats | null>(null);
+  const [achievementsCount, setAchievementsCount] = useState(0);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadUserStats = async () => {
+      if (!user?.id) {
+        setStatsLoading(false);
+        return;
+      }
+
+      setStatsLoading(true);
+      try {
+        // Load user stats
+        const stats = await userStatsService.getUserStats(user.id);
+        setUserStats(stats);
+
+        // Load achievements count
+        const achievements = await achievementsService.getUserAchievements(user.id);
+        setAchievementsCount(achievements.filter(a => a.unlocked).length);
+      } catch (error) {
+        console.error('Error loading user stats:', error);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+
+    loadUserStats();
+  }, [user?.id]);
 
   const handleSave = async () => {
     await updateProfile(editName);
     setIsEditModalOpen(false);
+  };
+
+  // Get the icon component for the selected avatar
+  const getAvatarIcon = (avatarName: string) => {
+    const avatar = AVATAR_ICONS.find(a => a.name === avatarName);
+    return avatar?.Icon || User;
+  };
+
+  const SelectedAvatarIcon = getAvatarIcon(selectedAvatar);
+  const CurrentAvatarIcon = getAvatarIcon(user?.avatar || 'User');
+
+  // Calculate XP for next level
+  const currentLevel = userStats?.level || 1;
+  const currentXp = userStats?.xp || 0;
+  const xpForNextLevel = currentLevel * 100;
+  const xpProgress = Math.min(100, (currentXp / xpForNextLevel) * 100);
+
+  // Format play time
+  const formatPlayTime = (minutes: number) => {
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    if (remainingMinutes === 0) return `${hours}h`;
+    return `${hours}h ${remainingMinutes}m`;
   };
 
   // Show sign-in prompt if not authenticated
@@ -35,8 +102,8 @@ export default function ProfilePage() {
         </div>
 
         <div className="bg-elevated border border-white/[0.06] p-8 text-center">
-          <div className="w-20 h-20 bg-surface border-2 border-white/[0.08] flex items-center justify-center text-4xl mx-auto mb-4">
-            👤
+          <div className="w-20 h-20 bg-surface border-2 border-white/[0.08] flex items-center justify-center mx-auto mb-4">
+            <User className="w-10 h-10 text-muted-foreground" />
           </div>
           <h2 className="font-display text-lg font-bold text-primary mb-2">
             Not Signed In
@@ -75,8 +142,20 @@ export default function ProfilePage() {
         <div className="flex items-start gap-6">
           {/* Avatar */}
           <div className="relative">
-            <div className="w-20 h-20 bg-surface border-2 border-accent flex items-center justify-center text-4xl">
-              {user?.avatar || '🎮'}
+            <div className="w-20 h-20 bg-surface border-2 border-accent flex items-center justify-center overflow-hidden">
+              {user?.avatar?.startsWith('http') || user?.avatar?.startsWith('//') ? (
+                <img 
+                  src={user.avatar} 
+                  alt={user.displayName || 'User'}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // Fallback if image fails to load
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              ) : (
+                <CurrentAvatarIcon className="w-10 h-10 text-primary" />
+              )}
             </div>
             <button
               onClick={() => setIsEditModalOpen(true)}
@@ -96,10 +175,10 @@ export default function ProfilePage() {
             {/* Level Badge */}
             <div className="mt-4 flex items-center gap-2">
               <span className="px-3 py-1 bg-accent-dim border border-accent-border text-accent text-xs font-bold uppercase">
-                Level {user?.level || 1}
+                Level {currentLevel}
               </span>
               <span className="text-xs text-muted-foreground">
-                {user?.xp || 0} / 100 XP
+                {currentXp} / {xpForNextLevel} XP
               </span>
             </div>
 
@@ -107,11 +186,31 @@ export default function ProfilePage() {
             <div className="mt-2 h-1.5 bg-surface overflow-hidden">
               <div
                 className="h-full bg-accent transition-all"
-                style={{ width: `${(user?.xp || 0)}%` }}
+                style={{ width: `${xpProgress}%` }}
               />
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Coins Card */}
+      <div className="bg-elevated border border-warning/20 p-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-warning/10 border border-warning/30 flex items-center justify-center">
+            <Coins className="w-6 h-6 text-warning" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">Coin Balance</p>
+            <p className="font-mono text-2xl font-bold text-warning">
+              {statsLoading ? '...' : (userStats?.coins || 0).toLocaleString()}
+            </p>
+          </div>
+        </div>
+        <a href="/hub/shop">
+          <Button size="sm" variant="secondary">
+            Visit Shop
+          </Button>
+        </a>
       </div>
 
       {/* Stats Grid */}
@@ -119,22 +218,22 @@ export default function ProfilePage() {
         <StatCard
           icon={Trophy}
           label="Total Score"
-          value={(user?.totalScore || 0).toLocaleString()}
+          value={statsLoading ? '...' : (userStats?.totalScore || 0).toLocaleString()}
         />
         <StatCard
           icon={Gamepad2}
           label="Games Played"
-          value={(user?.gamesPlayed || 0).toString()}
+          value={statsLoading ? '...' : (userStats?.gamesPlayed || 0).toString()}
         />
         <StatCard
           icon={Clock}
           label="Play Time"
-          value="0h"
+          value={statsLoading ? '...' : formatPlayTime(userStats?.totalPlayTime || 0)}
         />
         <StatCard
           icon={Award}
           label="Achievements"
-          value="0"
+          value={statsLoading ? '...' : achievementsCount.toString()}
         />
       </div>
 
@@ -171,18 +270,18 @@ export default function ProfilePage() {
               Avatar
             </label>
             <div className="grid grid-cols-5 gap-2">
-              {AVATARS.map((avatar) => (
+              {AVATAR_ICONS.map(({ name, Icon }) => (
                 <button
-                  key={avatar}
-                  onClick={() => setSelectedAvatar(avatar)}
+                  key={name}
+                  onClick={() => setSelectedAvatar(name)}
                   className={cn(
-                    'w-10 h-10 text-xl flex items-center justify-center border transition-colors',
-                    selectedAvatar === avatar
+                    'w-10 h-10 flex items-center justify-center border transition-colors',
+                    selectedAvatar === name
                       ? 'border-accent bg-accent-dim'
                       : 'border-white/[0.08] bg-surface hover:border-white/[0.12]'
                   )}
                 >
-                  {avatar}
+                  <Icon className="w-5 h-5 text-primary" />
                 </button>
               ))}
             </div>

@@ -3,14 +3,25 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Play } from 'lucide-react';
-import { Game } from '@/types/game';
+import { GameIcon } from '@/components/game-icon';
+import { GameIcon as GameIconType } from '@/types/game';
 
-const FEATURED_GAMES: Game[] = [
+interface FeaturedGame {
+  id: string;
+  name: string;
+  description: string;
+  icon: GameIconType;
+  difficulty: 'easy' | 'medium' | 'hard';
+  category: string;
+  path: string;
+}
+
+const FEATURED_GAMES: FeaturedGame[] = [
   {
     id: 'pacman',
     name: 'Pac-Man',
     description: 'Navigate the maze, eat all the dots, and avoid the ghosts. The arcade classic that started it all.',
-    emoji: '👾',
+    icon: 'Ghost',
     difficulty: 'medium',
     category: 'arcade',
     path: '/games/pacman/',
@@ -19,7 +30,7 @@ const FEATURED_GAMES: Game[] = [
     id: 'snake',
     name: 'Snake',
     description: 'Eat food, grow longer, and avoid colliding with yourself in this timeless classic.',
-    emoji: '🐍',
+    icon: 'Gamepad2',
     difficulty: 'easy',
     category: 'classic',
     path: '/games/snake/',
@@ -28,7 +39,7 @@ const FEATURED_GAMES: Game[] = [
     id: 'tetris',
     name: 'Tetris',
     description: 'Stack falling blocks to clear lines in the world\'s most addictive puzzle game.',
-    emoji: '🧱',
+    icon: 'Grid3x3',
     difficulty: 'medium',
     category: 'puzzle',
     path: '/games/tetris/',
@@ -124,9 +135,9 @@ export function HeroSection() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
               transition={{ duration: 0.4 }}
-              className="relative text-[8rem] lg:text-[10rem] drop-shadow-[0_0_30px_rgba(0,229,255,0.2)]"
+              className="relative drop-shadow-[0_0_30px_rgba(0,229,255,0.2)]"
             >
-              {currentGame.emoji}
+              <GameIcon icon={currentGame.icon} size={120} className="text-primary" />
             </motion.div>
           </AnimatePresence>
           

@@ -1,125 +1,158 @@
 'use client';
 
-import { useState } from 'react';
-import { ShoppingCart, Coins, Check } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ShoppingCart, Coins, Check, UserCircle, Bot, Palette, Star, Flame, Crown, Zap, Clover, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
+import { shopService, ShopItem, UserInventory } from '@/lib/firebase/services/shop';
+import { userStatsService, UserStats } from '@/lib/firebase/services/user-stats';
 
-interface ShopItem {
-  id: string;
-  name: string;
-  description: string;
-  emoji: string;
-  price: number;
-  category: 'title' | 'avatar' | 'frame';
-  owned: boolean;
-}
-
-const SHOP_ITEMS: ShopItem[] = [
-  {
-    id: 'title-gamer',
-    name: 'Gamer',
-    description: 'Show your gaming pride',
-    emoji: '🎮',
-    price: 100,
-    category: 'title',
-    owned: false,
-  },
-  {
-    id: 'title-pro',
-    name: 'Pro Player',
-    description: 'For serious competitors',
-    emoji: '🏆',
-    price: 500,
-    category: 'title',
-    owned: false,
-  },
-  {
-    id: 'title-legend',
-    name: 'Legend',
-    description: 'Only for the elite',
-    emoji: '👑',
-    price: 2000,
-    category: 'title',
-    owned: false,
-  },
-  {
-    id: 'avatar-ninja',
-    name: 'Ninja Avatar',
-    description: 'Silent but deadly',
-    emoji: '🥷',
-    price: 300,
-    category: 'avatar',
-    owned: false,
-  },
-  {
-    id: 'avatar-robot',
-    name: 'Robot Avatar',
-    description: 'Beep boop',
-    emoji: '🤖',
-    price: 300,
-    category: 'avatar',
-    owned: false,
-  },
-  {
-    id: 'avatar-alien',
-    name: 'Alien Avatar',
-    description: 'Out of this world',
-    emoji: '👽',
-    price: 400,
-    category: 'avatar',
-    owned: false,
-  },
-  {
-    id: 'frame-gold',
-    name: 'Gold Frame',
-    description: 'Shine bright',
-    emoji: '🖼️',
-    price: 1000,
-    category: 'frame',
-    owned: false,
-  },
-  {
-    id: 'frame-neon',
-    name: 'Neon Frame',
-    description: 'Cyberpunk style',
-    emoji: '🟦',
-    price: 800,
-    category: 'frame',
-    owned: false,
-  },
-];
+const iconMap: Record<string, React.ElementType> = {
+  UserCircle,
+  Bot,
+  Palette,
+  Star,
+  Flame,
+  Crown,
+  Zap,
+  Clover,
+};
 
 const CATEGORIES = [
   { id: 'all', label: 'All' },
-  { id: 'title', label: 'Titles' },
   { id: 'avatar', label: 'Avatars' },
-  { id: 'frame', label: 'Frames' },
+  { id: 'theme', label: 'Themes' },
+  { id: 'badge', label: 'Badges' },
+  { id: 'powerup', label: 'Power-ups' },
 ];
 
+const rarityStyles = {
+  common: 'border-white/[0.08]',
+  rare: 'border-accent-border',
+  epic: 'border-violet/30',
+  legendary: 'border-warning/30',
+};
+
+const rarityText = {
+  common: 'text-muted-foreground',
+  rare: 'text-accent',
+  epic: 'text-violet',
+  legendary: 'text-warning',
+};
+
 export default function ShopPage() {
+  const { user } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [coins] = useState(0); // TODO: Get from user store
+  const [items, setItems] = useState<ShopItem[]>([]);
+  const [inventory, setInventory] = useState<UserInventory>({ items: [], equipped: {} });
+  const [userStats, setUserStats] = useState<UserStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [purchasing, setPurchasing] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadShopData = async () => {
+      setIsLoading(true);
+      try {
+        // Load shop items
+        const shopItems = await shopService.getShopItems();
+        setItems(shopItems);
+
+        if (user) {
+          // Load user's inventory
+          const userInventory = await shopService.getUserInventory(user.id);
+          setInventory(userInventory);
+
+          // Load user's coin balance
+          const stats = await userStatsService.getUserStats(user.id);
+          setUserStats(stats);
+        }
+      } catch (error) {
+        console.error('Error loading shop data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadShopData();
+  }, [user]);
+
+  const handlePurchase = async (item: ShopItem) => {
+    if (!user) return;
+
+    setPurchasing(item.id);
+    try {
+      const result = await shopService.purchaseItem(user.id, item.id);
+      if (result.success) {
+        // Update local state
+        setInventory(prev => ({
+          ...prev,
+          items: [...prev.items, item.id],
+        }));
+        
+        // Update coin balance
+        setUserStats(prev => prev ? {
+          ...prev,
+          coins: prev.coins - item.price,
+        } : null);
+      } else {
+        alert(result.error || 'Purchase failed');
+      }
+    } catch (error) {
+      console.error('Error purchasing item:', error);
+    } finally {
+      setPurchasing(null);
+    }
+  };
+
+  const handleEquip = async (item: ShopItem) => {
+    if (!user) return;
+
+    try {
+      const result = await shopService.equipItem(user.id, item.id);
+      if (result.success) {
+        setInventory(prev => ({
+          ...prev,
+          equipped: {
+            ...prev.equipped,
+            [item.category]: item.id,
+          },
+        }));
+      }
+    } catch (error) {
+      console.error('Error equipping item:', error);
+    }
+  };
 
   const filteredItems = selectedCategory === 'all'
-    ? SHOP_ITEMS
-    : SHOP_ITEMS.filter(item => item.category === selectedCategory);
+    ? items
+    : items.filter(item => item.category === selectedCategory);
 
-  const handlePurchase = (item: ShopItem) => {
-    // TODO: Implement purchase logic
-    console.log('Purchasing:', item.name);
-  };
+  const coins = userStats?.coins || 0;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <h1 className="font-display text-2xl font-bold uppercase tracking-wider text-primary">
+          Item Shop
+        </h1>
+        <div className="p-8 text-center text-muted-foreground">
+          Loading shop...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="font-display text-2xl font-bold uppercase tracking-wider text-primary mb-2">
             Item Shop
           </h1>
           <p className="text-muted-foreground text-sm">
-            Customize your profile with exclusive items
+            {user ? 'Customize your profile with exclusive items' : 'Sign in to purchase items'}
           </p>
         </div>
 
@@ -153,63 +186,102 @@ export default function ShopPage() {
 
       {/* Items Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {filteredItems.map((item) => (
-          <div
-            key={item.id}
-            className={cn(
-              'bg-elevated border p-4 transition-all',
-              item.owned
-                ? 'border-success/30 bg-success/5'
-                : 'border-white/[0.06] hover:border-white/[0.12]'
-            )}
-          >
-            {/* Emoji & Status */}
-            <div className="flex items-start justify-between mb-3">
-              <span className="text-4xl">{item.emoji}</span>
-              {item.owned && (
-                <div className="flex items-center gap-1 text-success text-xs">
-                  <Check className="w-3 h-3" />
-                  <span>Owned</span>
-                </div>
+        {filteredItems.map((item) => {
+          const ItemIcon = iconMap[item.icon] || UserCircle;
+          const isOwned = inventory.items.includes(item.id);
+          const isEquipped = inventory.equipped[item.category] === item.id;
+          const canAfford = coins >= item.price;
+
+          return (
+            <div
+              key={item.id}
+              className={cn(
+                'bg-elevated border p-4 transition-all',
+                isEquipped
+                  ? 'border-success/30 bg-success/5'
+                  : isOwned
+                    ? 'border-accent/30'
+                    : rarityStyles[item.rarity]
               )}
-            </div>
-
-            {/* Info */}
-            <h3 className="font-display text-sm font-bold uppercase tracking-wide text-primary mb-1">
-              {item.name}
-            </h3>
-            <p className="text-xs text-muted-foreground mb-4">
-              {item.description}
-            </p>
-
-            {/* Price & Action */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1">
-                <Coins className="w-4 h-4 text-warning" />
-                <span className={cn(
-                  'font-mono font-bold',
-                  coins < item.price ? 'text-danger' : 'text-primary'
+            >
+              {/* Icon & Status */}
+              <div className="flex items-start justify-between mb-3">
+                <div className={cn(
+                  "w-16 h-16 border flex items-center justify-center",
+                  isEquipped ? "bg-success/10 border-success/30" : "bg-surface border-white/[0.08]"
                 )}>
-                  {item.price}
-                </span>
+                  <ItemIcon className={cn(
+                    "w-8 h-8",
+                    isEquipped ? "text-success" : rarityText[item.rarity]
+                  )} />
+                </div>
+                <div className="text-right">
+                  {isEquipped && (
+                    <div className="flex items-center gap-1 text-success text-xs">
+                      <Check className="w-3 h-3" />
+                      <span>Equipped</span>
+                    </div>
+                  )}
+                  {!isEquipped && isOwned && (
+                    <span className="text-xs text-accent uppercase tracking-wider">
+                      Owned
+                    </span>
+                  )}
+                  <span className={cn('text-[10px] uppercase tracking-wider block mt-1', rarityText[item.rarity])}>
+                    {item.rarity}
+                  </span>
+                </div>
               </div>
 
-              {item.owned ? (
-                <span className="text-xs text-success uppercase tracking-wider">
-                  Equipped
-                </span>
-              ) : (
-                <Button
-                  size="sm"
-                  disabled={coins < item.price}
-                  onClick={() => handlePurchase(item)}
-                >
-                  Buy
-                </Button>
-              )}
+              {/* Info */}
+              <h3 className="font-display text-sm font-bold uppercase tracking-wide text-primary mb-1">
+                {item.name}
+              </h3>
+              <p className="text-xs text-muted-foreground mb-4">
+                {item.description}
+              </p>
+
+              {/* Price & Action */}
+              <div className="flex items-center justify-between">
+                {isOwned ? (
+                  isEquipped ? (
+                    <span className="text-xs text-success uppercase tracking-wider">
+                      Active
+                    </span>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEquip(item)}
+                    >
+                      Equip
+                    </Button>
+                  )
+                ) : (
+                  <>
+                    <div className="flex items-center gap-1">
+                      <Coins className="w-4 h-4 text-warning" />
+                      <span className={cn(
+                        'font-mono font-bold',
+                        !canAfford ? 'text-danger' : 'text-primary'
+                      )}>
+                        {item.price}
+                      </span>
+                    </div>
+
+                    <Button
+                      size="sm"
+                      disabled={!user || !canAfford || purchasing === item.id}
+                      onClick={() => handlePurchase(item)}
+                    >
+                      {purchasing === item.id ? '...' : 'Buy'}
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* How to Earn */}
@@ -228,11 +300,11 @@ export default function ShopPage() {
           </li>
           <li className="flex items-center gap-2">
             <span className="w-1 h-1 bg-accent rounded-full" />
-            Win tournaments
+            Level up your profile
           </li>
           <li className="flex items-center gap-2">
             <span className="w-1 h-1 bg-accent rounded-full" />
-            Maintain daily streaks
+            Unlock achievements
           </li>
         </ul>
       </div>

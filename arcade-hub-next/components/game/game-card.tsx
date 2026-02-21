@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Game } from '@/types/game';
 import { cn } from '@/lib/utils';
 import { Trophy, Users } from 'lucide-react';
+import { GameIcon } from '@/components/game-icon';
 
 interface GameCardProps {
   game: Game;
@@ -33,9 +34,9 @@ export function GameCard({ game, className }: GameCardProps) {
               backgroundSize: '20px 20px',
             }}
           />
-          <span className="relative text-6xl transition-transform duration-300 group-hover:scale-110">
-            {game.emoji}
-          </span>
+          <div className="relative transition-transform duration-300 group-hover:scale-110">
+            <GameIcon icon={game.icon} size={48} className="text-primary" />
+          </div>
           
           {/* Difficulty badge */}
           <span className={cn(
