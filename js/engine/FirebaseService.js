@@ -1,10 +1,11 @@
-/**
+﻿/**
  * Firebase Configuration and Services
  * Handles authentication and Firestore for leaderboards
  */
 
 // Import Firebase configuration from centralized config module
 import { firebaseConfig } from '../config/firebase-config.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 
 class FirebaseService {
@@ -25,7 +26,7 @@ class FirebaseService {
         if (this.initialized) {
             // Lazy load RTDB if SDK loaded late
             if (!this.rtdb && typeof firebase !== 'undefined' && typeof firebase.database === 'function') {
-                console.log('Late initialization of RTDB');
+                logger.info(LogCategory.FIREBASE, 'Late initialization of RTDB');
                 this.rtdb = firebase.database();
             }
             return true;
@@ -34,7 +35,7 @@ class FirebaseService {
         try {
             // Check if Firebase is loaded
             if (typeof firebase === 'undefined') {
-                console.warn('Firebase SDK not loaded. Leaderboards disabled.');
+                logger.warn(LogCategory.FIREBASE, 'Firebase SDK not loaded. Leaderboards disabled.');
                 return false;
             }
 
@@ -46,40 +47,40 @@ class FirebaseService {
             if (typeof firebase.database === 'function') {
                 this.rtdb = firebase.database();
             } else {
-                console.warn('Firebase RTDB SDK not loaded initially.');
+                logger.warn(LogCategory.FIREBASE, 'Firebase RTDB SDK not loaded initially.');
             }
 
             // Set persistence to LOCAL (survives browser restart)
             await this.auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-            console.log('Auth persistence set to LOCAL');
+            logger.info(LogCategory.FIREBASE, 'Auth persistence set to LOCAL');
 
             this.initialized = true;
 
             // Check for redirect result (after Google sign-in redirect)
             try {
-                console.log('Checking for redirect result...');
+                logger.info(LogCategory.FIREBASE, 'Checking for redirect result...');
                 const result = await this.auth.getRedirectResult();
                 if (result && result.user) {
-                    console.log('✅ Signed in via redirect:', result.user.displayName || result.user.email);
+                    logger.info(LogCategory.FIREBASE, '✅ Signed in via redirect:', result.user.displayName || result.user.email);
                     this.user = result.user;
                     this.onAuthStateChanged(result.user);
                 } else {
-                    console.log('No redirect result found');
+                    logger.info(LogCategory.FIREBASE, 'No redirect result found');
                 }
             } catch (redirectError) {
-                console.error('Redirect result error:', redirectError.code, redirectError.message);
+                logger.error(LogCategory.FIREBASE, 'Redirect result error:', redirectError.code, redirectError.message);
             }
 
             // Listen for auth state changes
             this.auth.onAuthStateChanged((user) => {
-                console.log('Firebase onAuthStateChanged:', user?.email || 'null');
+                logger.info(LogCategory.FIREBASE, 'Firebase onAuthStateChanged:', user?.email || 'null');
                 this.user = user;
                 this.onAuthStateChanged(user);
             });
 
             return true;
         } catch (error) {
-            console.error('Firebase initialization error:', error);
+            logger.error(LogCategory.FIREBASE, 'Firebase initialization error:', error);
             return false;
         }
     }
@@ -113,11 +114,11 @@ class FirebaseService {
      */
     logStatus() {
         const status = this.isReady();
-        console.log('[FirebaseService] Status:', status.reason);
-        console.log('[FirebaseService] Initialized:', this.initialized);
-        console.log('[FirebaseService] User:', this.user?.email || 'None');
-        console.log('[FirebaseService] Firestore:', !!this.db);
-        console.log('[FirebaseService] RTDB:', !!this.rtdb);
+        logger.info(LogCategory.FIREBASE, '[FirebaseService] Status:', status.reason);
+        logger.info(LogCategory.FIREBASE, '[FirebaseService] Initialized:', this.initialized);
+        logger.info(LogCategory.FIREBASE, '[FirebaseService] User:', this.user?.email || 'None');
+        logger.info(LogCategory.FIREBASE, '[FirebaseService] Firestore:', !!this.db);
+        logger.info(LogCategory.FIREBASE, '[FirebaseService] RTDB:', !!this.rtdb);
         return status;
     }
 
@@ -126,7 +127,7 @@ class FirebaseService {
      */
     onAuthStateChanged(user) {
         // Override this in your app
-        console.log('Auth state changed:', user?.email || 'Not signed in');
+        logger.info(LogCategory.FIREBASE, 'Auth state changed:', user?.email || 'Not signed in');
     }
 
     // === AUTHENTICATION ===
@@ -146,20 +147,20 @@ class FirebaseService {
             // Try popup first (more reliable for local development)
             try {
                 const result = await this.auth.signInWithPopup(provider);
-                console.log('✅ Signed in via popup:', result.user.displayName);
+                logger.info(LogCategory.FIREBASE, '✅ Signed in via popup:', result.user.displayName);
                 return result.user;
             } catch (popupError) {
                 // If popup blocked or fails, fall back to redirect
                 if (popupError.code === 'auth/popup-blocked' || 
                     popupError.code === 'auth/popup-closed-by-user') {
-                    console.log('Popup blocked, using redirect...');
+                    logger.info(LogCategory.FIREBASE, 'Popup blocked, using redirect...');
                     await this.auth.signInWithRedirect(provider);
                     return null;
                 }
                 throw popupError;
             }
         } catch (error) {
-            console.error('Google sign-in error:', error);
+            logger.error(LogCategory.FIREBASE, 'Google sign-in error:', error);
             throw error;
         }
     }
@@ -174,7 +175,7 @@ class FirebaseService {
             const result = await this.auth.signInAnonymously();
             return result.user;
         } catch (error) {
-            console.error('Anonymous sign-in error:', error);
+            logger.error(LogCategory.FIREBASE, 'Anonymous sign-in error:', error);
             throw error;
         }
     }
@@ -189,7 +190,7 @@ class FirebaseService {
             const result = await this.auth.signInWithEmailAndPassword(email, password);
             return result.user;
         } catch (error) {
-            console.error('Email sign-in error:', error);
+            logger.error(LogCategory.FIREBASE, 'Email sign-in error:', error);
             throw error;
         }
     }
@@ -219,7 +220,7 @@ class FirebaseService {
             
             return result.user;
         } catch (error) {
-            console.error('Email sign-up error:', error);
+            logger.error(LogCategory.FIREBASE, 'Email sign-up error:', error);
             throw error;
         }
     }
@@ -234,7 +235,7 @@ class FirebaseService {
             await this.auth.sendPasswordResetEmail(email);
             return true;
         } catch (error) {
-            console.error('Password reset error:', error);
+            logger.error(LogCategory.FIREBASE, 'Password reset error:', error);
             throw error;
         }
     }
@@ -252,7 +253,7 @@ class FirebaseService {
         try {
             await this.auth.setPersistence(persistence);
         } catch (error) {
-            console.error('Set persistence error:', error);
+            logger.error(LogCategory.FIREBASE, 'Set persistence error:', error);
         }
     }
 
@@ -265,7 +266,7 @@ class FirebaseService {
         try {
             await this.auth.signOut();
         } catch (error) {
-            console.error('Sign-out error:', error);
+            logger.error(LogCategory.FIREBASE, 'Sign-out error:', error);
             throw error;
         }
     }
@@ -291,7 +292,7 @@ class FirebaseService {
      */
     async submitScore(gameId, score, metadata = {}) {
         if (!this.db || !this.user) {
-            console.warn('Cannot submit score: not signed in or DB not initialized');
+            logger.warn(LogCategory.FIREBASE, 'Cannot submit score: not signed in or DB not initialized');
             return null;
         }
 
@@ -314,7 +315,7 @@ class FirebaseService {
 
             return docRef.id;
         } catch (error) {
-            console.error('Submit score error:', error);
+            logger.error(LogCategory.FIREBASE, 'Submit score error:', error);
             throw error;
         }
     }
@@ -343,7 +344,7 @@ class FirebaseService {
                 }, { merge: true });
             }
         } catch (error) {
-            console.error('Update personal best error:', error);
+            logger.error(LogCategory.FIREBASE, 'Update personal best error:', error);
         }
     }
 
@@ -396,12 +397,12 @@ class FirebaseService {
             });
 
             if (result.updated) {
-                console.log(`New personal best for ${gameId}: ${result.newBest} (was ${result.previousBest})`);
+                logger.info(LogCategory.FIREBASE, `New personal best for ${gameId}: ${result.newBest} (was ${result.previousBest})`);
             }
 
             return result;
         } catch (error) {
-            console.error('Transaction update personal best error:', error);
+            logger.error(LogCategory.FIREBASE, 'Transaction update personal best error:', error);
             return { updated: false, previousBest: null, newBest: score, error: error.message };
         }
     }
@@ -416,7 +417,7 @@ class FirebaseService {
      */
     async submitScoreWithTransaction(gameId, score, metadata = {}) {
         if (!this.db || !this.user) {
-            console.warn('Cannot submit score: not signed in or DB not initialized');
+            logger.warn(LogCategory.FIREBASE, 'Cannot submit score: not signed in or DB not initialized');
             return { scoreId: null, isNewBest: false };
         }
 
@@ -444,7 +445,7 @@ class FirebaseService {
                 newBest: bestResult.newBest
             };
         } catch (error) {
-            console.error('Submit score with transaction error:', error);
+            logger.error(LogCategory.FIREBASE, 'Submit score with transaction error:', error);
             return { scoreId: null, isNewBest: false, error: error.message };
         }
     }
@@ -467,7 +468,7 @@ class FirebaseService {
                 ...doc.data()
             }));
         } catch (error) {
-            console.error('Get leaderboard error:', error);
+            logger.error(LogCategory.FIREBASE, 'Get leaderboard error:', error);
             return [];
         }
     }
@@ -494,7 +495,7 @@ class FirebaseService {
 
             return higherScores.size + 1;
         } catch (error) {
-            console.error('Get user rank error:', error);
+            logger.error(LogCategory.FIREBASE, 'Get user rank error:', error);
             return null;
         }
     }
@@ -509,7 +510,7 @@ class FirebaseService {
             const userDoc = await this.db.collection('users').doc(this.user.uid).get();
             return userDoc.exists ? userDoc.data() : null;
         } catch (error) {
-            console.error('Get user stats error:', error);
+            logger.error(LogCategory.FIREBASE, 'Get user stats error:', error);
             return null;
         }
     }

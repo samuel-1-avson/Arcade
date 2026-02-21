@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Arcade Gaming Hub - Main Application (Refactored)
  * Modular architecture with separate managers for each feature
  */
@@ -57,6 +57,7 @@ import { featuredCarousel } from '../components/FeaturedGames.js';
 
 // Config
 import { GAME_ICONS } from '../config/gameRegistry.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 // Game catalog
 const GAMES = [
@@ -100,7 +101,7 @@ export class ArcadeHub {
             fallbackMessage: 'Something went wrong. Please try again.',
             showDetails: false, // Don't show sensitive error details to users
             onError: (error, context) => {
-                console.error(`[ArcadeHub] Error in ${context}:`, error);
+                logger.error(LogCategory.APP, `[ArcadeHub] Error in ${context}:`, error);
                 analyticsService.track('error', {
                     context,
                     message: error.message,
@@ -113,7 +114,7 @@ export class ArcadeHub {
         try {
             await this.initializeApp();
         } catch (error) {
-            console.error('[ArcadeHub] Fatal initialization error:', error);
+            logger.error(LogCategory.APP, '[ArcadeHub] Fatal initialization error:', error);
             this.errorBoundary.handleError(error, 'App Initialization');
             notificationService.error('Failed to initialize app. Please refresh the page.');
         }
@@ -139,8 +140,8 @@ export class ArcadeHub {
         // Register Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('SW Registered'))
-                .catch(err => console.log('SW Failed', err));
+                .then(reg => logger.info(LogCategory.APP, 'SW Registered'))
+                .catch(err => logger.info(LogCategory.APP, 'SW Failed', err));
         }
     }
 
@@ -205,7 +206,7 @@ export class ArcadeHub {
         // Listen for events
         this.setupGlobalEventListeners();
 
-        console.log('Arcade Hub initialized with modular architecture');
+        logger.info(LogCategory.APP, 'Arcade Hub initialized with modular architecture');
     }
 
     setupEventListeners() {
@@ -231,12 +232,12 @@ export class ArcadeHub {
 
         // User auth
         eventBus.on('userSignedIn', (user) => {
-            console.log('User signed in:', user.displayName);
+            logger.info(LogCategory.APP, 'User signed in:', user.displayName);
             presenceService.setOnline();
         });
 
         eventBus.on('userSignedOut', () => {
-            console.log('User signed out');
+            logger.info(LogCategory.APP, 'User signed out');
         });
 
         // Featured game selection

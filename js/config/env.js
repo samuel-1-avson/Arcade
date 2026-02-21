@@ -1,3 +1,4 @@
+﻿import { logger, LogCategory } from '../utils/logger.js';
 /**
  * Environment Configuration Loader
  * Browser-safe configuration - no process.env dependencies
@@ -106,7 +107,7 @@ function validateFirebaseConfig(config) {
   const missing = required.filter(key => !config.firebase[key]);
   
   if (missing.length > 0) {
-    console.warn(
+    logger.warn(LogCategory.APP, 
       `[Config] Missing Firebase configuration: ${missing.join(', ')}\n` +
       `Make sure to create .env.local file from .env.example`
     );

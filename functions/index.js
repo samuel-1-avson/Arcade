@@ -157,23 +157,12 @@ function validateScore(scoreData) {
         return { valid: false, reason: 'Invalid score value' };
     }
 
-    // Game-specific validation
-    const gameValidators = {
-        'snake': (s) => s.score <= 1000000, // Max reasonable score
-        '2048': (s) => s.score <= 10000000,
-        'breakout': (s) => s.score <= 500000,
-        'tetris': (s) => s.score <= 5000000,
-        'minesweeper': (s) => s.score <= 100000,
-        'pacman': (s) => s.score <= 2000000,
-        'asteroids': (s) => s.score <= 1000000,
-        'tower-defense': (s) => s.score <= 10000000,
-        'rhythm': (s) => s.score <= 1000000,
-        'roguelike': (s) => s.score <= 500000,
-        'toonshooter': (s) => s.score <= 1000000
-    };
-
-    const validator = gameValidators[scoreData.gameId];
-    if (validator && !validator(scoreData)) {
+    // Game-specific validation from shared config (single source of truth)
+    const gameConfig = require('../shared/gameConfig.json');
+    const config = gameConfig[scoreData.gameId];
+    const maxScore = config ? config.maxScore : 1000000;
+    
+    if (scoreData.score > maxScore) {
         return { valid: false, reason: 'Score exceeds maximum for game' };
     }
 
@@ -268,7 +257,7 @@ async function checkScoreAchievements(scoreData) {
 exports.aggregateLeaderboards = functions.pubsub
     .schedule('every 15 minutes')
     .onRun(async (context) => {
-        console.log('Running leaderboard aggregation');
+        logger.info(LogCategory.SCORE, 'Running leaderboard aggregation');
 
         const games = ['snake', '2048', 'breakout', 'tetris', 'minesweeper', 
                        'pacman', 'asteroids', 'tower-defense', 'rhythm', 'roguelike', 'toonshooter'];
@@ -277,7 +266,7 @@ exports.aggregateLeaderboards = functions.pubsub
             try {
                 await aggregateGameLeaderboard(gameId);
             } catch (error) {
-                console.error(`Failed to aggregate ${gameId}:`, error);
+                logger.error(LogCategory.SCORE, `Failed to aggregate ${gameId}`, { error: error.message });
             }
         }
 
@@ -326,7 +315,7 @@ async function aggregateGameLeaderboard(gameId) {
         lastUpdated: admin.firestore.FieldValue.serverTimestamp()
     });
 
-    console.log(`Aggregated ${gameId}: ${leaderboard.length} entries`);
+    logger.info(LogCategory.SCORE, `Aggregated ${gameId}`, { entries: leaderboard.length });
 }
 
 /**
@@ -353,7 +342,7 @@ exports.processAnalytics = functions.firestore
     .onCreate(async (snap, context) => {
         const eventData = snap.data();
         
-        console.log(`Processing analytics event: ${eventData.type}`);
+        logger.info(LogCategory.ANALYTICS, `Processing analytics event: ${eventData.type}`);
 
         try {
             // Enrich event data
@@ -378,7 +367,7 @@ exports.processAnalytics = functions.firestore
 
             return null;
         } catch (error) {
-            console.error('Analytics processing error:', error);
+            logger.error(LogCategory.ANALYTICS, 'Analytics processing error', { error: error.message });
             return null;
         }
     });
@@ -425,7 +414,7 @@ exports.dailyAnalyticsRollup = functions.pubsub
         yesterday.setDate(yesterday.getDate() - 1);
         const dateStr = yesterday.toISOString().split('T')[0];
 
-        console.log(`Running daily rollup for ${dateStr}`);
+        logger.info(LogCategory.ANALYTICS, `Running daily rollup for ${dateStr}`);
 
         try {
             // Get daily counters
@@ -442,7 +431,7 @@ exports.dailyAnalyticsRollup = functions.pubsub
 
             return null;
         } catch (error) {
-            console.error('Daily rollup error:', error);
+            logger.error(LogCategory.ANALYTICS, 'Daily rollup error', { error: error.message });
             return null;
         }
     });
@@ -455,7 +444,7 @@ exports.dailyAnalyticsRollup = functions.pubsub
 exports.cleanupPresence = functions.pubsub
     .schedule('every 10 minutes')
     .onRun(async (context) => {
-        console.log('Cleaning up stale presence');
+        logger.info(LogCategory.SYSTEM, 'Cleaning up stale presence');
 
         // Stale threshold: 1 hour
         const staleThreshold = Date.now() - (60 * 60 * 1000);
@@ -475,12 +464,12 @@ exports.cleanupPresence = functions.pubsub
 
             if (Object.keys(updates).length > 0) {
                 await rtdb.ref('presence').update(updates);
-                console.log(`Cleaned up ${Object.keys(updates).length} stale presence entries`);
+                logger.info(LogCategory.SYSTEM, `Cleaned up ${Object.keys(updates).length} stale presence entries`);
             }
 
             return null;
         } catch (error) {
-            console.error('Presence cleanup error:', error);
+            logger.error(LogCategory.SYSTEM, 'Presence cleanup error', { error: error.message });
             return null;
         }
     });
@@ -526,7 +515,7 @@ exports.onUserCreate = functions.firestore
         const userId = context.params.userId;
         const userData = snap.data();
 
-        console.log(`New user created: ${userId}`);
+        logger.info(LogCategory.USER, `New user created: ${userId}`);
 
         // Initialize user stats document
         await db.collection('stats').doc('global').set({
@@ -693,9 +682,9 @@ exports.healthCheck = functions.https.onRequest((req, res) => {
 exports.cleanupRateLimits = functions.pubsub
     .schedule('every 1 hours')
     .onRun(async (context) => {
-        console.log('Cleaning up stale rate limit documents');
+        logger.info(LogCategory.SYSTEM, 'Cleaning up stale rate limit documents');
         await cleanupRateLimits();
         return null;
     });
 
-console.log('Arcade Hub Cloud Functions loaded');
+logger.info(LogCategory.SYSTEM, 'Arcade Hub Cloud Functions loaded');

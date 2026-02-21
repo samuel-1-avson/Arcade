@@ -1,10 +1,11 @@
-/**
+﻿/**
  * Local Tournament Manager
  * Client-side tournament bracket management without Cloud Functions
  * Supports single/double elimination and round-robin formats
  */
 
 import { eventBus } from '../engine/EventBus.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 class LocalTournamentManager {
     constructor() {
@@ -16,7 +17,7 @@ class LocalTournamentManager {
      * Initialize manager
      */
     init() {
-        console.log('[LocalTournamentManager] Initialized');
+        logger.info(LogCategory.GAME, '[LocalTournamentManager] Initialized');
         this.loadFromStorage();
     }
 
@@ -63,7 +64,7 @@ class LocalTournamentManager {
         this.activeTournaments.set(tournament.id, tournament);
         this.saveToStorage();
 
-        console.log('[LocalTournamentManager] Tournament created:', tournament.id);
+        logger.info(LogCategory.GAME, '[LocalTournamentManager] Tournament created:', tournament.id);
         eventBus.emit('tournamentCreated', { tournament });
 
         return tournament;
@@ -460,7 +461,7 @@ class LocalTournamentManager {
             };
             localStorage.setItem('arcadeHub_tournaments', JSON.stringify(data));
         } catch (e) {
-            console.warn('[LocalTournamentManager] Save error:', e);
+            logger.warn(LogCategory.GAME, '[LocalTournamentManager] Save error:', e);
         }
     }
 
@@ -476,7 +477,7 @@ class LocalTournamentManager {
                 this.tournamentHistory = data.tournamentHistory || [];
             }
         } catch (e) {
-            console.warn('[LocalTournamentManager] Load error:', e);
+            logger.warn(LogCategory.GAME, '[LocalTournamentManager] Load error:', e);
         }
     }
 }

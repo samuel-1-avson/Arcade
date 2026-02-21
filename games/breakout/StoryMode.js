@@ -659,9 +659,12 @@ export class StoryMode {
                 You have defeated all 5 bosses and proven yourself as the ultimate Brick Breaker.
                 Your legend will echo through the Grid forever.
             </p>
-            <button onclick="this.parentElement.remove()" class="btn btn-continue">RETURN TO MENU</button>
+            <button class="btn btn-continue close-overlay-btn">RETURN TO MENU</button>
         `;
         document.body.appendChild(overlay);
+        
+        // Add event listener for close button (security fix: no inline onclick)
+        overlay.querySelector('.close-overlay-btn').addEventListener('click', () => overlay.remove());
     }
     
     // World selection UI

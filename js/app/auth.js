@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Enhanced Authentication Module
  * Handles email/password, Google, and guest authentication
  */
@@ -7,6 +7,7 @@ import { firebaseService } from '../engine/FirebaseService.js';
 import { eventBus } from '../engine/EventBus.js';
 import { publicProfileService } from '../services/PublicProfileService.js';
 import { Modal } from '../components/Modal.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 export class AuthManager {
     constructor(app) {
@@ -160,7 +161,7 @@ export class AuthManager {
                 }
             }
         } catch (error) {
-            console.error('Sign-in error:', error);
+            logger.error(LogCategory.AUTH, 'Sign-in error:', error);
             this.handleAuthError(error);
         } finally {
             this.setLoading(false);
@@ -197,7 +198,7 @@ export class AuthManager {
                 }
             }
         } catch (error) {
-            console.error('Sign-up error:', error);
+            logger.error(LogCategory.AUTH, 'Sign-up error:', error);
             this.handleAuthError(error);
         } finally {
             this.setLoading(false);
@@ -353,7 +354,7 @@ export class AuthManager {
         try {
             await firebaseService.signInAnonymously();
         } catch (error) {
-            console.warn('Anonymous sign-in failed:', error);
+            logger.warn(LogCategory.AUTH, 'Anonymous sign-in failed:', error);
         }
     }
 
@@ -377,13 +378,13 @@ export class AuthManager {
             this.dropdownMenu?.classList.add('hidden');
             eventBus.emit('userSignedOut');
         } catch (error) {
-            console.error('Sign-out error:', error);
+            logger.error(LogCategory.AUTH, 'Sign-out error:', error);
         }
     }
 
     async initFirebase() {
         firebaseService.onAuthStateChanged = (user) => {
-            console.log('Auth state changed:', user?.email || 'Not signed in');
+            logger.info(LogCategory.AUTH, 'Auth state changed:', user?.email || 'Not signed in');
             this.updateUI(user);
         };
 

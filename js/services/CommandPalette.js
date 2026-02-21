@@ -1,9 +1,10 @@
-/**
+﻿/**
  * Command Palette Service
  * Universal keyboard-driven navigation with fuzzy search
  * Minimal Retro Calm Theme
  */
 import { GAME_ICONS } from '../config/gameRegistry.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 class CommandPaletteService {
     constructor() {
@@ -21,7 +22,7 @@ class CommandPaletteService {
         this.buildSearchIndex();
         this.createDOM();
         this.bindKeyboardShortcuts();
-        console.log('[CommandPalette] Initialized with', this.searchIndex.length, 'items');
+        logger.info(LogCategory.UI, '[CommandPalette] Initialized with', this.searchIndex.length, 'items');
     }
 
     buildSearchIndex() {

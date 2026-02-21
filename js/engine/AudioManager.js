@@ -1,8 +1,9 @@
-/**
+﻿/**
  * AudioManager - Sound effect and music management using Howler.js
  * Handles loading, playing, and controlling audio with volume/mute support
  */
 import { eventBus, GameEvents } from './EventBus.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 class AudioManager {
     constructor() {
@@ -42,7 +43,7 @@ class AudioManager {
                         preload: true,
                         onload: () => resolve(),
                         onloaderror: (_, error) => {
-                            console.warn(`Failed to load sound: ${id}`, error);
+                            logger.warn(LogCategory.AUDIO, `Failed to load sound: ${id}`, error);
                             resolve(); // Don't fail completely
                         }
                     });
@@ -55,7 +56,7 @@ class AudioManager {
                     audio.preload = 'auto';
                     audio.addEventListener('canplaythrough', () => resolve(), { once: true });
                     audio.addEventListener('error', () => {
-                        console.warn(`Failed to load sound: ${id}`);
+                        logger.warn(LogCategory.AUDIO, `Failed to load sound: ${id}`);
                         resolve();
                     }, { once: true });
                     this.sounds.set(id, audio);
@@ -77,7 +78,7 @@ class AudioManager {
 
         const sound = this.sounds.get(id);
         if (!sound) {
-            console.warn(`Sound not found: ${id}`);
+            logger.warn(LogCategory.AUDIO, `Sound not found: ${id}`);
             return;
         }
 
@@ -110,7 +111,7 @@ class AudioManager {
 
         const music = this.sounds.get(id);
         if (!music) {
-            console.warn(`Music not found: ${id}`);
+            logger.warn(LogCategory.AUDIO, `Music not found: ${id}`);
             return;
         }
 

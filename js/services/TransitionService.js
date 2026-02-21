@@ -1,8 +1,9 @@
-/**
+﻿/**
  * TransitionService - Standardized Transitions for AAA feel
  * Handles UI fades and 3D camera zooms when entering/exiting games
  */
 import { backgroundService } from './BackgroundService.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 class TransitionService {
     constructor() {
@@ -33,7 +34,7 @@ class TransitionService {
         document.head.appendChild(style);
 
         this.initialized = true;
-        console.log('TransitionService initialized');
+        logger.info(LogCategory.UI, 'TransitionService initialized');
     }
 
     /**

@@ -689,3 +689,88 @@
     }
     .pac-menu-btn.primary { grid-column: span 1; }
 }
+
+/* ============================================
+   Mobile Touch Controls (D-Pad)
+   ============================================ */
+.mobile-dpad {
+    display: none;
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid var(--pac-yellow);
+    border-radius: 50%;
+    padding: 10px;
+    width: 160px;
+    height: 160px;
+}
+
+.dpad-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.dpad-btn {
+    width: 44px;
+    height: 44px;
+    background: rgba(255, 204, 0, 0.15);
+    border: 2px solid var(--pac-yellow);
+    border-radius: 8px;
+    color: var(--pac-yellow);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.1s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    touch-action: manipulation;
+}
+
+.dpad-btn:active {
+    background: var(--pac-yellow);
+    color: #000;
+    transform: scale(0.95);
+}
+
+.dpad-btn:disabled {
+    background: transparent;
+    border-color: transparent;
+    cursor: default;
+}
+
+.dpad-center {
+    background: transparent;
+    border: 2px solid rgba(255, 204, 0, 0.3);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+/* Show D-Pad on touch devices and small screens */
+@media (hover: none) and (pointer: coarse), (max-width: 768px) {
+    .mobile-dpad {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    .pac-canvas-wrapper {
+        padding-bottom: 180px;
+    }
+}
+
+/* Hide D-Pad on larger screens with mouse */
+@media (hover: hover) and (pointer: fine) and (min-width: 769px) {
+    .mobile-dpad {
+        display: none !important;
+    }
+    
+    .pac-canvas-wrapper {
+        padding-bottom: 0;
+    }
+}

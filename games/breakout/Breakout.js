@@ -6,6 +6,7 @@
 import { GameEngine, GameState } from '../../js/engine/GameEngine.js';
 import { inputManager } from '../../js/engine/InputManager.js';
 import { clamp, random } from '../../js/utils/math.js';
+import { hubSDK } from '../../js/engine/HubSDK.js';
 
 // Import enhanced systems
 import { BRICK_TYPES, ROW_COLORS, WORLD_BRICK_THEMES, Brick, getAdjacentPositions } from './BrickTypes.js';
@@ -46,6 +47,13 @@ class Breakout extends GameEngine {
             width: 640,
             height: 600
         });
+
+        // Initialize HubSDK
+        hubSDK.init({ gameId: 'breakout' });
+        
+        // Register pause/resume handlers
+        hubSDK.onPause(() => this.pause());
+        hubSDK.onResume(() => this.resume());
 
         // Store config for external access
         this.config = { ...CONFIG };
@@ -109,6 +117,17 @@ class Breakout extends GameEngine {
 
         this.setupUI();
         this.onReset();
+    }
+
+    /**
+     * Override gameOver to submit score to HubSDK
+     */
+    gameOver(isWin = false) {
+        // Submit score to HubSDK before calling parent gameOver
+        hubSDK.submitScore(this.score);
+        
+        // Call parent gameOver
+        super.gameOver(isWin);
     }
 
     setupUI() {

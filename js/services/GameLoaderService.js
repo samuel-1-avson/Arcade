@@ -1,4 +1,4 @@
-/**
+﻿/**
  * GameLoaderService - SPA Game Manager
  * Loads games into an iframe to maintain Hub state (music, party, etc.)
  */
@@ -14,6 +14,7 @@ import { liveEventService } from './LiveEventService.js';
 import { artifactService } from './ArtifactService.js';
 import { navigationService } from './NavigationService.js';
 import { systemMenu } from '../components/SystemMenu.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 class GameLoaderService {
     constructor() {
@@ -74,7 +75,7 @@ class GameLoaderService {
         systemMenu.init();
 
         this.initialized = true;
-        console.log('GameLoaderService initialized (with Health Monitoring)');
+        logger.info(LogCategory.GAME, 'GameLoaderService initialized (with Health Monitoring)');
     }
 
     loadGame(game) {
@@ -124,7 +125,7 @@ class GameLoaderService {
         hudService.show();
         
         backgroundService.setTheme(game.id);
-        console.log(`Launched ${game.title} (SPA Mode)`);
+        logger.info(LogCategory.GAME, `Launched ${game.title} (SPA Mode)`);
     }
 
     showLoadingOverlay(game) {
@@ -235,7 +236,7 @@ class GameLoaderService {
             
             case 'GAME_READY':
             case 'GAME_LOADED':
-                console.log(`[Hub] Game ready: ${payload.gameId || this.activeGameId}`);
+                logger.info(LogCategory.GAME, `[Hub] Game ready: ${payload.gameId || this.activeGameId}`);
                 if (payload.gameId) this.activeGameId = payload.gameId;
                 this.handshakeAcknowledged = true;
                 this.lastHeartbeat = Date.now();
@@ -275,7 +276,7 @@ class GameLoaderService {
                 if (payload.data) {
                     const gid = payload.gameId || this.activeGameId;
                     globalStateManager.saveGameProgress(gid, payload.data);
-                    console.log(`[Hub] Progress saved for ${gid}`, payload.data);
+                    logger.info(LogCategory.GAME, `[Hub] Progress saved for ${gid}`, payload.data);
                     notificationService.info('Progress Synced');
                 }
                 break;
@@ -290,7 +291,7 @@ class GameLoaderService {
                 const diff = (now - this.lastHeartbeat) / 1000;
                 
                 if (diff > 15) {
-                    console.warn(`[Hub] Game ${this.activeGameId} is unresponsive (No heartbeat for ${Math.round(diff)}s)`);
+                    logger.warn(LogCategory.GAME, `[Hub] Game ${this.activeGameId} is unresponsive (No heartbeat for ${Math.round(diff)}s)`);
                     // Optional: Recovery logic or UI warning
                 }
             }

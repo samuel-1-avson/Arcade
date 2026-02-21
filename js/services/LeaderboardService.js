@@ -1,4 +1,4 @@
-/**
+﻿/**
  * LeaderboardService - Global Leaderboard Management
  * Cross-game rankings, personal bests, and score submission
  */
@@ -7,6 +7,8 @@ import { firebaseService } from '../engine/FirebaseService.js';
 import { globalStateManager, GAME_IDS } from './GlobalStateManager.js';
 import { publicProfileService } from './PublicProfileService.js';
 import { leaderboardCache, requestDeduplicator } from '../utils/cache.js';
+import { getMaxScore } from '../config/gameRegistry.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 // Leaderboard time periods
 export const TIME_PERIODS = {
@@ -27,7 +29,7 @@ class LeaderboardService {
      * Initialize the leaderboard service
      */
     init() {
-        console.log('LeaderboardService initialized');
+        logger.info(LogCategory.GAME, 'LeaderboardService initialized');
     }
 
     // ============ PUBLIC METHODS ============
@@ -118,7 +120,7 @@ class LeaderboardService {
                 };
             });
         } catch (e) {
-            console.warn('[LeaderboardService] Failed to fetch game leaderboard:', e.message);
+            logger.warn(LogCategory.GAME, '[LeaderboardService] Failed to fetch game leaderboard:', e.message);
             return {
                 scores: this._getLocalLeaderboard(gameId),
                 nextCursor: null,
@@ -197,7 +199,7 @@ class LeaderboardService {
                 return result;
             });
         } catch (e) {
-            console.warn('[LeaderboardService] Failed to fetch paginated leaderboard:', e);
+            logger.warn(LogCategory.GAME, '[LeaderboardService] Failed to fetch paginated leaderboard:', e);
             return {
                 scores: this._getLocalGlobalLeaderboard(),
                 nextCursor: null,
@@ -245,7 +247,7 @@ class LeaderboardService {
                 ranks.global = globalRank;
             }
         } catch (e) {
-            console.warn('Failed to get global rank:', e);
+            logger.warn(LogCategory.GAME, 'Failed to get global rank:', e);
         }
 
         // Get per-game ranks (from local high scores)
@@ -321,7 +323,7 @@ class LeaderboardService {
                 // Validate score client-side first (anti-cheat)
                 const validation = this._validateScoreClientSide(gameId, score);
                 if (!validation.valid) {
-                    console.warn('[LeaderboardService] Score validation failed:', validation.errors);
+                    logger.warn(LogCategory.GAME, '[LeaderboardService] Score validation failed:', validation.errors);
                     return { submitted: false, isNewBest: false, error: validation.errors };
                 }
                 
@@ -331,7 +333,7 @@ class LeaderboardService {
                     isNewBest = result.isNewBest || false;
                 } catch (cloudError) {
                     // Cloud Functions not available, use direct Firestore write
-                    console.log('[LeaderboardService] Using client-side submission (Cloud Functions unavailable)');
+                    logger.info(LogCategory.GAME, '[LeaderboardService] Using client-side submission (Cloud Functions unavailable)');
                     const result = await this._submitScoreDirect(gameId, score, metadata);
                     isNewBest = result.isNewBest || false;
                 }
@@ -340,7 +342,7 @@ class LeaderboardService {
                 this._invalidateCache(gameId);
             }
         } catch (e) {
-            console.warn('Failed to submit score to Firebase:', e);
+            logger.warn(LogCategory.GAME, 'Failed to submit score to Firebase:', e);
         }
 
         // Emit event with isNewBest flag
@@ -374,22 +376,8 @@ class LeaderboardService {
             return result;
         }
         
-        // Game-specific max scores (anti-cheat)
-        const maxScores = {
-            'snake': 1000000,
-            '2048': 10000000,
-            'breakout': 500000,
-            'tetris': 5000000,
-            'minesweeper': 100000,
-            'pacman': 2000000,
-            'asteroids': 1000000,
-            'tower-defense': 10000000,
-            'rhythm': 1000000,
-            'roguelike': 500000,
-            'toonshooter': 1000000
-        };
-        
-        const maxScore = maxScores[gameId] || 1000000;
+        // Game-specific max scores from single source of truth
+        const maxScore = getMaxScore(gameId);
         if (score > maxScore) {
             result.errors.push(`Score exceeds maximum for ${gameId}`);
             return result;
@@ -526,7 +514,7 @@ class LeaderboardService {
 
             return snapshot.size + 1;
         } catch (e) {
-            console.warn('[LeaderboardService] Failed to get user rank:', e.message);
+            logger.warn(LogCategory.GAME, '[LeaderboardService] Failed to get user rank:', e.message);
             return null;
         }
     }

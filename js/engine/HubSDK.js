@@ -1,3 +1,4 @@
+﻿import { logger, LogCategory } from '../utils/logger.js';
 /**
  * HubSDK - Standardized Game-to-Hub Communication (AAA Version)
  * 
@@ -46,7 +47,7 @@ export class HubSDK {
         this._startHeartbeat();
 
         this.initialized = true;
-        console.log(`[HubSDK] Master Bridge Initialized for ${this.gameId}`);
+        logger.info(LogCategory.APP, `[HubSDK] Master Bridge Initialized for ${this.gameId}`);
     }
 
     /**
@@ -144,7 +145,7 @@ export class HubSDK {
         if (window.parent && window.parent !== window) {
             window.parent.postMessage({ type, payload: payload || {} }, '*');
         } else {
-            console.warn('[HubSDK] No parent window found. Running standalone?');
+            logger.warn(LogCategory.APP, '[HubSDK] No parent window found. Running standalone?');
             // Standalone fallback: redirects if exit is called
             if (type === 'GAME_EXIT') {
                  const hubPath = window.location.pathname.includes('/games/') ? '../../index.html' : './index.html';

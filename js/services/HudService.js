@@ -1,4 +1,4 @@
-/**
+﻿/**
  * HudService - Manages the Global Overlay HUD
  * Synchronizes Hub state with the in-game overlay.
  */
@@ -6,6 +6,7 @@ import { eventBus } from '../engine/EventBus.js';
 import { globalStateManager } from './GlobalStateManager.js';
 import { economyService } from './EconomyService.js';
 import { liveEventService } from './LiveEventService.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 class HudService {
     constructor() {
@@ -47,7 +48,7 @@ class HudService {
         // Initial sync
         this.update();
         
-        console.log('HudService initialized');
+        logger.info(LogCategory.UI, 'HudService initialized');
     }
 
     setMode(mode) {
@@ -55,7 +56,7 @@ class HudService {
         this.currentMode = mode;
         this.container.dataset.mode = mode;
         
-        console.log(`[HUD] Mode set to: ${mode}`);
+        logger.info(LogCategory.UI, `[HUD] Mode set to: ${mode}`);
         
         // Apply visual changes based on mode
         if (mode === 'GAME_MINIMAL') {
@@ -162,7 +163,7 @@ class HudService {
                 const nav = window.navigationService || document.querySelector('app-shell')?.navigationService;
                 // Since we don't have direct access here easily without circular dep, use EventBus
                 // But better yet, rely on the click handler setup elsewhere or add specific logic
-                console.log('[HUD] Menu Clicked');
+                logger.info(LogCategory.UI, '[HUD] Menu Clicked');
                 
                 // Simulate ESC key for handling logic if simpler
                 window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));

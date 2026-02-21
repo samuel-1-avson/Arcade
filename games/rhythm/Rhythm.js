@@ -9,6 +9,7 @@ import { GameModeManager, GameModeType } from './GameModes.js';
 import { AchievementManager } from './AchievementSystem.js';
 import { EffectsSystem } from './EffectsSystem.js';
 import { RhythmMultiplayer } from './RhythmMultiplayer.js';
+import { hubSDK } from '../../js/engine/HubSDK.js';
 
 // Enhanced Configuration
 const LANE_COUNT = 4;
@@ -79,6 +80,13 @@ class Rhythm extends GameEngine {
         this.countdownActive = false;
         this.countdownValue = 3;
 
+        // Initialize HubSDK
+        hubSDK.init({ gameId: 'rhythm' });
+        
+        // Register pause/resume handlers
+        hubSDK.onPause(() => this.pauseGame());
+        hubSDK.onResume(() => this.resumeGame());
+
         this.init();
     }
 
@@ -87,12 +95,18 @@ class Rhythm extends GameEngine {
         try {
             const s = localStorage.getItem('rhythm_settings');
             if (s) return { ...defaults, ...JSON.parse(s) };
-        } catch (e) {}
+        } catch (e) {
+            console.warn('Failed to load settings:', e);
+        }
         return defaults;
     }
 
     saveSettings() {
-        localStorage.setItem('rhythm_settings', JSON.stringify(this.settings));
+        try {
+            localStorage.setItem('rhythm_settings', JSON.stringify(this.settings));
+        } catch (e) {
+            console.warn('Failed to save settings:', e);
+        }
     }
 
     init() {
@@ -281,7 +295,7 @@ class Rhythm extends GameEngine {
 
         if (state.name && state.name !== 'Opponent') {
             slot.classList.add('connected');
-            slot.querySelector('.player-icon').textContent = '👤';
+            slot.querySelector('.player-avatar').textContent = '👤';
             nameEl.textContent = state.name;
             statusEl.textContent = state.isReady ? 'Ready' : 'Not Ready';
             statusEl.classList.toggle('ready', state.isReady);
@@ -892,6 +906,10 @@ class Rhythm extends GameEngine {
         };
 
         this.achievementManager.updateStats(results);
+        
+        // Submit score to hub
+        hubSDK.submitScore(this.score);
+        
         this.gameOver(completed);
         this.showResults(results);
     }
@@ -918,7 +936,7 @@ class Rhythm extends GameEngine {
     checkAchievements() {
         const a = this.achievementManager.getNextNotification?.();
         if (a) {
-            document.getElementById('toast-icon').textContent = a.icon;
+            document.querySelector('.toast-icon').textContent = a.icon;
             document.getElementById('toast-name').textContent = a.name;
             document.getElementById('toast').classList.add('show');
             setTimeout(() => document.getElementById('toast').classList.remove('show'), 3000);

@@ -1,10 +1,11 @@
-/**
+﻿/**
  * NotificationService - Unified Notification System for Arcade Hub
  * Toast notifications for achievements, level-ups, challenges, and general messages
  * Includes sound effects support
  */
 import { eventBus } from '../engine/EventBus.js';
 import { globalStateManager } from './GlobalStateManager.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 // Notification types and their styles
 const NOTIFICATION_TYPES = {
@@ -110,7 +111,7 @@ class NotificationService {
     init() {
         // Lazy init audio context (needs user interaction)
         this._initAudio();
-        console.log('NotificationService initialized');
+        logger.info(LogCategory.UI, 'NotificationService initialized');
     }
 
     // ============ PUBLIC METHODS ============
@@ -464,7 +465,7 @@ class NotificationService {
         try {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
         } catch (e) {
-            console.warn('Web Audio API not supported');
+            logger.warn(LogCategory.UI, 'Web Audio API not supported');
         }
     }
 
@@ -516,7 +517,7 @@ class NotificationService {
                 time += sound.durations[i];
             }
         } catch (e) {
-            console.warn('Failed to play notification sound:', e);
+            logger.warn(LogCategory.UI, 'Failed to play notification sound:', e);
         }
     }
 

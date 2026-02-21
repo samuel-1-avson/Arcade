@@ -10,6 +10,7 @@ import { StoryMode, STORY_WORLDS } from './StoryMode.js';
 import { PowerUpSystem, POWER_UPS } from './PowerUpSystem.js';
 import { MultiplayerSystem } from './MultiplayerSystem.js';
 import { ICONS } from './Icons.js';
+import { hubSDK } from '../../js/engine/HubSDK.js';
 
 // Difficulty settings
 const DIFFICULTIES = {
@@ -21,6 +22,7 @@ const DIFFICULTIES = {
 class MinesweeperEnhanced {
     constructor() {
         this.gameId = 'minesweeper';
+        hubSDK.init({ gameId: 'minesweeper' });
         this.board = document.getElementById('game-board');
         this.overlay = document.getElementById('game-overlay');
         
@@ -378,8 +380,9 @@ class MinesweeperEnhanced {
         } else {
             // Random placement
             let placed = 0;
+            let attempts = 0;
             
-            while (placed < this.mineCount) {
+            while (placed < this.mineCount && attempts < 10000) {
                 const row = Math.floor(Math.random() * this.rows);
                 const col = Math.floor(Math.random() * this.cols);
                 
@@ -390,6 +393,7 @@ class MinesweeperEnhanced {
                     this.grid[row][col].mine = true;
                     placed++;
                 }
+                attempts++;
             }
         }
         
@@ -450,16 +454,28 @@ class MinesweeperEnhanced {
                     }
                 });
                 
-                // Touch support - long press for flag
+                // Touch support - long press for flag with visual feedback
                 let touchTimer;
                 cell.addEventListener('touchstart', (e) => {
+                    cell.classList.add('touch-active');
                     touchTimer = setTimeout(() => {
                         e.preventDefault();
+                        cell.classList.remove('touch-active');
                         this.handleRightClick(row, col);
-                    }, 500);
+                    }, 300);
                 });
-                cell.addEventListener('touchend', () => clearTimeout(touchTimer));
-                cell.addEventListener('touchmove', () => clearTimeout(touchTimer));
+                cell.addEventListener('touchend', () => {
+                    clearTimeout(touchTimer);
+                    cell.classList.remove('touch-active');
+                });
+                cell.addEventListener('touchmove', () => {
+                    clearTimeout(touchTimer);
+                    cell.classList.remove('touch-active');
+                });
+                cell.addEventListener('touchcancel', () => {
+                    clearTimeout(touchTimer);
+                    cell.classList.remove('touch-active');
+                });
                 
                 this.board.appendChild(cell);
             }
@@ -734,11 +750,27 @@ class MinesweeperEnhanced {
         const cells = this.board.querySelectorAll('.cell');
         cells.forEach(c => c.classList.add('win'));
         
+        // Submit score to Hub
+        this.submitScoreToHub();
+        
         // Show overlay
         this.showOverlay(true, time);
         
         // Update UI
         this.updateSidebarUI();
+    }
+    
+    submitScoreToHub() {
+        if (typeof hubSDK !== 'undefined') {
+            // Calculate score based on time and difficulty
+            const baseScore = Math.floor(10000 / Math.max(this.timer, 1) * this.mineCount);
+            hubSDK.submitScore(baseScore);
+            
+            // Also sync achievements
+            this.achievements.unlockedAchievements.forEach(id => {
+                hubSDK.unlockAchievement(id);
+            });
+        }
     }
     
     calculateStars(time) {

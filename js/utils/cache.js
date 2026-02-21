@@ -1,3 +1,4 @@
+﻿import { logger, LogCategory } from '../utils/logger.js';
 /**
  * Cache Management Utilities
  * Smart caching with TTL and memory management
@@ -157,7 +158,7 @@ export class PersistentCache {
                 try {
                     localStorage.setItem(fullKey, JSON.stringify(entry));
                 } catch (e2) {
-                    console.warn('PersistentCache: Storage quota exceeded');
+                    logger.warn(LogCategory.PERF, 'PersistentCache: Storage quota exceeded');
                 }
             }
         }

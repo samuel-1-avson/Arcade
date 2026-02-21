@@ -1,4 +1,4 @@
-/**
+﻿/**
  * AnalyticsDashboard - Player Statistics Visualization Component
  * Displays game performance, achievements, and progression data
  */
@@ -6,6 +6,7 @@
 import { globalStateManager } from '../services/GlobalStateManager.js';
 import { achievementService } from '../services/AchievementService.js';
 import { eventBus } from './EventBus.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 // Chart colors
 const CHART_COLORS = {
@@ -40,7 +41,7 @@ export class AnalyticsDashboard {
             : container;
         
         if (!this.container) {
-            console.error('[AnalyticsDashboard] Container not found');
+            logger.error(LogCategory.ANALYTICS, '[AnalyticsDashboard] Container not found');
             return;
         }
 
@@ -57,7 +58,7 @@ export class AnalyticsDashboard {
         this.setupEventListeners();
         
         this.isVisible = true;
-        console.log('[AnalyticsDashboard] Rendered');
+        logger.info(LogCategory.ANALYTICS, '[AnalyticsDashboard] Rendered');
     }
 
     /**

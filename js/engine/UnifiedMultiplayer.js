@@ -1,3 +1,4 @@
+﻿import { logger, LogCategory } from '../utils/logger.js';
 /**
  * UnifiedMultiplayer - Base class for all game multiplayer systems
  * Provides common room management, player sync, chat, and lobby functionality
@@ -136,7 +137,7 @@ export class UnifiedMultiplayer {
      * Override to trigger your game's start logic
      */
     onGameStart() {
-        console.log('[UnifiedMultiplayer] Game starting - override this method');
+        logger.info(LogCategory.GAME, '[UnifiedMultiplayer] Game starting - override this method');
     }
 
     /**
@@ -144,7 +145,7 @@ export class UnifiedMultiplayer {
      * @param {Object} action - { type, playerId, data }
      */
     onGameAction(action) {
-        console.log('[UnifiedMultiplayer] Received action:', action);
+        logger.info(LogCategory.GAME, '[UnifiedMultiplayer] Received action:', action);
     }
 
     /**
@@ -164,7 +165,7 @@ export class UnifiedMultiplayer {
     async init() {
         try {
             if (typeof firebase === 'undefined' || !firebase.database) {
-                console.warn('[UnifiedMultiplayer] Firebase RTDB not available');
+                logger.warn(LogCategory.GAME, '[UnifiedMultiplayer] Firebase RTDB not available');
                 return false;
             }
             
@@ -172,7 +173,7 @@ export class UnifiedMultiplayer {
             this.connectionState = CONNECTION_STATE.CONNECTED;
             return true;
         } catch (error) {
-            console.error('[UnifiedMultiplayer] Init failed:', error);
+            logger.error(LogCategory.GAME, '[UnifiedMultiplayer] Init failed:', error);
             this.connectionState = CONNECTION_STATE.ERROR;
             return false;
         }
@@ -563,7 +564,7 @@ export class UnifiedMultiplayer {
         const callbacks = this.eventCallbacks.get(event);
         if (callbacks) {
             for (const cb of callbacks) {
-                try { cb(data); } catch (e) { console.error(e); }
+                try { cb(data); } catch (e) { logger.error(LogCategory.GAME, e); }
             }
         }
     }

@@ -4,6 +4,7 @@
  */
 
 import { ICONS } from './Icons.js';
+import { hubSDK } from '../../js/engine/HubSDK.js';
 
 // Achievement Definitions (50 total)
 export const ACHIEVEMENTS = {
@@ -129,48 +130,86 @@ export class AchievementSystem {
     // ===== Persistence =====
     
     loadUnlocked() {
-        const saved = localStorage.getItem('breakout_achievements');
-        return saved ? new Set(JSON.parse(saved)) : new Set();
+        try {
+            const saved = localStorage.getItem('breakout_achievements');
+            return saved ? new Set(JSON.parse(saved)) : new Set();
+        } catch (e) {
+            console.warn('Failed to load achievements from localStorage:', e);
+            return new Set();
+        }
     }
     
     saveUnlocked() {
-        localStorage.setItem('breakout_achievements', JSON.stringify([...this.unlockedAchievements]));
+        try {
+            localStorage.setItem('breakout_achievements', JSON.stringify([...this.unlockedAchievements]));
+        } catch (e) {
+            console.warn('Failed to save achievements to localStorage:', e);
+        }
     }
     
     loadProgress() {
-        const saved = localStorage.getItem('breakout_achievement_progress');
-        return saved ? JSON.parse(saved) : { xp: 0, level: 1, prestigeLevel: 0, totalXP: 0, collectedPowerupTypes: [] };
+        try {
+            const saved = localStorage.getItem('breakout_achievement_progress');
+            return saved ? JSON.parse(saved) : { xp: 0, level: 1, prestigeLevel: 0, totalXP: 0, collectedPowerupTypes: [] };
+        } catch (e) {
+            console.warn('Failed to load progress from localStorage:', e);
+            return { xp: 0, level: 1, prestigeLevel: 0, totalXP: 0, collectedPowerupTypes: [] };
+        }
     }
     
     saveProgress() {
-        const progress = {
-            xp: this.xp,
-            level: this.level,
-            prestigeLevel: this.prestigeLevel,
-            totalXP: this.totalXP,
-            collectedPowerupTypes: [...this.collectedPowerupTypes]
-        };
-        localStorage.setItem('breakout_achievement_progress', JSON.stringify(progress));
+        try {
+            const progress = {
+                xp: this.xp,
+                level: this.level,
+                prestigeLevel: this.prestigeLevel,
+                totalXP: this.totalXP,
+                collectedPowerupTypes: [...this.collectedPowerupTypes]
+            };
+            localStorage.setItem('breakout_achievement_progress', JSON.stringify(progress));
+        } catch (e) {
+            console.warn('Failed to save progress to localStorage:', e);
+        }
     }
     
     loadStats() {
-        const saved = localStorage.getItem('breakout_stats');
-        return saved ? JSON.parse(saved) : {
-            totalBricksDestroyed: 0,
-            totalGamesPlayed: 0,
-            totalScore: 0,
-            totalPowerupsCollected: 0,
-            totalGoldBricks: 0,
-            totalLaserShots: 0,
-            maxCombo: 0,
-            perfectLevels: 0,
-            playTime: 0, // seconds
-            sessionStart: Date.now()
-        };
+        try {
+            const saved = localStorage.getItem('breakout_stats');
+            return saved ? JSON.parse(saved) : {
+                totalBricksDestroyed: 0,
+                totalGamesPlayed: 0,
+                totalScore: 0,
+                totalPowerupsCollected: 0,
+                totalGoldBricks: 0,
+                totalLaserShots: 0,
+                maxCombo: 0,
+                perfectLevels: 0,
+                playTime: 0, // seconds
+                sessionStart: Date.now()
+            };
+        } catch (e) {
+            console.warn('Failed to load stats from localStorage:', e);
+            return {
+                totalBricksDestroyed: 0,
+                totalGamesPlayed: 0,
+                totalScore: 0,
+                totalPowerupsCollected: 0,
+                totalGoldBricks: 0,
+                totalLaserShots: 0,
+                maxCombo: 0,
+                perfectLevels: 0,
+                playTime: 0,
+                sessionStart: Date.now()
+            };
+        }
     }
     
     saveStats() {
-        localStorage.setItem('breakout_stats', JSON.stringify(this.stats));
+        try {
+            localStorage.setItem('breakout_stats', JSON.stringify(this.stats));
+        } catch (e) {
+            console.warn('Failed to save stats to localStorage:', e);
+        }
     }
     
     // ===== Achievement Logic =====
@@ -184,6 +223,9 @@ export class AchievementSystem {
         this.unlockedAchievements.add(achievementId);
         this.addXP(achievement.xp);
         this.saveUnlocked();
+        
+        // Sync achievement with HubSDK
+        hubSDK.unlockAchievement(achievementId);
         
         this.showAchievementPopup(achievement);
         

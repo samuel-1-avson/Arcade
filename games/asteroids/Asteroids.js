@@ -7,6 +7,7 @@ import { inputManager } from '../../js/engine/InputManager.js';
 import { storageManager } from '../../js/engine/StorageManager.js';
 import { random, randomInt } from '../../js/utils/math.js';
 import GameBridge from '../../js/utils/GameBridge.js';
+import { hubSDK } from '../../js/engine/HubSDK.js';
 
 // Import all systems
 import { AchievementSystem, ACHIEVEMENTS } from './AchievementSystem.js';
@@ -116,9 +117,20 @@ class Asteroids extends GameEngine {
         this.inStoryMode = false;
         this.storyLevelConfig = null;
 
-        this.currentGameMode = 'classic';
-        this.inStoryMode = false;
-        this.storyLevelConfig = null;
+        // Initialize HubSDK
+        hubSDK.init({ gameId: 'asteroids' });
+        
+        // Register pause/resume handlers
+        hubSDK.onPause(() => {
+            if (this.state === GameState.PLAYING) {
+                this.togglePause();
+            }
+        });
+        hubSDK.onResume(() => {
+            if (this.state === GameState.PAUSED) {
+                this.togglePause();
+            }
+        });
 
         this.setupIcons();
         this.setupUI();
@@ -1128,6 +1140,7 @@ class Asteroids extends GameEngine {
         this.spawnExplosion(this.ship.x, this.ship.y, '#fff');
 
         if (this.lives <= 0) {
+            hubSDK.submitScore(this.score);
             this.gameOver(false);
         } else {
             this.respawnShip();

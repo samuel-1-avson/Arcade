@@ -1,10 +1,11 @@
-/**
+﻿/**
  * PresenceService - Online Status & Activity Tracking
  * Tracks user presence, current activity, and online counts
  */
 
 import { firebaseService } from '../engine/FirebaseService.js';
 import { eventBus } from '../engine/EventBus.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 class PresenceService {
     constructor() {
@@ -23,7 +24,7 @@ class PresenceService {
 
         const rtdb = firebaseService.getRTDB();
         if (!rtdb) {
-            console.warn('[PresenceService] RTDB not available');
+            logger.warn(LogCategory.PRESENCE, '[PresenceService] RTDB not available');
             return;
         }
 
@@ -38,7 +39,7 @@ class PresenceService {
         });
 
         this.initialized = true;
-        console.log('[PresenceService] Initialized');
+        logger.info(LogCategory.PRESENCE, '[PresenceService] Initialized');
     }
 
     /**
@@ -70,7 +71,7 @@ class PresenceService {
         });
 
         eventBus.emit('presenceConnected');
-        console.log('[PresenceService] Connected, presence set');
+        logger.info(LogCategory.PRESENCE, '[PresenceService] Connected, presence set');
     }
 
     /**
@@ -78,7 +79,7 @@ class PresenceService {
      */
     onDisconnected() {
         eventBus.emit('presenceDisconnected');
-        console.log('[PresenceService] Disconnected');
+        logger.info(LogCategory.PRESENCE, '[PresenceService] Disconnected');
     }
 
     /**
@@ -93,7 +94,7 @@ class PresenceService {
                 lastChanged: firebase.database.ServerValue.TIMESTAMP
             });
         } catch (error) {
-            console.error('[PresenceService] setOnline error:', error);
+            logger.error(LogCategory.PRESENCE, '[PresenceService] setOnline error:', error);
         }
     }
 
@@ -110,7 +111,7 @@ class PresenceService {
                 currentGame: null
             });
         } catch (error) {
-            console.error('[PresenceService] setOffline error:', error);
+            logger.error(LogCategory.PRESENCE, '[PresenceService] setOffline error:', error);
         }
     }
 
@@ -129,7 +130,7 @@ class PresenceService {
                 lastChanged: firebase.database.ServerValue.TIMESTAMP
             });
         } catch (error) {
-            console.error('[PresenceService] setCurrentGame error:', error);
+            logger.error(LogCategory.PRESENCE, '[PresenceService] setCurrentGame error:', error);
         }
     }
 
@@ -146,7 +147,7 @@ class PresenceService {
                 lastChanged: firebase.database.ServerValue.TIMESTAMP
             });
         } catch (error) {
-            console.error('[PresenceService] setInParty error:', error);
+            logger.error(LogCategory.PRESENCE, '[PresenceService] setInParty error:', error);
         }
     }
 
@@ -163,7 +164,7 @@ class PresenceService {
             const snapshot = await rtdb.ref(`presence/${userId}`).once('value');
             return snapshot.exists() ? snapshot.val() : null;
         } catch (error) {
-            console.error('[PresenceService] getUserPresence error:', error);
+            logger.error(LogCategory.PRESENCE, '[PresenceService] getUserPresence error:', error);
             return null;
         }
     }
@@ -230,7 +231,7 @@ class PresenceService {
             
             return snapshot.numChildren();
         } catch (error) {
-            console.error('[PresenceService] getOnlineCount error:', error);
+            logger.error(LogCategory.PRESENCE, '[PresenceService] getOnlineCount error:', error);
             return 0;
         }
     }
@@ -276,7 +277,7 @@ class PresenceService {
             });
             return players;
         } catch (error) {
-            console.error('[PresenceService] getPlayersInGame error:', error);
+            logger.error(LogCategory.PRESENCE, '[PresenceService] getPlayersInGame error:', error);
             return [];
         }
     }
@@ -334,7 +335,7 @@ class PresenceService {
             users.sort((a, b) => (b.lastChanged || 0) - (a.lastChanged || 0));
             return users;
         } catch (error) {
-            console.error('[PresenceService] getRecentlyActive error:', error);
+            logger.error(LogCategory.PRESENCE, '[PresenceService] getRecentlyActive error:', error);
             return [];
         }
     }
@@ -362,10 +363,10 @@ class PresenceService {
 
             if (Object.keys(updates).length > 0) {
                 await rtdb.ref('presence').update(updates);
-                console.log(`[PresenceService] Cleaned up ${Object.keys(updates).length} stale entries`);
+                logger.info(LogCategory.PRESENCE, `[PresenceService] Cleaned up ${Object.keys(updates).length} stale entries`);
             }
         } catch (error) {
-            console.error('[PresenceService] cleanupStale error:', error);
+            logger.error(LogCategory.PRESENCE, '[PresenceService] cleanupStale error:', error);
         }
     }
 

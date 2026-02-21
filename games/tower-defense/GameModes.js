@@ -57,7 +57,12 @@ export class GameModes {
         this.game.maxWaves = Infinity;
         
         // Track best wave for leaderboard
-        this.bestWave = parseInt(localStorage.getItem('towerdefense_endless_best')) || 0;
+        try {
+            this.bestWave = parseInt(localStorage.getItem('towerdefense_endless_best')) || 0;
+        } catch (e) {
+            console.warn('Failed to load endless best wave:', e);
+            this.bestWave = 0;
+        }
     }
 
     // Challenge Mode applies special restrictions
@@ -94,7 +99,12 @@ export class GameModes {
         
         // Track time
         this.startTime = Date.now();
-        this.bestTime = parseFloat(localStorage.getItem('towerdefense_speedrun_best')) || Infinity;
+        try {
+            this.bestTime = parseFloat(localStorage.getItem('towerdefense_speedrun_best')) || Infinity;
+        } catch (e) {
+            console.warn('Failed to load speedrun best time:', e);
+            this.bestTime = Infinity;
+        }
     }
 
     // Survival Mode: Single life, higher rewards
@@ -161,7 +171,11 @@ export class GameModes {
             // Save best time if improved
             if (elapsedTime < this.bestTime) {
                 this.bestTime = elapsedTime;
-                localStorage.setItem('towerdefense_speedrun_best', this.bestTime.toString());
+                try {
+                    localStorage.setItem('towerdefense_speedrun_best', this.bestTime.toString());
+                } catch (e) {
+                    console.warn('Failed to save speedrun best time:', e);
+                }
             }
         }
 
@@ -306,7 +320,11 @@ export class GameModes {
         if (this.currentMode === GAME_MODES.ENDLESS) {
             if (this.game.wave > this.bestWave) {
                 this.bestWave = this.game.wave;
-                localStorage.setItem('towerdefense_endless_best', this.bestWave.toString());
+                try {
+                    localStorage.setItem('towerdefense_endless_best', this.bestWave.toString());
+                } catch (e) {
+                    console.warn('Failed to save endless best wave:', e);
+                }
                 
                 const endlessStats = document.getElementById('endless-stats');
                 if (endlessStats) {

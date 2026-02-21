@@ -2,6 +2,7 @@ import { GameEngine, GameState } from '../../js/engine/GameEngine.js';
 import { inputManager } from '../../js/engine/InputManager.js';
 import { storageManager } from '../../js/engine/StorageManager.js';
 import { ICONS } from './Icons.js';
+import { hubSDK } from '../../js/engine/HubSDK.js';
 
 import { dailyChallengeSystem } from '../../js/engine/DailyChallengeSystem.js';
 
@@ -57,6 +58,21 @@ export class PacManEnhanced extends GameEngine {
             width: COLS * CELL_SIZE,
             height: ROWS * CELL_SIZE,
             pixelPerfect: true
+        });
+
+        // Initialize HubSDK
+        hubSDK.init({ gameId: 'pacman' });
+        
+        // Register pause/resume handlers
+        hubSDK.onPause(() => {
+            if (this.state === GameState.PLAYING) {
+                this.pause();
+            }
+        });
+        hubSDK.onResume(() => {
+            if (this.state === GameState.PAUSED) {
+                this.resume();
+            }
         });
 
         // Initialize systems
@@ -220,6 +236,7 @@ export class PacManEnhanced extends GameEngine {
     }
 
     setupTouchControls() {
+        // Swipe controls on canvas
         let touchStartX = 0, touchStartY = 0;
         this.canvas.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; });
         this.canvas.addEventListener('touchend', (e) => {
@@ -227,6 +244,29 @@ export class PacManEnhanced extends GameEngine {
             const dy = e.changedTouches[0].clientY - touchStartY;
             if (Math.abs(dx) > Math.abs(dy)) this.pacman.nextDirection = dx > 0 ? DIRS.RIGHT : DIRS.LEFT;
             else this.pacman.nextDirection = dy > 0 ? DIRS.DOWN : DIRS.UP;
+        });
+
+        // Mobile D-Pad button controls
+        const dpadButtons = document.querySelectorAll('.dpad-btn[data-direction]');
+        dpadButtons.forEach(btn => {
+            const direction = btn.dataset.direction;
+            const dirMap = {
+                'up': DIRS.UP,
+                'down': DIRS.DOWN,
+                'left': DIRS.LEFT,
+                'right': DIRS.RIGHT
+            };
+            
+            // Handle both touch and click events
+            const handleDpadPress = (e) => {
+                e.preventDefault();
+                if (dirMap[direction]) {
+                    this.pacman.nextDirection = dirMap[direction];
+                }
+            };
+            
+            btn.addEventListener('touchstart', handleDpadPress, { passive: false });
+            btn.addEventListener('mousedown', handleDpadPress);
         });
     }
 
@@ -1018,19 +1058,38 @@ export class PacManEnhanced extends GameEngine {
     renderGhostEyes(px, py, direction, frightened = false) {
         const ctx = this.ctx;
         if (frightened) {
+            // Frightened mode - small worried eyes
             ctx.fillStyle = '#ffccac';
             ctx.fillRect(px - 6, py - 6, 4, 4);
             ctx.fillRect(px + 2, py - 6, 4, 4);
         } else {
+            // Normal eyes - white sclera with blue pupils
             ctx.fillStyle = '#fff';
             ctx.beginPath();
             ctx.arc(px - 4, py - 4, 4, 0, Math.PI*2);
             ctx.arc(px + 4, py - 4, 4, 0, Math.PI*2);
             ctx.fill();
+            
+            // Pupils - offset based on direction
             ctx.fillStyle = '#00f';
             ctx.beginPath();
-            ctx.arc(px - 4 + direction.x*1.5, py - 4 + direction.y*1.5, 2, 0, Math.PI*2);
-            ctx.arc(px + 4 + direction.x*1.5, py - 4 + direction.y*1.5, 2, 0, Math.PI*2);
+            
+            // Ensure direction has x/y properties, default to 0 if missing
+            const dx = direction?.x || 0;
+            const dy = direction?.y || 0;
+            
+            // Handle all four directions properly
+            let pupilOffsetX = 0;
+            let pupilOffsetY = 0;
+            
+            if (dx > 0) pupilOffsetX = 1.5;      // Moving right
+            else if (dx < 0) pupilOffsetX = -1.5; // Moving left
+            
+            if (dy > 0) pupilOffsetY = 1.5;      // Moving down
+            else if (dy < 0) pupilOffsetY = -1.5; // Moving up
+            
+            ctx.arc(px - 4 + pupilOffsetX, py - 4 + pupilOffsetY, 2, 0, Math.PI*2);
+            ctx.arc(px + 4 + pupilOffsetX, py - 4 + pupilOffsetY, 2, 0, Math.PI*2);
             ctx.fill();
         }
     }
@@ -1056,6 +1115,12 @@ export class PacManEnhanced extends GameEngine {
     }
 
     onGameOver(isWin, isNewHighScore) {
+        // Submit to hub leaderboard FIRST
+        if (typeof hubSDK !== 'undefined') {
+            hubSDK.submitScore(this.score);
+        }
+        
+        // Then handle daily challenge
         if (this.dailyChallengeActive) {
             dailyChallengeSystem.submitResult('pacman', this.score, this.dailyTarget);
             this.loadDailyStatus();

@@ -9,23 +9,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./rhythm.css">
     
-    <!-- Firebase SDK (v10 Compat) -->
+    <!-- Firebase SDK (v10 Compat) - Hub's FirebaseService is used instead -->
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
-    <script>
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDemoKey12345",
-            authDomain: "arcade-hub.firebaseapp.com",
-            databaseURL: "https://arcade-hub-default-rtdb.firebaseio.com",
-            projectId: "arcade-hub",
-            storageBucket: "arcade-hub.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:abc123"
-        };
-        firebase.initializeApp(firebaseConfig);
-    </script>
 </head>
 <body>
     <div id="app" class="app">

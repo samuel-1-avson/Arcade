@@ -1,10 +1,11 @@
-/**
+﻿/**
  * A/B Testing Infrastructure
  * Feature flags and experiment management
  */
 
 import { globalStateManager } from './GlobalStateManager.js';
 import { analyticsService, ANALYTICS_EVENTS } from './AnalyticsService.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 // Experiment definitions
 const EXPERIMENTS = {
@@ -79,7 +80,7 @@ class ABTestingService {
     init(userId = null) {
         this.userId = userId || this._getOrCreateUserId();
         this._loadAssignments();
-        console.log('[A/B] Service initialized for user:', this.userId);
+        logger.info(LogCategory.ANALYTICS, '[A/B] Service initialized for user:', this.userId);
     }
 
     /**
@@ -102,7 +103,7 @@ class ABTestingService {
             const stored = localStorage.getItem(this.localStorageKey);
             this.assignments = stored ? JSON.parse(stored) : {};
         } catch (e) {
-            console.warn('Failed to load A/B assignments:', e);
+            logger.warn(LogCategory.ANALYTICS, 'Failed to load A/B assignments:', e);
             this.assignments = {};
         }
     }
@@ -114,7 +115,7 @@ class ABTestingService {
         try {
             localStorage.setItem(this.localStorageKey, JSON.stringify(this.assignments));
         } catch (e) {
-            console.warn('Failed to save A/B assignments:', e);
+            logger.warn(LogCategory.ANALYTICS, 'Failed to save A/B assignments:', e);
         }
     }
 
@@ -148,7 +149,7 @@ class ABTestingService {
             userId: this.userId
         });
 
-        console.log(`[A/B] Assigned ${experimentId}: ${variant}`);
+        logger.info(LogCategory.ANALYTICS, `[A/B] Assigned ${experimentId}: ${variant}`);
         return variant;
     }
 
@@ -259,13 +260,13 @@ class ABTestingService {
         if (!experiment) return;
 
         if (!experiment.variants.includes(variant)) {
-            console.warn(`Invalid variant ${variant} for ${experimentId}`);
+            logger.warn(LogCategory.ANALYTICS, `Invalid variant ${variant} for ${experimentId}`);
             return;
         }
 
         this.assignments[experimentId] = variant;
         this._saveAssignments();
-        console.log(`[A/B] Forced ${experimentId}: ${variant}`);
+        logger.info(LogCategory.ANALYTICS, `[A/B] Forced ${experimentId}: ${variant}`);
     }
 
     /**
@@ -274,7 +275,7 @@ class ABTestingService {
     resetAssignments() {
         this.assignments = {};
         localStorage.removeItem(this.localStorageKey);
-        console.log('[A/B] All assignments reset');
+        logger.info(LogCategory.ANALYTICS, '[A/B] All assignments reset');
     }
 
     /**

@@ -25,8 +25,40 @@ export class GameCardsManager {
     init() {
         this.grid = document.getElementById('games-grid');
         this.setupFilters();
-        this.render();
-        this.imageLoader.init();
+        // Show skeleton placeholders immediately while data loads
+        this.showSkeletons();
+        // Then render real cards (may be synchronous if data is ready)
+        requestAnimationFrame(() => {
+            this.render();
+            this.imageLoader.init();
+        });
+    }
+
+    /**
+     * Show skeleton loading placeholders
+     * @param {number} count - Number of skeleton cards to display
+     */
+    showSkeletons(count = 6) {
+        if (!this.grid) return;
+        this.grid.innerHTML = '';
+
+        for (let i = 0; i < count; i++) {
+            const skeleton = document.createElement('article');
+            skeleton.className = 'game-card skeleton-card';
+            skeleton.setAttribute('aria-hidden', 'true');
+            skeleton.innerHTML = `
+                <div class="skeleton-card-art"></div>
+                <div class="skeleton-card-content">
+                    <div class="skeleton-line skeleton-line--title"></div>
+                    <div class="skeleton-line skeleton-line--desc"></div>
+                    <div class="skeleton-line skeleton-line--short"></div>
+                </div>
+                <div class="skeleton-card-footer">
+                    <div class="skeleton-btn"></div>
+                </div>
+            `;
+            this.grid.appendChild(skeleton);
+        }
     }
 
     setupFilters() {

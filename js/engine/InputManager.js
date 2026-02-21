@@ -1,8 +1,9 @@
-/**
+﻿/**
  * InputManager - Unified input handling for keyboard, touch, and gamepad
  * Supports both event-based and polling-based input detection
  */
 import { eventBus } from './EventBus.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 class InputManager {
     constructor() {
@@ -256,13 +257,13 @@ class InputManager {
     }
 
     _onGamepadConnected(e) {
-        console.log('Gamepad connected:', e.gamepad.id);
+        logger.info(LogCategory.GAME, 'Gamepad connected:', e.gamepad.id);
         this.gamepadIndex = e.gamepad.index;
     }
 
     _onGamepadDisconnected(e) {
         if (e.gamepad.index === this.gamepadIndex) {
-            console.log('Gamepad disconnected');
+            logger.info(LogCategory.GAME, 'Gamepad disconnected');
             this.gamepadIndex = null;
         }
     }

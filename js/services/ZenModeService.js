@@ -1,3 +1,4 @@
+﻿import { logger, LogCategory } from '../utils/logger.js';
 /**
  * ZenModeService - Interactive Background Zen Experience
  * Provides 6 calming, interactive full-screen animations with audio
@@ -43,7 +44,7 @@ class ZenModeService {
         this.createContainer();
         this.initAnimations();
         this.setupKeyboardShortcuts();
-        console.log('[ZenMode] Service initialized with enhanced features');
+        logger.info(LogCategory.UI, '[ZenMode] Service initialized with enhanced features');
     }
 
     createContainer() {
@@ -238,7 +239,7 @@ class ZenModeService {
             this.ambientGain.connect(this.audioContext.destination);
             this.ambientGain.gain.value = this.volume;
         } catch (e) {
-            console.warn('[ZenMode] Audio not supported:', e);
+            logger.warn(LogCategory.UI, '[ZenMode] Audio not supported:', e);
             this.audioEnabled = false;
         }
     }
@@ -997,7 +998,7 @@ class ZenModeService {
         this.switchAnimation('aurora');
         this.startLoop();
 
-        console.log('[ZenMode] Entered');
+        logger.info(LogCategory.UI, '[ZenMode] Entered');
     }
 
     exit() {
@@ -1016,7 +1017,7 @@ class ZenModeService {
         // Stop audio
         this.stopAmbientSound();
 
-        console.log('[ZenMode] Exited');
+        logger.info(LogCategory.UI, '[ZenMode] Exited');
     }
 
     toggle() {

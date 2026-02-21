@@ -2,6 +2,7 @@
  * Input Sanitization Utilities
  * Prevents XSS and injection attacks
  */
+import { getMaxScore } from '../config/gameRegistry.js';
 
 /**
  * Sanitize HTML to prevent XSS
@@ -93,22 +94,8 @@ export function validateScore(score, gameId) {
         return result;
     }
     
-    // Game-specific max scores (anti-cheat)
-    const maxScores = {
-        'snake': 1000000,
-        '2048': 10000000,
-        'breakout': 500000,
-        'tetris': 5000000,
-        'minesweeper': 100000,
-        'pacman': 2000000,
-        'asteroids': 1000000,
-        'tower-defense': 10000000,
-        'rhythm': 1000000,
-        'roguelike': 500000,
-        'toonshooter': 1000000
-    };
-    
-    const maxScore = maxScores[gameId] || 1000000;
+    // Game-specific max scores from single source of truth
+    const maxScore = getMaxScore(gameId);
     if (score > maxScore) {
         result.errors.push(`Score exceeds maximum for ${gameId}`);
         return result;

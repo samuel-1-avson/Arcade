@@ -1,10 +1,11 @@
-/**
+﻿/**
  * AnalyticsService - Game Event Analytics Pipeline
  * Tracks user actions, game events, and performance metrics
  */
 
 import { firebaseService } from '../engine/FirebaseService.js';
 import { eventBus } from '../engine/EventBus.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 // Event types
 export const ANALYTICS_EVENTS = {
@@ -104,7 +105,7 @@ class AnalyticsService {
         });
 
         this.initialized = true;
-        console.log('[AnalyticsService] Initialized, session:', this.sessionId);
+        logger.info(LogCategory.ANALYTICS, '[AnalyticsService] Initialized, session:', this.sessionId);
     }
 
     /**
@@ -144,7 +145,7 @@ class AnalyticsService {
 
         // Log in debug mode
         if (this.debugMode) {
-            console.log('[Analytics]', eventType, data);
+            logger.info(LogCategory.ANALYTICS, '[Analytics]', eventType, data);
         }
 
         // Emit local event
@@ -288,7 +289,7 @@ class AnalyticsService {
 
         const db = firebaseService.db;
         if (!db) {
-            console.warn('[AnalyticsService] Firestore not available, events queued locally');
+            logger.warn(LogCategory.ANALYTICS, '[AnalyticsService] Firestore not available, events queued locally');
             return;
         }
 
@@ -309,9 +310,9 @@ class AnalyticsService {
             }
 
             await batch.commit();
-            console.log(`[AnalyticsService] Flushed ${eventsToSend.length} events`);
+            logger.info(LogCategory.ANALYTICS, `[AnalyticsService] Flushed ${eventsToSend.length} events`);
         } catch (error) {
-            console.error('[AnalyticsService] Flush error:', error);
+            logger.error(LogCategory.ANALYTICS, '[AnalyticsService] Flush error:', error);
             // Re-queue events on failure
             this.eventQueue = [...eventsToSend, ...this.eventQueue];
         }
@@ -353,7 +354,7 @@ class AnalyticsService {
                 await this.flush();
             }
         } catch (e) {
-            console.warn('[AnalyticsService] Failed to process pending:', e);
+            logger.warn(LogCategory.ANALYTICS, '[AnalyticsService] Failed to process pending:', e);
         }
     }
 
@@ -411,7 +412,7 @@ class AnalyticsService {
      */
     enableDebug() {
         this.debugMode = true;
-        console.log('[AnalyticsService] Debug mode enabled');
+        logger.info(LogCategory.ANALYTICS, '[AnalyticsService] Debug mode enabled');
     }
 
     /**

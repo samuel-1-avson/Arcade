@@ -11,6 +11,7 @@ import { StoryMode } from './StoryMode.js';
 import { TetrisMultiplayer } from './TetrisMultiplayer.js';
 import { dailyChallengeSystem } from '../../js/engine/DailyChallengeSystem.js';
 import { ICONS } from './Icons.js';
+import { hubSDK } from '../../js/engine/HubSDK.js';
 
 // Grid dimensions
 const COLS = 10;
@@ -25,6 +26,29 @@ const TETROMINOES = {
     S: { shape: [[0,1,1], [1,1,0], [0,0,0]], color: '#00f000' },
     T: { shape: [[0,1,0], [1,1,1], [0,0,0]], color: '#a000f0' },
     Z: { shape: [[1,1,0], [0,1,1], [0,0,0]], color: '#f00000' }
+};
+
+const WALL_KICKS = {
+    normal: [
+        [[0,0], [-1,0], [-1,1], [0,-2], [-1,-2]],  // 0->1
+        [[0,0], [1,0], [1,-1], [0,2], [1,2]],       // 1->0
+        [[0,0], [1,0], [1,1], [0,-2], [1,-2]],      // 1->2
+        [[0,0], [-1,0], [-1,-1], [0,2], [-1,2]],    // 2->1
+        [[0,0], [1,0], [1,-1], [0,-2], [1,-2]],     // 2->3
+        [[0,0], [-1,0], [-1,1], [0,2], [-1,2]],     // 3->2
+        [[0,0], [-1,0], [-1,-1], [0,-2], [-1,-2]],  // 3->0
+        [[0,0], [1,0], [1,1], [0,2], [1,2]]         // 0->3
+    ],
+    I: [
+        [[0,0], [-2,0], [1,0], [-2,-1], [1,2]],
+        [[0,0], [-1,0], [2,0], [-1,2], [2,-1]],
+        [[0,0], [2,0], [-1,0], [2,1], [-1,-2]],
+        [[0,0], [1,0], [-2,0], [1,-2], [-2,1]],
+        [[0,0], [2,0], [-1,0], [2,1], [-1,-2]],
+        [[0,0], [-1,0], [2,0], [-1,2], [2,-1]],
+        [[0,0], [1,0], [-2,0], [1,-2], [-2,1]],
+        [[0,0], [-2,0], [1,0], [-2,-1], [1,2]]
+    ]
 };
 
 
@@ -101,6 +125,9 @@ class Tetris extends GameEngine {
         this.setupUI();
         this.loadDailyStatus();
         this.onReset();
+        
+        // Initialize HubSDK
+        hubSDK.init({ gameId: 'tetris' });
     }
 
     bindEvents() {
@@ -171,6 +198,10 @@ class Tetris extends GameEngine {
         this.onGhostWarpEffect = () => this.effects.addFlash('#aa88ff', 0.1);
         this.onColorBlastEffect = () => this.effects.addFlash('#ff00ff', 0.1);
         this.onShuffleEffect = () => this.effects.addFlash('#00ff88', 0.1);
+        
+        // HubSDK pause/resume handlers
+        hubSDK.onPause(() => this.pause());
+        hubSDK.onResume(() => this.resume());
     }
 
     loadDailyStatus() {
@@ -549,21 +580,34 @@ class Tetris extends GameEngine {
 
     setupTouchControls() {
         const touchMap = {
-            'left': () => {
+            'touch-left': () => {
                 this.moveHorizontal(-1);
                 this.dasDirection = -1;
             },
-            'right': () => {
+            'touch-right': () => {
                 this.moveHorizontal(1);
                 this.dasDirection = 1;
             },
-            'rotate': () => this.rotate(1),
-            'down': () => this.moveDown(),
-            'drop': () => this.hardDrop(),
-            'hold': () => this.hold()
+            'touch-rotate': () => this.rotate(1),
+            'touch-down': () => this.moveDown(),
+            'touch-drop': () => this.hardDrop(),
+            'touch-hold': () => this.hold()
         };
-        // Add listeners if elements exist
-        // ... (can add real implementation if needed, but for now just function existence prevents crash)
+        
+        // Attach event listeners to touch control elements
+        Object.entries(touchMap).forEach(([id, handler]) => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    handler();
+                });
+                el.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    handler();
+                });
+            }
+        });
     }
 
     showAchievements() {
@@ -1285,6 +1329,9 @@ class Tetris extends GameEngine {
     }
 
     onGameOver(isWin, isNewHighScore) {
+        // Submit score to HubSDK
+        hubSDK.submitScore(this.score);
+        
         if (this.dailyChallengeActive) {
             dailyChallengeSystem.submitResult('tetris', this.score, this.dailyTarget);
             this.loadDailyStatus();

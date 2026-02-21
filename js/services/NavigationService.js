@@ -1,10 +1,11 @@
-/**
+﻿/**
  * Navigation Service
  * Handles breadcrumbs, history tracking, and navigation state
  * Minimal Retro Calm Theme
  */
 
 import { eventBus } from '../engine/EventBus.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 class NavigationService {
     constructor() {
@@ -34,7 +35,7 @@ class NavigationService {
         const homeIcon = `<svg class="breadcrumb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>`;
         this.pushState('Home', homeIcon, 'home');
         
-        console.log('[NavigationService] Initialized');
+        logger.info(LogCategory.UI, '[NavigationService] Initialized');
     }
 
     setupGlobalInput() {
@@ -60,7 +61,7 @@ class NavigationService {
 
     setContext(context) {
         this.context = context;
-        console.log(`[Nav] Context switched to: ${context}`);
+        logger.info(LogCategory.UI, `[Nav] Context switched to: ${context}`);
         
         // Hide breadcrumbs in game mode
         if (this.breadcrumbContainer) {

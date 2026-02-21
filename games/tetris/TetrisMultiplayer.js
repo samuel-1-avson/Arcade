@@ -194,4 +194,33 @@ export class TetrisMultiplayer {
             });
         }
     }
+
+    /**
+     * Leave the current room and cleanup listeners
+     */
+    leaveRoom() {
+        if (!this.roomId) return;
+        
+        const roomRef = this.db.ref(`tetris_rooms/${this.roomId}`);
+        
+        // Remove all Firebase listeners
+        roomRef.child('players').off();
+        roomRef.child('status').off();
+        roomRef.child('state').off();
+        roomRef.child(`attacks/${this.playerId}`).off();
+        
+        // Remove player from room if not host
+        if (!this.isHost && this.playerId) {
+            roomRef.child(`players/${this.playerId}`).remove();
+        }
+        
+        // Reset state
+        this.roomId = null;
+        this.opponentId = null;
+        this.isHost = false;
+        this.status = 'disconnected';
+        this.garbageQueue = [];
+        
+        console.log('[Multiplayer] Left room and cleaned up');
+    }
 }

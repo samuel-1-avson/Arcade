@@ -1,10 +1,11 @@
-/**
+﻿/**
  * StreamService - Real-time Data Streaming Pipeline
  * Handles live leaderboards, event broadcasting, and player action streams
  */
 
 import { firebaseService } from '../engine/FirebaseService.js';
 import { eventBus } from '../engine/EventBus.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 class StreamService {
     constructor() {
@@ -22,7 +23,7 @@ class StreamService {
         if (this.initialized) return;
 
         this.initialized = true;
-        console.log('[StreamService] Initialized');
+        logger.info(LogCategory.STREAM, '[StreamService] Initialized');
     }
 
     // ==================== LEADERBOARD STREAMING ====================
@@ -37,7 +38,7 @@ class StreamService {
     subscribeToLeaderboard(gameId, callback, limit = 10) {
         const rtdb = firebaseService.getRTDB();
         if (!rtdb) {
-            console.warn('[StreamService] RTDB not available');
+            logger.warn(LogCategory.STREAM, '[StreamService] RTDB not available');
             return () => {};
         }
 
@@ -80,9 +81,9 @@ class StreamService {
             const key = playerInfo.oderId || rtdb.ref().child(`liveLeaderboards/${gameId}`).push().key;
             await rtdb.ref(`liveLeaderboards/${gameId}/${key}`).set(scoreData);
             
-            console.log('[StreamService] Published score:', gameId, score);
+            logger.info(LogCategory.STREAM, '[StreamService] Published score:', gameId, score);
         } catch (error) {
-            console.error('[StreamService] Publish score error:', error);
+            logger.error(LogCategory.STREAM, '[StreamService] Publish score error:', error);
         }
     }
 
@@ -135,7 +136,7 @@ class StreamService {
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             });
         } catch (error) {
-            console.error('[StreamService] Room action error:', error);
+            logger.error(LogCategory.STREAM, '[StreamService] Room action error:', error);
         }
     }
 
@@ -211,7 +212,7 @@ class StreamService {
                 progress: 0
             });
         } catch (error) {
-            console.error('[StreamService] Join event error:', error);
+            logger.error(LogCategory.STREAM, '[StreamService] Join event error:', error);
         }
     }
 
@@ -230,7 +231,7 @@ class StreamService {
         try {
             await rtdb.ref(`liveEvents/${eventId}/participants/${user.uid}/progress`).set(progress);
         } catch (error) {
-            console.error('[StreamService] Update progress error:', error);
+            logger.error(LogCategory.STREAM, '[StreamService] Update progress error:', error);
         }
     }
 
@@ -279,7 +280,7 @@ class StreamService {
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             });
         } catch (error) {
-            console.error('[StreamService] Push notification error:', error);
+            logger.error(LogCategory.STREAM, '[StreamService] Push notification error:', error);
         }
     }
 
@@ -355,7 +356,7 @@ class StreamService {
         try {
             await rtdb.ref().update(updates);
         } catch (error) {
-            console.error('[StreamService] Batch publish error:', error);
+            logger.error(LogCategory.STREAM, '[StreamService] Batch publish error:', error);
         }
 
         this.batchBuffer = [];
@@ -405,7 +406,7 @@ class StreamService {
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             });
         } catch (error) {
-            console.error('[StreamService] Chat error:', error);
+            logger.error(LogCategory.STREAM, '[StreamService] Chat error:', error);
         }
     }
 
@@ -464,10 +465,10 @@ class StreamService {
 
             if (Object.keys(updates).length > 0) {
                 await rtdb.ref(path).update(updates);
-                console.log(`[StreamService] Cleaned up ${Object.keys(updates).length} old entries from ${path}`);
+                logger.info(LogCategory.STREAM, `[StreamService] Cleaned up ${Object.keys(updates).length} old entries from ${path}`);
             }
         } catch (error) {
-            console.error('[StreamService] Cleanup error:', error);
+            logger.error(LogCategory.STREAM, '[StreamService] Cleanup error:', error);
         }
     }
 }

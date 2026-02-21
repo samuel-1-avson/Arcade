@@ -584,9 +584,12 @@ export class PuzzleMode {
             <div style="width: 80px; height: 80px; color: #ffcc00; margin-bottom: 20px;">${ICONS.PUZZLE}</div>
             <h1 style="color: #ffcc00; margin: 20px 0; font-family: 'VT323', monospace; font-size: 3rem;">ALL PUZZLES COMPLETE!</h1>
             <p style="color: #888; font-family: 'VT323', monospace; font-size: 1.5rem;">You've mastered all ${PUZZLE_LEVELS.length} puzzles!</p>
-            <button onclick="this.parentElement.remove()" class="btn btn-primary" style="margin-top: 30px; font-weight: bold; color: #000; background: #ffcc00; border-color: #ffcc00;">RETURN TO MENU</button>
+            <button class="btn btn-primary close-overlay-btn" style="margin-top: 30px; font-weight: bold; color: #000; background: #ffcc00; border-color: #ffcc00;">RETURN TO MENU</button>
         `;
         document.body.appendChild(overlay);
+        
+        // Add event listener for close button (security fix: no inline onclick)
+        overlay.querySelector('.close-overlay-btn').addEventListener('click', () => overlay.remove());
     }
     
     render(ctx) {

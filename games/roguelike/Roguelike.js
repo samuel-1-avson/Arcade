@@ -3,6 +3,7 @@
  */
 import { GameEngine, GameState } from '../../js/engine/GameEngine.js';
 import { hubSDK } from '../../js/engine/HubSDK.js';
+import { eventBus, GameEvents } from '../../js/engine/EventBus.js';
 import { soundEffects } from '../../js/engine/SoundEffects.js';
 import { randomInt } from '../../js/utils/math.js';
 import { StoryMode, STORY, LEVEL_CONFIG } from './StoryMode.js';
@@ -1294,17 +1295,22 @@ class Roguelike extends GameEngine {
 
     saveProgress() {
         if (!this.hub) return;
-        const progress = {
-            floor: this.floor,
-            player: this.player,
-            stats: this.achievements.getStats(),
-            mode: this.gameModes?.currentMode || 'classic'
-        };
-        this.hub.saveProgress(progress);
+        try {
+            const progress = {
+                floor: this.floor,
+                player: this.player,
+                stats: this.achievements.getStats(),
+                mode: this.gameModes?.currentMode || 'classic'
+            };
+            this.hub.saveProgress(progress);
+        } catch (e) {
+            console.error('Failed to save progress:', e);
+        }
     }
 
     gainXP(amount) {
         this.player.xp += amount;
+        eventBus.emit(GameEvents.XP_GAIN, { gameId: this.config.gameId, xp: amount, totalXP: this.player.xp });
         while (this.player.xp >= this.player.xpToLevel) {
             this.player.xp -= this.player.xpToLevel;
             this.player.level++;
@@ -1315,6 +1321,7 @@ class Roguelike extends GameEngine {
             this.player.def += 2;
             this.log(`LEVEL ${this.player.level}!`, 'level');
             soundEffects.levelUp?.();
+            eventBus.emit(GameEvents.LEVEL_UP, { gameId: this.config.gameId, level: this.player.level });
         }
     }
 
@@ -1322,9 +1329,8 @@ class Roguelike extends GameEngine {
         this.log('You have fallen...', 'damage');
         soundEffects.die?.();
         this.achievements.recordDeath();
-        const score = this.player.gold + this.floor * 100 + this.player.xp; // Better score calc
-        this.hub.submitScore(score);
-        this.addScore(score);
+        const finalScore = this.player.gold + this.floor * 100 + this.player.xp;
+        this.setScore(finalScore);
         this.gameOver(false);
     }
 

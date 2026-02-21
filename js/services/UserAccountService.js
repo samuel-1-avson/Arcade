@@ -1,4 +1,4 @@
-/**
+﻿/**
  * UserAccountService - Cloud-synced User Account Management
  * Handles profile sync, authentication state, and cross-device data
  */
@@ -6,6 +6,7 @@
 import { firebaseService } from '../engine/FirebaseService.js';
 import { globalStateManager } from './GlobalStateManager.js';
 import { eventBus } from '../engine/EventBus.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 // User data version for schema migrations
 const DATA_VERSION = 1;
@@ -56,13 +57,13 @@ class UserAccountService {
             const syncableTypes = ['profile', 'stats', 'statistics', 'session', 'preferences', 'achievement'];
 
             if (syncableTypes.includes(type) && !this._isSyncing && isDebounced) {
-                console.log(`[UserAccountService] Triggering cloud sync for type: ${type}`);
+                logger.info(LogCategory.AUTH, `[UserAccountService] Triggering cloud sync for type: ${type}`);
                 this.saveToCloud();
             }
         });
 
         this.initialized = true;
-        console.log('[UserAccountService] Initialized');
+        logger.info(LogCategory.AUTH, '[UserAccountService] Initialized');
     }
 
     /**
@@ -113,17 +114,17 @@ class UserAccountService {
                 // Existing user - merge cloud data with local
                 const cloudData = userDoc.data();
                 await this.mergeCloudWithLocal(cloudData);
-                console.log('[UserAccountService] Loaded profile from cloud');
+                logger.info(LogCategory.AUTH, '[UserAccountService] Loaded profile from cloud');
             } else {
                 // New user - create cloud profile from local data
                 await this.createCloudProfile(user, userRef);
-                console.log('[UserAccountService] Created new cloud profile');
+                logger.info(LogCategory.AUTH, '[UserAccountService] Created new cloud profile');
             }
 
             this.syncStatus = 'synced';
             this.emitSyncStatus();
         } catch (error) {
-            console.error('[UserAccountService] Profile load error:', error);
+            logger.error(LogCategory.AUTH, '[UserAccountService] Profile load error:', error);
             this.syncStatus = 'error';
             this.emitSyncStatus();
         }
@@ -262,13 +263,13 @@ class UserAccountService {
                 }
             },
             (error) => {
-                console.error('[UserAccountService] Sync error:', error);
+                logger.error(LogCategory.AUTH, '[UserAccountService] Sync error:', error);
                 this.syncStatus = 'error';
                 this.emitSyncStatus();
             }
         );
 
-        console.log('[UserAccountService] Started real-time sync');
+        logger.info(LogCategory.AUTH, '[UserAccountService] Started real-time sync');
     }
 
     /**
@@ -289,14 +290,14 @@ class UserAccountService {
     handleCloudUpdate(cloudData) {
         // Skip if we're currently syncing or just wrote to cloud
         if (this._isSyncing) {
-            console.log('[UserAccountService] Ignoring snapshot - currently syncing');
+            logger.info(LogCategory.AUTH, '[UserAccountService] Ignoring snapshot - currently syncing');
             return;
         }
         
         // Ignore snapshots triggered by our own writes (within 10 seconds of our cloud save)
         const timeSinceOurSave = Date.now() - this._lastCloudSaveTime;
         if (this._ignoreNextSnapshot || timeSinceOurSave < 10000) {
-            console.log('[UserAccountService] Ignoring snapshot triggered by our own write');
+            logger.info(LogCategory.AUTH, '[UserAccountService] Ignoring snapshot triggered by our own write');
             this._ignoreNextSnapshot = false;
             this.syncStatus = 'synced';
             this.emitSyncStatus();
@@ -305,7 +306,7 @@ class UserAccountService {
 
         // Only update if data version matches or is newer
         if (cloudData.dataVersion && cloudData.dataVersion > DATA_VERSION) {
-            console.warn('[UserAccountService] Cloud data version newer than client');
+            logger.warn(LogCategory.AUTH, '[UserAccountService] Cloud data version newer than client');
         }
 
         const localProfile = globalStateManager.getProfile();
@@ -316,7 +317,7 @@ class UserAccountService {
         // Timestamp-based conflict resolution - only merge if cloud is significantly newer (5+ seconds)
         if (cloudLastModified > localLastModified + 5000) {
             // Cloud is newer - merge cloud data into local
-            console.log('[UserAccountService] Cloud data is newer, merging...');
+            logger.info(LogCategory.AUTH, '[UserAccountService] Cloud data is newer, merging...');
             
             // Set syncing flag to prevent recursive updates
             this._isSyncing = true;
@@ -380,7 +381,7 @@ class UserAccountService {
      */
     async saveToCloud() {
         if (!this.currentUser || !firebaseService.db) {
-            console.warn('[UserAccountService] Cannot save: not signed in');
+            logger.warn(LogCategory.AUTH, '[UserAccountService] Cannot save: not signed in');
             return;
         }
 
@@ -403,7 +404,7 @@ class UserAccountService {
         
         // Prevent re-entrant calls
         if (this._isSyncing) {
-            console.log('[UserAccountService] Sync already in progress, skipping');
+            logger.info(LogCategory.AUTH, '[UserAccountService] Sync already in progress, skipping');
             return;
         }
 
@@ -450,14 +451,14 @@ class UserAccountService {
 
             this.syncStatus = 'synced';
             this.emitSyncStatus();
-            console.log('[UserAccountService] Saved to cloud');
+            logger.info(LogCategory.AUTH, '[UserAccountService] Saved to cloud');
         } catch (error) {
-            console.error('[UserAccountService] Cloud save error:', error);
+            logger.error(LogCategory.AUTH, '[UserAccountService] Cloud save error:', error);
             
             // Exponential backoff retry
             if (retryCount < MAX_RETRIES) {
                 const delay = BASE_DELAY * Math.pow(2, retryCount);
-                console.log(`[UserAccountService] Retrying in ${delay}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+                logger.info(LogCategory.AUTH, `[UserAccountService] Retrying in ${delay}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
                 
                 this._isSyncing = false; // Reset flag before retry
                 setTimeout(() => {
@@ -495,7 +496,7 @@ class UserAccountService {
             this.syncStatus = 'offline';
             this.emitSyncStatus();
         } catch (e) {
-            console.warn('[UserAccountService] Failed to queue offline save:', e);
+            logger.warn(LogCategory.AUTH, '[UserAccountService] Failed to queue offline save:', e);
         }
     }
 
@@ -528,7 +529,7 @@ class UserAccountService {
             const pending = JSON.parse(localStorage.getItem('pendingCloudSync') || '[]');
             if (pending.length === 0) return;
 
-            console.log(`[UserAccountService] Processing ${pending.length} pending saves`);
+            logger.info(LogCategory.AUTH, `[UserAccountService] Processing ${pending.length} pending saves`);
 
             for (const item of pending) {
                 await this.performCloudSave();
@@ -536,7 +537,7 @@ class UserAccountService {
 
             localStorage.removeItem('pendingCloudSync');
         } catch (e) {
-            console.warn('[UserAccountService] Failed to process pending saves:', e);
+            logger.warn(LogCategory.AUTH, '[UserAccountService] Failed to process pending saves:', e);
         }
     }
 
@@ -545,7 +546,7 @@ class UserAccountService {
      */
     async linkToGoogle() {
         if (!this.currentUser || !this.currentUser.isAnonymous) {
-            console.warn('[UserAccountService] Cannot link: not anonymous');
+            logger.warn(LogCategory.AUTH, '[UserAccountService] Cannot link: not anonymous');
             return null;
         }
 
@@ -567,7 +568,7 @@ class UserAccountService {
             eventBus.emit('accountLinked', { provider: 'google' });
             return result.user;
         } catch (error) {
-            console.error('[UserAccountService] Link error:', error);
+            logger.error(LogCategory.AUTH, '[UserAccountService] Link error:', error);
             throw error;
         }
     }
@@ -643,9 +644,9 @@ class UserAccountService {
             globalStateManager.clearAllData();
             localStorage.removeItem('pendingCloudSync');
 
-            console.log('[UserAccountService] Account deleted');
+            logger.info(LogCategory.AUTH, '[UserAccountService] Account deleted');
         } catch (error) {
-            console.error('[UserAccountService] Delete account error:', error);
+            logger.error(LogCategory.AUTH, '[UserAccountService] Delete account error:', error);
             throw error;
         }
     }

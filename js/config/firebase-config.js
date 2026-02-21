@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Firebase Configuration
  * 
  * SECURITY WARNING: 
@@ -11,13 +11,14 @@
  */
 
 import { config, isConfigValid, isDevelopment } from './env.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 // Firebase configuration from environment
 export const firebaseConfig = config.firebase;
 
 // Validate configuration
 if (!isConfigValid) {
-  console.error(`
+  logger.error(LogCategory.FIREBASE, `
 ╔════════════════════════════════════════════════════════════════╗
 ║                    CONFIGURATION ERROR                         ║
 ╠════════════════════════════════════════════════════════════════╣
@@ -47,8 +48,8 @@ export const envConfig = {
 
 // Log environment on init (only in development)
 if (isDevelopment) {
-  console.log('[Config] Running in development mode');
-  console.log('[Config] Firebase project:', firebaseConfig.projectId || 'NOT CONFIGURED');
+  logger.info(LogCategory.FIREBASE, '[Config] Running in development mode');
+  logger.info(LogCategory.FIREBASE, '[Config] Firebase project:', firebaseConfig.projectId || 'NOT CONFIGURED');
 }
 
 // Export feature flags

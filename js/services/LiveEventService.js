@@ -1,4 +1,4 @@
-/**
+﻿/**
  * LiveEventService - Real-time Flash Challenges
  * Generates temporary high-stakes objectives for players.
  */
@@ -6,6 +6,7 @@ import { eventBus } from '../engine/EventBus.js';
 import { globalStateManager } from './GlobalStateManager.js';
 import { economyService, CURRENCY } from './EconomyService.js';
 import { notificationService } from './NotificationService.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 class LiveEventService {
     constructor() {
@@ -21,7 +22,7 @@ class LiveEventService {
             }
         }, 60000); // Check every minute
 
-        console.log('LiveEventService initialized');
+        logger.info(LogCategory.SERVICE, 'LiveEventService initialized');
     }
 
     generateFlashChallenge() {

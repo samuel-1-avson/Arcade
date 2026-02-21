@@ -5,6 +5,7 @@
 
 // Achievement Definitions (35 total)
 import { ICONS } from './AsteroidsIcons.js';
+import { hubSDK } from '../../js/engine/HubSDK.js';
 
 export const ACHIEVEMENTS = {
     // ===== PROGRESS (8) =====
@@ -101,7 +102,11 @@ export class AchievementSystem {
     }
 
     saveUnlocked() {
-        localStorage.setItem('asteroids_achievements', JSON.stringify(this.unlockedAchievements));
+        try {
+            localStorage.setItem('asteroids_achievements', JSON.stringify(this.unlockedAchievements));
+        } catch (e) {
+            console.warn('[AchievementSystem] Failed to save achievements:', e);
+        }
     }
 
     loadProgress() {
@@ -111,7 +116,11 @@ export class AchievementSystem {
     }
 
     saveProgress() {
-        localStorage.setItem('asteroids_achievement_progress', JSON.stringify(this.progress));
+        try {
+            localStorage.setItem('asteroids_achievement_progress', JSON.stringify(this.progress));
+        } catch (e) {
+            console.warn('[AchievementSystem] Failed to save progress:', e);
+        }
     }
 
     loadPlayerData() {
@@ -126,10 +135,14 @@ export class AchievementSystem {
     }
 
     savePlayerData() {
-        localStorage.setItem('asteroids_player', JSON.stringify({
-            xp: this.xp,
-            level: this.level
-        }));
+        try {
+            localStorage.setItem('asteroids_player', JSON.stringify({
+                xp: this.xp,
+                level: this.level
+            }));
+        } catch (e) {
+            console.warn('[AchievementSystem] Failed to save player data:', e);
+        }
     }
 
     // Achievement Unlocking
@@ -143,6 +156,9 @@ export class AchievementSystem {
         this.saveUnlocked();
         this.addXP(achievement.xp);
         this.showAchievementPopup(achievement);
+        
+        // Sync with HubSDK
+        hubSDK.unlockAchievement(achievementId);
         
         // Check for completionist
         if (this.unlockedAchievements.length === Object.keys(ACHIEVEMENTS).length - 1) {
@@ -209,13 +225,22 @@ export class AchievementSystem {
     // Daily Challenge
     generateDailyChallenge() {
         const today = new Date().toDateString();
-        const saved = localStorage.getItem('asteroids_daily');
+        let saved = null;
+        try {
+            saved = localStorage.getItem('asteroids_daily');
+        } catch (e) {
+            console.warn('[AchievementSystem] Failed to load daily challenge:', e);
+        }
         
         if (saved) {
-            const data = JSON.parse(saved);
-            if (data.date === today) {
-                this.dailyChallenge = data.challenge;
-                return;
+            try {
+                const data = JSON.parse(saved);
+                if (data.date === today) {
+                    this.dailyChallenge = data.challenge;
+                    return;
+                }
+            } catch (e) {
+                console.warn('[AchievementSystem] Failed to parse daily challenge:', e);
             }
         }
 
@@ -235,31 +260,48 @@ export class AchievementSystem {
             reward: value * 5 // XP reward
         };
 
-        localStorage.setItem('asteroids_daily', JSON.stringify({
-            date: today,
-            challenge: this.dailyChallenge
-        }));
+        try {
+            localStorage.setItem('asteroids_daily', JSON.stringify({
+                date: today,
+                challenge: this.dailyChallenge
+            }));
+        } catch (e) {
+            console.warn('[AchievementSystem] Failed to save daily challenge:', e);
+        }
     }
 
     generateWeeklyChallenge() {
         const weekNum = this.getWeekNumber();
-        const saved = localStorage.getItem('asteroids_weekly');
+        let saved = null;
+        try {
+            saved = localStorage.getItem('asteroids_weekly');
+        } catch (e) {
+            console.warn('[AchievementSystem] Failed to load weekly challenge:', e);
+        }
 
         if (saved) {
-            const data = JSON.parse(saved);
-            if (data.week === weekNum) {
-                this.weeklyChallenge = data.challenge;
-                return;
+            try {
+                const data = JSON.parse(saved);
+                if (data.week === weekNum) {
+                    this.weeklyChallenge = data.challenge;
+                    return;
+                }
+            } catch (e) {
+                console.warn('[AchievementSystem] Failed to parse weekly challenge:', e);
             }
         }
 
         const index = weekNum % WEEKLY_CHALLENGES.length;
         this.weeklyChallenge = { ...WEEKLY_CHALLENGES[index], progress: 0, completed: false };
         
-        localStorage.setItem('asteroids_weekly', JSON.stringify({
-            week: weekNum,
-            challenge: this.weeklyChallenge
-        }));
+        try {
+            localStorage.setItem('asteroids_weekly', JSON.stringify({
+                week: weekNum,
+                challenge: this.weeklyChallenge
+            }));
+        } catch (e) {
+            console.warn('[AchievementSystem] Failed to save weekly challenge:', e);
+        }
     }
 
     updateDailyProgress(type, amount) {
@@ -273,10 +315,14 @@ export class AchievementSystem {
             this.showDailyChallengeComplete();
         }
 
-        localStorage.setItem('asteroids_daily', JSON.stringify({
-            date: new Date().toDateString(),
-            challenge: this.dailyChallenge
-        }));
+        try {
+            localStorage.setItem('asteroids_daily', JSON.stringify({
+                date: new Date().toDateString(),
+                challenge: this.dailyChallenge
+            }));
+        } catch (e) {
+            console.warn('[AchievementSystem] Failed to save daily challenge:', e);
+        }
     }
 
     updateWeeklyProgress(type, amount) {
@@ -290,10 +336,14 @@ export class AchievementSystem {
             this.showWeeklyChallengeComplete();
         }
 
-        localStorage.setItem('asteroids_weekly', JSON.stringify({
-            week: this.getWeekNumber(),
-            challenge: this.weeklyChallenge
-        }));
+        try {
+            localStorage.setItem('asteroids_weekly', JSON.stringify({
+                week: this.getWeekNumber(),
+                challenge: this.weeklyChallenge
+            }));
+        } catch (e) {
+            console.warn('[AchievementSystem] Failed to save weekly challenge:', e);
+        }
     }
 
     // Utilities

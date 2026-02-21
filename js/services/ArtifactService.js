@@ -1,10 +1,11 @@
-/**
+﻿/**
  * ArtifactService - Cross-Game Buff System
  * Manages unique permanent items that grant gameplay bonuses.
  */
 import { eventBus } from '../engine/EventBus.js';
 import { globalStateManager } from './GlobalStateManager.js';
 import { notificationService } from './NotificationService.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 export const ARTIFACT_LIBRARY = {
     'gilded_scale': {
@@ -54,7 +55,7 @@ class ArtifactService {
             }
         });
         
-        console.log('ArtifactService initialized');
+        logger.info(LogCategory.SERVICE, 'ArtifactService initialized');
     }
 
     getArtifact(id) {

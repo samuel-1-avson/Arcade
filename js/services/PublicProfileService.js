@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Public Profile Service
  * Handles migration from users collection to publicProfiles
  * Manages public-facing user data
@@ -6,6 +6,7 @@
 
 import { firebaseService } from '../engine/FirebaseService.js';
 import { eventBus } from '../engine/EventBus.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 class PublicProfileService {
   constructor() {
@@ -18,7 +19,7 @@ class PublicProfileService {
    */
   async init() {
     if (!firebaseService.db) {
-      console.warn('[PublicProfileService] Firestore not initialized');
+      logger.warn(LogCategory.SOCIAL, '[PublicProfileService] Firestore not initialized');
       return;
     }
 
@@ -48,13 +49,13 @@ class PublicProfileService {
         .get();
 
       if (!publicProfileDoc.exists) {
-        console.log('[PublicProfileService] Migrating user profile...');
+        logger.info(LogCategory.SOCIAL, '[PublicProfileService] Migrating user profile...');
         await this.migrateUserProfile(user.uid);
       }
 
       this.migrationChecked = true;
     } catch (error) {
-      console.error('[PublicProfileService] Migration check failed:', error);
+      logger.error(LogCategory.SOCIAL, '[PublicProfileService] Migration check failed:', error);
     }
   }
 
@@ -67,7 +68,7 @@ class PublicProfileService {
       const userDoc = await this.db.collection('users').doc(userId).get();
       
       if (!userDoc.exists) {
-        console.warn('[PublicProfileService] User document not found');
+        logger.warn(LogCategory.SOCIAL, '[PublicProfileService] User document not found');
         return;
       }
 
@@ -89,10 +90,10 @@ class PublicProfileService {
 
       await this.db.collection('publicProfiles').doc(userId).set(publicProfile);
 
-      console.log('[PublicProfileService] Profile migrated successfully');
+      logger.info(LogCategory.SOCIAL, '[PublicProfileService] Profile migrated successfully');
       eventBus.emit('profileMigrated', { userId });
     } catch (error) {
-      console.error('[PublicProfileService] Migration failed:', error);
+      logger.error(LogCategory.SOCIAL, '[PublicProfileService] Migration failed:', error);
       throw error;
     }
   }
@@ -109,7 +110,7 @@ class PublicProfileService {
       const doc = await this.db.collection('publicProfiles').doc(userId).get();
       return doc.exists ? { id: doc.id, ...doc.data() } : null;
     } catch (error) {
-      console.error('[PublicProfileService] Failed to get public profile:', error);
+      logger.error(LogCategory.SOCIAL, '[PublicProfileService] Failed to get public profile:', error);
       return null;
     }
   }
@@ -140,7 +141,7 @@ class PublicProfileService {
 
       return profiles;
     } catch (error) {
-      console.error('[PublicProfileService] Failed to get public profiles:', error);
+      logger.error(LogCategory.SOCIAL, '[PublicProfileService] Failed to get public profiles:', error);
       return [];
     }
   }
@@ -178,9 +179,9 @@ class PublicProfileService {
         .doc(user.uid)
         .update(filteredUpdates);
 
-      console.log('[PublicProfileService] Public profile updated');
+      logger.info(LogCategory.SOCIAL, '[PublicProfileService] Public profile updated');
     } catch (error) {
-      console.error('[PublicProfileService] Update failed:', error);
+      logger.error(LogCategory.SOCIAL, '[PublicProfileService] Update failed:', error);
       throw error;
     }
   }
@@ -206,7 +207,7 @@ class PublicProfileService {
           }
         },
         (error) => {
-          console.error('[PublicProfileService] Watch error:', error);
+          logger.error(LogCategory.SOCIAL, '[PublicProfileService] Watch error:', error);
         }
       );
   }

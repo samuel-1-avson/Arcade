@@ -1,10 +1,11 @@
-/**
+﻿/**
  * SyncEngine - Offline-first Data Synchronization
  * Handles reliable bidirectional sync between local storage and cloud
  */
 
 import { firebaseService } from './FirebaseService.js';
 import { eventBus } from './EventBus.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 // Sync operation types
 const OP_TYPES = {
@@ -46,14 +47,14 @@ class SyncEngine {
         }
 
         this.initialized = true;
-        console.log('[SyncEngine] Initialized, queue size:', this.syncQueue.length);
+        logger.info(LogCategory.SYNC, '[SyncEngine] Initialized, queue size:', this.syncQueue.length);
     }
 
     /**
      * Handle coming online
      */
     handleOnline() {
-        console.log('[SyncEngine] Back online');
+        logger.info(LogCategory.SYNC, '[SyncEngine] Back online');
         this.isOnline = true;
         eventBus.emit('networkStatusChanged', { online: true });
         
@@ -65,7 +66,7 @@ class SyncEngine {
      * Handle going offline
      */
     handleOffline() {
-        console.log('[SyncEngine] Gone offline');
+        logger.info(LogCategory.SYNC, '[SyncEngine] Gone offline');
         this.isOnline = false;
         eventBus.emit('networkStatusChanged', { online: false });
     }
@@ -143,7 +144,7 @@ class SyncEngine {
                 const result = await this.executeOperation(operation);
                 return result;
             } catch (error) {
-                console.warn('[SyncEngine] Operation failed, queuing:', error.message);
+                logger.warn(LogCategory.SYNC, '[SyncEngine] Operation failed, queuing:', error.message);
                 this.queueOperation(operation);
                 throw error;
             }
@@ -227,7 +228,7 @@ class SyncEngine {
         this.saveQueue();
         eventBus.emit('syncQueueUpdated', { size: this.syncQueue.length });
         
-        console.log('[SyncEngine] Queued operation:', operation.type, operation.collection);
+        logger.info(LogCategory.SYNC, '[SyncEngine] Queued operation:', operation.type, operation.collection);
     }
 
     /**
@@ -241,7 +242,7 @@ class SyncEngine {
         this.syncInProgress = true;
         eventBus.emit('syncStarted');
 
-        console.log(`[SyncEngine] Processing ${this.syncQueue.length} queued operations`);
+        logger.info(LogCategory.SYNC, `[SyncEngine] Processing ${this.syncQueue.length} queued operations`);
 
         const failedOps = [];
 
@@ -254,13 +255,13 @@ class SyncEngine {
                     this.syncQueue.splice(index, 1);
                 }
             } catch (error) {
-                console.error('[SyncEngine] Operation failed:', error);
+                logger.error(LogCategory.SYNC, '[SyncEngine] Operation failed:', error);
                 operation.retries++;
                 
                 if (operation.retries < 3) {
                     failedOps.push(operation);
                 } else {
-                    console.error('[SyncEngine] Max retries reached, dropping operation');
+                    logger.error(LogCategory.SYNC, '[SyncEngine] Max retries reached, dropping operation');
                     eventBus.emit('syncOperationFailed', { operation, error });
                 }
             }
@@ -304,7 +305,7 @@ class SyncEngine {
         try {
             localStorage.setItem(QUEUE_KEY, JSON.stringify(this.syncQueue));
         } catch (e) {
-            console.warn('[SyncEngine] Failed to save queue:', e);
+            logger.warn(LogCategory.SYNC, '[SyncEngine] Failed to save queue:', e);
         }
     }
 
@@ -318,7 +319,7 @@ class SyncEngine {
                 this.syncQueue = JSON.parse(saved);
             }
         } catch (e) {
-            console.warn('[SyncEngine] Failed to load queue:', e);
+            logger.warn(LogCategory.SYNC, '[SyncEngine] Failed to load queue:', e);
             this.syncQueue = [];
         }
     }
@@ -337,7 +338,7 @@ class SyncEngine {
             const doc = await firebaseService.db.collection(collection).doc(docId).get();
             return doc.exists ? { id: doc.id, ...doc.data() } : null;
         } catch (error) {
-            console.error('[SyncEngine] Get error:', error);
+            logger.error(LogCategory.SYNC, '[SyncEngine] Get error:', error);
             return null;
         }
     }
@@ -373,7 +374,7 @@ class SyncEngine {
             const snapshot = await ref.get();
             return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         } catch (error) {
-            console.error('[SyncEngine] Query error:', error);
+            logger.error(LogCategory.SYNC, '[SyncEngine] Query error:', error);
             return [];
         }
     }
@@ -389,7 +390,7 @@ class SyncEngine {
      */
     watchDocument(collection, docId, callback) {
         if (!firebaseService.db) {
-            console.warn('[SyncEngine] Cannot watch: Firestore not initialized');
+            logger.warn(LogCategory.SYNC, '[SyncEngine] Cannot watch: Firestore not initialized');
             return () => {};
         }
 
@@ -405,7 +406,7 @@ class SyncEngine {
                     }
                 },
                 (error) => {
-                    console.error('[SyncEngine] Watch error:', error);
+                    logger.error(LogCategory.SYNC, '[SyncEngine] Watch error:', error);
                 }
             );
 
@@ -421,7 +422,7 @@ class SyncEngine {
      */
     watchCollection(collection, queries, callback) {
         if (!firebaseService.db) {
-            console.warn('[SyncEngine] Cannot watch: Firestore not initialized');
+            logger.warn(LogCategory.SYNC, '[SyncEngine] Cannot watch: Firestore not initialized');
             return () => {};
         }
 
@@ -442,7 +443,7 @@ class SyncEngine {
                 callback(docs, changes);
             },
             (error) => {
-                console.error('[SyncEngine] Collection watch error:', error);
+                logger.error(LogCategory.SYNC, '[SyncEngine] Collection watch error:', error);
             }
         );
 

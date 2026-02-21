@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Client-Side Analytics
  * Lightweight analytics tracking without external services
  * Stores aggregated data in Firestore for dashboard display
@@ -6,6 +6,7 @@
 
 import { eventBus } from '../engine/EventBus.js';
 import { firebaseService } from '../engine/FirebaseService.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 class ClientAnalytics {
     constructor() {
@@ -25,7 +26,7 @@ class ClientAnalytics {
      * Initialize analytics
      */
     init() {
-        console.log('[ClientAnalytics] Initialized');
+        logger.info(LogCategory.ANALYTICS, '[ClientAnalytics] Initialized');
 
         // Track page views
         this.trackPageView(window.location.pathname);

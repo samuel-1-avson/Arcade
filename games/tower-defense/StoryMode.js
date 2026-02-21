@@ -158,9 +158,13 @@ export class StoryMode {
     }
 
     loadProgress() {
-        const saved = localStorage.getItem('towerdefense_story_progress');
-        if (saved) {
-            return JSON.parse(saved);
+        try {
+            const saved = localStorage.getItem('towerdefense_story_progress');
+            if (saved) {
+                return JSON.parse(saved);
+            }
+        } catch (e) {
+            console.warn('Failed to load story progress:', e);
         }
         
         // Default progress: only level 1 unlocked
@@ -173,7 +177,11 @@ export class StoryMode {
     }
 
     saveProgress() {
-        localStorage.setItem('towerdefense_story_progress', JSON.stringify(this.progress));
+        try {
+            localStorage.setItem('towerdefense_story_progress', JSON.stringify(this.progress));
+        } catch (e) {
+            console.warn('Failed to save story progress:', e);
+        }
     }
 
     // Check if a level is unlocked

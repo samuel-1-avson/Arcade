@@ -1,3 +1,4 @@
+﻿import { logger, LogCategory } from '../utils/logger.js';
 /**
  * Schema Versioning System
  * Handles data migrations and schema version tracking
@@ -59,7 +60,7 @@ class SchemaVersionService {
             const stored = localStorage.getItem(this.localVersionsKey);
             return stored ? JSON.parse(stored) : {};
         } catch (e) {
-            console.warn('Failed to get schema versions:', e);
+            logger.warn(LogCategory.STORAGE, 'Failed to get schema versions:', e);
             return {};
         }
     }
@@ -71,7 +72,7 @@ class SchemaVersionService {
         try {
             localStorage.setItem(this.localVersionsKey, JSON.stringify(versions));
         } catch (e) {
-            console.warn('Failed to save schema versions:', e);
+            logger.warn(LogCategory.STORAGE, 'Failed to save schema versions:', e);
         }
     }
 
@@ -103,7 +104,7 @@ class SchemaVersionService {
             return data; // Already up to date
         }
 
-        console.log(`[Schema] Migrating ${collection} from v${storedVersion} to v${currentVersion}`);
+        logger.info(LogCategory.STORAGE, `[Schema] Migrating ${collection} from v${storedVersion} to v${currentVersion}`);
 
         let migratedData = data;
 
@@ -116,7 +117,7 @@ class SchemaVersionService {
                 } else {
                     migratedData = migration(migratedData);
                 }
-                console.log(`[Schema] Applied migration v${v} -> v${v + 1}`);
+                logger.info(LogCategory.STORAGE, `[Schema] Applied migration v${v} -> v${v + 1}`);
             }
         }
 
@@ -170,17 +171,17 @@ class SchemaVersionService {
      * Run all pending migrations
      */
     runAllMigrations() {
-        console.log('[Schema] Running all pending migrations...');
+        logger.info(LogCategory.STORAGE, '[Schema] Running all pending migrations...');
         const status = this.getMigrationStatus();
         
         for (const [collection, info] of Object.entries(status)) {
             if (info.needsMigration) {
-                console.log(`[Schema] ${collection} needs migration: v${info.stored} -> v${info.current}`);
+                logger.info(LogCategory.STORAGE, `[Schema] ${collection} needs migration: v${info.stored} -> v${info.current}`);
                 this.markMigrated(collection);
             }
         }
 
-        console.log('[Schema] All collections updated');
+        logger.info(LogCategory.STORAGE, '[Schema] All collections updated');
     }
 }
 

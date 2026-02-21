@@ -155,6 +155,7 @@
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
+    import { hubSDK } from '../../js/engine/HubSDK.js';
 
     const BASE_ARENA = {
       width: 26,
@@ -559,17 +560,23 @@
       binds: { ...DEFAULT_KEYBINDS },
       
       load() {
-        const stored = localStorage.getItem('tinyToonDuel_keybinds');
-        if (stored) {
-          try {
+        try {
+          const stored = localStorage.getItem('tinyToonDuel_keybinds');
+          if (stored) {
             const parsed = JSON.parse(stored);
             this.binds = { ...DEFAULT_KEYBINDS, ...parsed };
-          } catch {}
+          }
+        } catch (e) {
+          console.warn('Failed to load keybinds:', e);
         }
       },
       
       save() {
-        localStorage.setItem('tinyToonDuel_keybinds', JSON.stringify(this.binds));
+        try {
+          localStorage.setItem('tinyToonDuel_keybinds', JSON.stringify(this.binds));
+        } catch (e) {
+          console.warn('Failed to save keybinds:', e);
+        }
       },
       
       reset() {
@@ -656,17 +663,23 @@
       },
 
       load() {
-        const stored = localStorage.getItem('tinyToonDuel_playerStats');
-        if (stored) {
-          try {
+        try {
+          const stored = localStorage.getItem('tinyToonDuel_playerStats');
+          if (stored) {
             const parsed = JSON.parse(stored);
             this.data = { ...this.data, ...parsed };
-          } catch {}
+          }
+        } catch (e) {
+          console.warn('Failed to load player stats:', e);
         }
       },
 
       save() {
-        localStorage.setItem('tinyToonDuel_playerStats', JSON.stringify(this.data));
+        try {
+          localStorage.setItem('tinyToonDuel_playerStats', JSON.stringify(this.data));
+        } catch (e) {
+          console.warn('Failed to save player stats:', e);
+        }
       },
 
       addKill(weaponId) {
@@ -724,18 +737,24 @@
       },
 
       load() {
-        const stored = localStorage.getItem('tinyToonDuel_settings');
-        if (stored) {
-          try {
+        try {
+          const stored = localStorage.getItem('tinyToonDuel_settings');
+          if (stored) {
             const parsed = JSON.parse(stored);
             this.data = { ...this.data, ...parsed };
-          } catch {}
+          }
+        } catch (e) {
+          console.warn('Failed to load settings:', e);
         }
         this.apply();
       },
 
       save() {
-        localStorage.setItem('tinyToonDuel_settings', JSON.stringify(this.data));
+        try {
+          localStorage.setItem('tinyToonDuel_settings', JSON.stringify(this.data));
+        } catch (e) {
+          console.warn('Failed to save settings:', e);
+        }
         this.apply();
       },
 
@@ -896,9 +915,13 @@
 	      usePlaceholders: false
 	    };
 
-	    const storedVisualMode = localStorage.getItem('tinyToonDuel_visualMode');
-	    if (storedVisualMode === 'placeholder') {
-	      settings.usePlaceholders = true;
+	    try {
+	      const storedVisualMode = localStorage.getItem('tinyToonDuel_visualMode');
+	      if (storedVisualMode === 'placeholder') {
+	        settings.usePlaceholders = true;
+	      }
+	    } catch (e) {
+	      console.warn('Failed to load visual mode:', e);
 	    }
 
 	    const fx = {
@@ -947,20 +970,26 @@
 	      arenaDecor: []
 	    };
 
-	    const stored = localStorage.getItem('tinyToonDuel_bestWinSeconds');
-	    if (stored) {
-	      const parsed = Number(stored);
-	      if (!Number.isNaN(parsed)) state.bestWinTime = parsed;
+	    try {
+	      const stored = localStorage.getItem('tinyToonDuel_bestWinSeconds');
+	      if (stored) {
+	        const parsed = Number(stored);
+	        if (!Number.isNaN(parsed)) state.bestWinTime = parsed;
+	      }
+	    } catch (e) {
+	      console.warn('Failed to load best win time:', e);
 	    }
 
-	    const storedDifficulty = localStorage.getItem('tinyToonDuel_aiDifficultyByMode');
-	    if (storedDifficulty) {
-	      try {
+	    try {
+	      const storedDifficulty = localStorage.getItem('tinyToonDuel_aiDifficultyByMode');
+	      if (storedDifficulty) {
 	        const parsed = JSON.parse(storedDifficulty);
 	        if (parsed && typeof parsed === 'object') {
 	          CONFIG.difficulty.byMode = { ...CONFIG.difficulty.byMode, ...parsed };
 	        }
-	      } catch {}
+	      }
+	    } catch (e) {
+	      console.warn('Failed to load difficulty settings:', e);
 	    }
 
 	    init();
@@ -970,6 +999,13 @@
       GameSettings.load();
       PlayerStats.load();
       KeyBinds.load();
+      
+      // Initialize HubSDK
+      hubSDK.init({ gameId: 'toonshooter' });
+      
+      // Register pause/resume handlers
+      hubSDK.onPause(() => togglePause());
+      hubSDK.onResume(() => { if (state.mode === 'paused') togglePause(); });
       
       setupRenderer();
       setupScene();
@@ -1013,7 +1049,11 @@
 
 	    function setVisualMode(usePlaceholders) {
 	      settings.usePlaceholders = Boolean(usePlaceholders);
-	      localStorage.setItem('tinyToonDuel_visualMode', settings.usePlaceholders ? 'placeholder' : 'gltf');
+	      try {
+	        localStorage.setItem('tinyToonDuel_visualMode', settings.usePlaceholders ? 'placeholder' : 'gltf');
+	      } catch (e) {
+	        console.warn('Failed to save visual mode:', e);
+	      }
 	      updateVisualToggleUI();
 	      if (assets.manifest) {
 	        swapAllVisuals();
@@ -1231,7 +1271,7 @@
     }
     
     function returnToHub() {
-      window.location.href = '../../index.html';
+      hubSDK.exitGame();
     }
     
     function toggleControlsPanel() {
@@ -2744,7 +2784,11 @@
 	      const allowed = ['easy', 'normal', 'hard'];
 	      if (!allowed.includes(difficulty)) return;
 	      CONFIG.difficulty.byMode[modeId] = difficulty;
-	      localStorage.setItem('tinyToonDuel_aiDifficultyByMode', JSON.stringify(CONFIG.difficulty.byMode));
+	      try {
+        localStorage.setItem('tinyToonDuel_aiDifficultyByMode', JSON.stringify(CONFIG.difficulty.byMode));
+      } catch (e) {
+        console.warn('Failed to save difficulty settings:', e);
+      }
 	      updateDifficultyUI();
 	    }
 
@@ -4981,7 +5025,11 @@
       if (state.gameMode === 'duel' && winner === 'p1') {
         if (state.bestWinTime === null || elapsed < state.bestWinTime) {
           state.bestWinTime = elapsed;
-          localStorage.setItem('tinyToonDuel_bestWinSeconds', String(elapsed));
+          try {
+            localStorage.setItem('tinyToonDuel_bestWinSeconds', String(elapsed));
+          } catch (e) {
+            console.warn('Failed to save best win time:', e);
+          }
         }
       }
       updateBestTimeUI();
@@ -4999,23 +5047,29 @@
         // Check achievements
         if (PlayerStats.unlockAchievement('first_blood')) {
           spawnAchievementPopup('first_blood');
+          hubSDK.unlockAchievement('first_blood');
         }
         if (elapsed < 30 && PlayerStats.unlockAchievement('speedrunner')) {
           spawnAchievementPopup('speedrunner');
+          hubSDK.unlockAchievement('speedrunner');
         }
         if (state.gameMode === 'duel' && state.wins.p1 >= 3 && state.wins.p2 === 0) {
           if (PlayerStats.unlockAchievement('domination')) {
             spawnAchievementPopup('domination');
+            hubSDK.unlockAchievement('domination');
           }
         }
         if (player.hp > 0 && player.hp <= 10 && PlayerStats.unlockAchievement('survivor')) {
           spawnAchievementPopup('survivor');
+          hubSDK.unlockAchievement('survivor');
         }
         if (accuracy >= 80 && stats.shotsFired >= 10 && PlayerStats.unlockAchievement('sharpshooter')) {
           spawnAchievementPopup('sharpshooter');
+          hubSDK.unlockAchievement('sharpshooter');
         }
         if ((stats.nearMisses || 0) >= 5 && PlayerStats.unlockAchievement('close_call')) {
           spawnAchievementPopup('close_call');
+          hubSDK.unlockAchievement('close_call');
         }
       } else if (player) {
         PlayerStats.recordMatch(false, 0);
@@ -5025,27 +5079,18 @@
       submitScoreToHub(winner, elapsed);
     }
     
-    // Submit score to the Hub via postMessage
+    // Submit score to the Hub via HubSDK
     function submitScoreToHub(winner, matchTime) {
-      if (window.parent && window.parent !== window) {
-        // Calculate score based on: wins, match time, and player performance
-        // Player wins = 1000 pts, faster wins = bonus points (max 500)
-        const didWin = winner === 'p1';
-        const baseScore = didWin ? 1000 : 100;
-        const timeBonus = didWin ? Math.max(0, Math.floor((CONFIG.match.totalTime - matchTime) * 5)) : 0;
-        const winsBonus = state.wins.p1 * 200;
-        const score = baseScore + timeBonus + winsBonus;
-        
-        window.parent.postMessage({
-          type: 'SUBMIT_SCORE',
-          payload: {
-            gameId: 'toonshooter',
-            score: score,
-            completed: didWin
-          }
-        }, '*');
-        console.log('[ToonShooter] Score submitted to Hub:', score, didWin ? '(WIN)' : '(LOSS)');
-      }
+      // Calculate score based on: wins, match time, and player performance
+      // Player wins = 1000 pts, faster wins = bonus points (max 500)
+      const didWin = winner === 'p1';
+      const baseScore = didWin ? 1000 : 100;
+      const timeBonus = didWin ? Math.max(0, Math.floor((CONFIG.match.totalTime - matchTime) * 5)) : 0;
+      const winsBonus = state.wins.p1 * 200;
+      const score = baseScore + timeBonus + winsBonus;
+      
+      hubSDK.submitScore(score);
+      console.log('[ToonShooter] Score submitted to Hub:', score, didWin ? '(WIN)' : '(LOSS)');
     }
 
     function togglePause() {

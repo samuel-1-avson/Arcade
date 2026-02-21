@@ -1,4 +1,4 @@
-/**
+﻿/**
  * GlobalStateManager - Centralized State Management for Arcade Hub
  * Handles cross-game data, user profiles, and unified statistics
  * Syncs with StorageManager and Firebase for persistence
@@ -6,6 +6,7 @@
 import { eventBus, GameEvents } from '../engine/EventBus.js';
 import { storageManager } from '../engine/StorageManager.js';
 import { GAME_IDS } from '../config/gameRegistry.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 // Re-export GAME_IDS for backward compatibility
 export { GAME_IDS } from '../config/gameRegistry.js';
@@ -129,7 +130,7 @@ class GlobalStateManager {
         // Determine title based on achievements
         this._updateTitle();
 
-        console.log('GlobalStateManager initialized:', this.userProfile.displayName);
+        logger.info(LogCategory.APP, 'GlobalStateManager initialized:', this.userProfile.displayName);
         return true;
     }
 
@@ -240,7 +241,7 @@ class GlobalStateManager {
      */
     updateGameStats(gameId, stats) {
         if (!GAME_IDS.includes(gameId)) {
-            console.warn('Unknown game ID:', gameId);
+            logger.warn(LogCategory.APP, 'Unknown game ID:', gameId);
             return;
         }
 
@@ -539,7 +540,7 @@ class GlobalStateManager {
                 this.artifacts = parsed.artifacts || [];
             }
         } catch (e) {
-            console.warn('Failed to load global state:', e);
+            logger.warn(LogCategory.APP, 'Failed to load global state:', e);
         }
     }
 
@@ -557,7 +558,7 @@ class GlobalStateManager {
                 artifacts: this.artifacts
             }));
         } catch (e) {
-            console.warn('Failed to save global state:', e);
+            logger.warn(LogCategory.APP, 'Failed to save global state:', e);
         }
     }
 

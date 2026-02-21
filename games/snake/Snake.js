@@ -26,6 +26,7 @@ import { PolishSystem } from './PolishSystem.js';
 import { TrailSystem, LightingSystem, ScreenEffects, IsometricRenderer } from './EnhancedEffects.js';
 
 import { SNAKE_ICONS } from './SnakeIcons.js';
+import { hubSDK } from '../../js/engine/HubSDK.js';
 
 // Direction constants
 const DIRECTION = {
@@ -160,6 +161,13 @@ class SnakeGame extends GameEngine {
             height: 600,
             pixelPerfect: true
         });
+
+        // Initialize HubSDK
+        hubSDK.init({ gameId: 'snake' });
+        
+        // Register pause/resume handlers
+        hubSDK.onPause(() => this.pause());
+        hubSDK.onResume(() => this.resume());
 
         // Grid settings - 30x30 grid
         this.gridSize = 30;
@@ -445,7 +453,12 @@ class SnakeGame extends GameEngine {
     }
 
     loadAchievements() {
-        this.unlockedAchievements = storageManager.getAchievements() || [];
+        try {
+            this.unlockedAchievements = storageManager.getAchievements() || [];
+        } catch (e) {
+            console.warn('[Snake] Failed to load achievements:', e);
+            this.unlockedAchievements = [];
+        }
     }
 
     checkAchievement(id) {
@@ -456,6 +469,10 @@ class SnakeGame extends GameEngine {
 
         storageManager.unlockAchievement(id, achievement.xp);
         this.unlockedAchievements.push(id);
+        
+        // Sync achievement with Hub
+        hubSDK.unlockAchievement(id);
+        
         this.showAchievementPopup(achievement);
         return true;
     }
@@ -516,11 +533,7 @@ class SnakeGame extends GameEngine {
 
         // SPA Back Button
         document.getElementById('snake-back-btn')?.addEventListener('click', () => {
-            if (window.GameBridge) {
-                window.GameBridge.exitGame();
-            } else {
-                window.location.href = '../../index.html';
-            }
+            hubSDK.exitGame();
         });
 
         // View toggle button (2D/3D/WebGL)
@@ -702,6 +715,11 @@ class SnakeGame extends GameEngine {
     loadLevel(config) {
         this.customLevelConfig = config;
         this.currentLevel = 0; 
+    }
+
+    onGameOver(isWin, isNewHighScore) {
+        // Submit score to Hub
+        hubSDK.submitScore(this.score);
     }
 
     onReset() {

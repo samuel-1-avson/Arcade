@@ -1,8 +1,9 @@
-/**
+﻿/**
  * StorageManager - Persistent data storage with LocalStorage and Firebase sync
  * Handles high scores, achievements, user stats, and settings
  */
 import { eventBus, GameEvents } from './EventBus.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 class StorageManager {
     constructor() {
@@ -251,9 +252,9 @@ class StorageManager {
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             }, { merge: true });
 
-            console.log('Data synced to cloud');
+            logger.info(LogCategory.STORAGE, 'Data synced to cloud');
         } catch (error) {
-            console.error('Failed to sync to cloud:', error);
+            logger.error(LogCategory.STORAGE, 'Failed to sync to cloud:', error);
         }
     }
 
@@ -305,10 +306,10 @@ class StorageManager {
                 }
 
                 this._saveLocalData();
-                console.log('Data synced from cloud');
+                logger.info(LogCategory.STORAGE, 'Data synced from cloud');
             }
         } catch (error) {
-            console.error('Failed to sync from cloud:', error);
+            logger.error(LogCategory.STORAGE, 'Failed to sync from cloud:', error);
         }
     }
 
@@ -325,7 +326,7 @@ class StorageManager {
                 };
             }
         } catch (e) {
-            console.warn('Failed to load local data:', e);
+            logger.warn(LogCategory.STORAGE, 'Failed to load local data:', e);
         }
     }
 
@@ -333,7 +334,7 @@ class StorageManager {
         try {
             localStorage.setItem('arcadeHub_gameData', JSON.stringify(this.localData));
         } catch (e) {
-            console.warn('Failed to save local data:', e);
+            logger.warn(LogCategory.STORAGE, 'Failed to save local data:', e);
         }
     }
 
@@ -353,7 +354,7 @@ class StorageManager {
             // This would typically call a Cloud Function
             // await firebase.functions().httpsCallable('submitScore')({ gameId, score });
         } catch (error) {
-            console.error('Failed to sync high score to cloud:', error);
+            logger.error(LogCategory.STORAGE, 'Failed to sync high score to cloud:', error);
         }
     }
 
@@ -367,7 +368,7 @@ class StorageManager {
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             }, { merge: true });
         } catch (error) {
-            console.error('Failed to sync achievements to cloud:', error);
+            logger.error(LogCategory.STORAGE, 'Failed to sync achievements to cloud:', error);
         }
     }
 

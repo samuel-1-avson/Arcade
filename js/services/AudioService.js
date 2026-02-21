@@ -1,8 +1,9 @@
-/**
+﻿/**
  * AudioService - Centralized Audio Management
  * Handles Background Music (BGM) and Sound Effects (SFX)
  */
 import { globalStateManager } from './GlobalStateManager.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 class AudioService {
     constructor() {
@@ -53,11 +54,11 @@ class AudioService {
             // Web Audio Context - Initialize lazily
             this.ctx = null;
         } catch (e) {
-            console.warn('Web Audio support check failed', e);
+            logger.warn(LogCategory.AUDIO, 'Web Audio support check failed', e);
         }
 
         this.initialized = true;
-        console.log('AudioService initialized (waiting for user gesture)');
+        logger.info(LogCategory.AUDIO, 'AudioService initialized (waiting for user gesture)');
 
         // Add unlock listeners
         const unlockHandler = () => {
@@ -76,7 +77,7 @@ class AudioService {
     _tryInitContext() {
         if (this.ctx) {
             if (this.ctx.state === 'suspended') {
-                this.ctx.resume().catch(e => console.warn('Audio resume failed', e));
+                this.ctx.resume().catch(e => logger.warn(LogCategory.AUDIO, 'Audio resume failed', e));
             }
             return;
         }
@@ -95,13 +96,13 @@ class AudioService {
             // Start Ambience
             this._startAmbience();
             
-            console.log('AudioContext started successfully');
+            logger.info(LogCategory.AUDIO, 'AudioContext started successfully');
         } catch (e) {
-            console.warn('AudioContext init failed', e);
+            logger.warn(LogCategory.AUDIO, 'AudioContext init failed', e);
         }
 
         this.initialized = true;
-        console.log('AudioService initialized with AAA Audio');
+        logger.info(LogCategory.AUDIO, 'AudioService initialized with AAA Audio');
 
         // Subscribe to preference changes
         // checking periodically or hooking into save event in GlobalStateManager
@@ -124,7 +125,7 @@ class AudioService {
         try {
             this._playSynthSound(name);
         } catch (e) {
-            console.warn('Audio play failed', e);
+            logger.warn(LogCategory.AUDIO, 'Audio play failed', e);
         }
     }
 
@@ -142,7 +143,7 @@ class AudioService {
         this.bgm = new Audio(trackUrl);
         this.bgm.loop = true;
         this.bgm.volume = this.volume.music;
-        this.bgm.play().catch(e => console.log('Autoplay prevented', e));
+        this.bgm.play().catch(e => logger.info(LogCategory.AUDIO, 'Autoplay prevented', e));
     }
 
     setMusicEnabled(enabled) {

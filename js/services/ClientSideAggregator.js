@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Client-Side Leaderboard Aggregator
  * Replaces Cloud Functions leaderboard aggregation for free tier
  * Runs in browser to calculate rankings from Firestore data
@@ -7,6 +7,7 @@
 import { firebaseService } from '../engine/FirebaseService.js';
 import { eventBus } from '../engine/EventBus.js';
 import { GAME_IDS } from '../config/gameRegistry.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 class ClientSideAggregator {
     constructor() {
@@ -20,7 +21,7 @@ class ClientSideAggregator {
      * Initialize aggregator
      */
     init() {
-        console.log('[ClientSideAggregator] Initialized');
+        logger.info(LogCategory.ANALYTICS, '[ClientSideAggregator] Initialized');
         
         // Aggregate on score submission
         eventBus.on('scoreSubmitted', () => {
@@ -51,7 +52,7 @@ class ClientSideAggregator {
         if (this.isAggregating) return;
         this.isAggregating = true;
 
-        console.log('[ClientSideAggregator] Starting aggregation...');
+        logger.info(LogCategory.ANALYTICS, '[ClientSideAggregator] Starting aggregation...');
         
         try {
             // Aggregate each game's leaderboard
@@ -62,10 +63,10 @@ class ClientSideAggregator {
             // Aggregate global leaderboard
             await this.aggregateGlobalLeaderboard();
 
-            console.log('[ClientSideAggregator] Aggregation complete');
+            logger.info(LogCategory.ANALYTICS, '[ClientSideAggregator] Aggregation complete');
             eventBus.emit('leaderboardsUpdated', { source: 'client-aggregator' });
         } catch (error) {
-            console.error('[ClientSideAggregator] Error:', error);
+            logger.error(LogCategory.ANALYTICS, '[ClientSideAggregator] Error:', error);
         } finally {
             this.isAggregating = false;
         }
@@ -127,7 +128,7 @@ class ClientSideAggregator {
             this.cacheLeaderboard(gameId, leaderboard);
 
         } catch (error) {
-            console.error(`[ClientSideAggregator] Error aggregating ${gameId}:`, error);
+            logger.error(LogCategory.ANALYTICS, `[ClientSideAggregator] Error aggregating ${gameId}:`, error);
         }
     }
 
@@ -192,7 +193,7 @@ class ClientSideAggregator {
             this.cacheLeaderboard('global', leaderboard);
 
         } catch (error) {
-            console.error('[ClientSideAggregator] Error aggregating global:', error);
+            logger.error(LogCategory.ANALYTICS, '[ClientSideAggregator] Error aggregating global:', error);
         }
     }
 
@@ -207,7 +208,7 @@ class ClientSideAggregator {
                 timestamp: Date.now()
             }));
         } catch (e) {
-            console.warn('[ClientSideAggregator] Cache error:', e);
+            logger.warn(LogCategory.ANALYTICS, '[ClientSideAggregator] Cache error:', e);
         }
     }
 
@@ -226,7 +227,7 @@ class ClientSideAggregator {
                 }
             }
         } catch (e) {
-            console.warn('[ClientSideAggregator] Cache read error:', e);
+            logger.warn(LogCategory.ANALYTICS, '[ClientSideAggregator] Cache read error:', e);
         }
         return null;
     }

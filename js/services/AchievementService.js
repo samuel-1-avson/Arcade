@@ -1,10 +1,11 @@
-/**
+﻿/**
  * AchievementService - Unified Achievement System for Arcade Hub
  * Hub-wide achievement tracking with meta-achievements and cross-game milestones
  */
 import { eventBus } from '../engine/EventBus.js';
 import { globalStateManager, GAME_IDS } from './GlobalStateManager.js';
 import { notificationService } from './NotificationService.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 // Meta-Achievements - Cross-game achievements
 export const META_ACHIEVEMENTS = {
@@ -346,7 +347,7 @@ class AchievementService {
     init() {
         // Initial check for meta achievements
         this.checkMetaAchievements();
-        console.log('AchievementService initialized');
+        logger.info(LogCategory.GAME, 'AchievementService initialized');
     }
 
     // ============ PUBLIC METHODS ============
@@ -470,7 +471,7 @@ class AchievementService {
             const saved = localStorage.getItem('arcadeHub_metaAchievements');
             return saved ? JSON.parse(saved) : [];
         } catch (e) {
-            console.warn('Failed to load meta achievements:', e);
+            logger.warn(LogCategory.GAME, 'Failed to load meta achievements:', e);
             return [];
         }
     }
@@ -483,7 +484,7 @@ class AchievementService {
         try {
             localStorage.setItem('arcadeHub_metaAchievements', JSON.stringify(this.unlockedMeta));
         } catch (e) {
-            console.warn('Failed to save meta achievements:', e);
+            logger.warn(LogCategory.GAME, 'Failed to save meta achievements:', e);
         }
     }
 
@@ -691,11 +692,11 @@ class AchievementService {
             });
 
             await batch.commit();
-            console.log(`[AchievementService] Synced ${syncedCount} achievements to cloud`);
+            logger.info(LogCategory.GAME, `[AchievementService] Synced ${syncedCount} achievements to cloud`);
             
             return { synced: syncedCount, skipped: 0 };
         } catch (error) {
-            console.error('[AchievementService] Cloud sync error:', error);
+            logger.error(LogCategory.GAME, '[AchievementService] Cloud sync error:', error);
             return { synced: 0, error: error.message };
         }
     }
@@ -715,7 +716,7 @@ class AchievementService {
                     JSON.stringify([...new Set([...pending, ...newPending])]));
             }
         } catch (e) {
-            console.warn('[AchievementService] Failed to queue sync:', e);
+            logger.warn(LogCategory.GAME, '[AchievementService] Failed to queue sync:', e);
         }
     }
 
@@ -739,9 +740,9 @@ class AchievementService {
             
             // Clear pending
             localStorage.removeItem('pendingAchievementSync');
-            console.log(`[AchievementService] Processed ${pending.length} pending achievement syncs`);
+            logger.info(LogCategory.GAME, `[AchievementService] Processed ${pending.length} pending achievement syncs`);
         } catch (e) {
-            console.warn('[AchievementService] Failed to process pending sync:', e);
+            logger.warn(LogCategory.GAME, '[AchievementService] Failed to process pending sync:', e);
         }
     }
 

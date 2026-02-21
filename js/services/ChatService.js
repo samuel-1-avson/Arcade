@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ChatService - Messaging System
  * Handles direct messages between friends and party chat
  * Uses Firebase Realtime Database for real-time messaging
@@ -9,6 +9,7 @@ import { globalStateManager } from './GlobalStateManager.js';
 import { notificationService } from './NotificationService.js';
 import { sanitizeChatMessage, sanitizeDisplayName, sanitizeHTML } from '../utils/sanitize.js';
 import { rateLimiter, RATE_LIMITS } from '../utils/rateLimiter.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 class ChatService {
     constructor() {
@@ -29,7 +30,7 @@ class ChatService {
         if (typeof firebase !== 'undefined' && firebase.database) {
             this.db = firebase.database();
         } else {
-            console.warn('[ChatService] Firebase RTDB not available');
+            logger.warn(LogCategory.SOCIAL, '[ChatService] Firebase RTDB not available');
             return;
         }
 
@@ -50,7 +51,7 @@ class ChatService {
         });
 
         this.initialized = true;
-        console.log('[ChatService] Initialized');
+        logger.info(LogCategory.SOCIAL, '[ChatService] Initialized');
     }
 
     // ============ DIRECT MESSAGES ============
@@ -119,7 +120,7 @@ class ChatService {
             if (error.rateLimited) {
                 notificationService.error(error.message);
             } else {
-                console.error('[ChatService] Send DM error:', error);
+                logger.error(LogCategory.SOCIAL, '[ChatService] Send DM error:', error);
                 notificationService.error('Failed to send message');
             }
             return false;
@@ -204,7 +205,7 @@ class ChatService {
 
             return messages;
         } catch (error) {
-            console.error('[ChatService] Get history error:', error);
+            logger.error(LogCategory.SOCIAL, '[ChatService] Get history error:', error);
             return [];
         }
     }
@@ -218,7 +219,7 @@ class ChatService {
         try {
             await this.db.ref(`conversations/${this.currentUserId}/${conversationId}/unread`).set(0);
         } catch (error) {
-            console.error('[ChatService] Mark read error:', error);
+            logger.error(LogCategory.SOCIAL, '[ChatService] Mark read error:', error);
         }
     }
 
@@ -282,7 +283,7 @@ class ChatService {
             if (error.rateLimited) {
                 notificationService.warning('Please slow down your messages');
             } else {
-                console.error('[ChatService] Send party message error:', error);
+                logger.error(LogCategory.SOCIAL, '[ChatService] Send party message error:', error);
             }
             return false;
         }
@@ -348,7 +349,7 @@ class ChatService {
         try {
             await this.db.ref(`messages/party/${partyId}`).remove();
         } catch (error) {
-            console.error('[ChatService] Clear party chat error:', error);
+            logger.error(LogCategory.SOCIAL, '[ChatService] Clear party chat error:', error);
         }
     }
 
@@ -387,7 +388,7 @@ class ChatService {
 
             return conversations.reverse(); // Most recent first
         } catch (error) {
-            console.error('[ChatService] Get conversations error:', error);
+            logger.error(LogCategory.SOCIAL, '[ChatService] Get conversations error:', error);
             return [];
         }
     }

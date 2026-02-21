@@ -1,9 +1,10 @@
-/**
+﻿/**
  * Error Boundary Component v1.1
  * Catches and handles errors gracefully
  */
 
 import { Modal, MODAL_SIZES } from './Modal.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 export class ErrorBoundary {
     constructor(options = {}) {
@@ -75,24 +76,34 @@ export class ErrorBoundary {
 
     showErrorModal(error, context) {
         const modal = new Modal({
-            title: 'Error',
+            title: 'Something Went Wrong',
             size: MODAL_SIZES.SM,
             content: `
-                <div class="error-content">
-                    <div class="error-icon">⚠️</div>
-                    <p>${this.options.fallbackMessage}</p>
+                <div class="error-content" style="text-align:center;padding:var(--space-lg,1.5rem);">
+                    <div class="error-icon" style="font-size:3rem;margin-bottom:var(--space-md,1rem);">⚠️</div>
+                    <p style="color:var(--text-primary,#f0f0f5);margin-bottom:var(--space-sm,0.5rem);font-family:var(--font-display,'Orbitron',sans-serif);font-size:0.85rem;letter-spacing:0.05em;">
+                        ${this.options.fallbackMessage}
+                    </p>
+                    <p style="color:var(--text-muted,#52526a);font-size:0.75rem;margin-bottom:var(--space-md,1rem);">
+                        ${context ? `Context: ${context}` : 'An unexpected error occurred.'}
+                    </p>
                     ${this.options.showDetails ? `
-                        <details>
-                            <summary>Error Details</summary>
-                            <pre>${error.message}\n${error.stack || ''}</pre>
+                        <details style="text-align:left;margin-top:var(--space-md,1rem);border:var(--border-subtle,1px solid #1a1a1a);padding:var(--space-sm,0.5rem);">
+                            <summary style="cursor:pointer;color:var(--text-secondary,#9898b0);font-size:0.7rem;letter-spacing:0.05em;">ERROR DETAILS</summary>
+                            <pre style="font-size:0.65rem;color:var(--color-red,#e85555);margin-top:var(--space-sm,0.5rem);overflow-x:auto;white-space:pre-wrap;">${error.message}\n${error.stack || ''}</pre>
                         </details>
                     ` : ''}
                 </div>
             `,
             footer: `
-                <button class="btn btn-primary" onclick="this.closest('.modal-backdrop').remove()">
-                    Dismiss
-                </button>
+                <div style="display:flex;gap:var(--space-sm,0.5rem);width:100%;">
+                    <button class="btn btn-ghost" onclick="window.location.reload()" style="flex:1;">
+                        ↻ Retry
+                    </button>
+                    <button class="btn btn-primary" onclick="this.closest('.modal-backdrop').remove()" style="flex:1;">
+                        Dismiss
+                    </button>
+                </div>
             `
         });
         
@@ -127,11 +138,11 @@ export class ErrorBoundary {
         
         // Log to console in development
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            console.group('Error Report');
-            console.log('Context:', context);
-            console.log('Error:', error);
-            console.log('Stack:', error.stack);
-            console.groupEnd();
+            logger.debug(LogCategory.APP, 'GROUP:', 'Error Report');
+            logger.info(LogCategory.APP, 'Context:', context);
+            logger.info(LogCategory.APP, 'Error:', error);
+            logger.info(LogCategory.APP, 'Stack:', error.stack);
+            // groupEnd;
         }
     }
 

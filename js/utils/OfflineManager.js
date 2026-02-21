@@ -1,10 +1,11 @@
-/**
+﻿/**
  * Offline Manager
  * Enhanced offline support for free tier without relying on Cloud Functions
  * Handles queueing actions and syncing when back online
  */
 
 import { eventBus } from '../engine/EventBus.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 class OfflineManager {
     constructor() {
@@ -20,7 +21,7 @@ class OfflineManager {
      * Initialize offline manager
      */
     init() {
-        console.log('[OfflineManager] Initialized');
+        logger.info(LogCategory.NETWORK, '[OfflineManager] Initialized');
 
         // Listen for online/offline events
         window.addEventListener('online', () => this.handleOnline());
@@ -45,7 +46,7 @@ class OfflineManager {
      * Handle going online
      */
     handleOnline() {
-        console.log('[OfflineManager] Connection restored');
+        logger.info(LogCategory.NETWORK, '[OfflineManager] Connection restored');
         this.isOnline = true;
         eventBus.emit('offlineStatusChanged', { isOnline: true });
         eventBus.emit('connectionRestored');
@@ -58,7 +59,7 @@ class OfflineManager {
      * Handle going offline
      */
     handleOffline() {
-        console.log('[OfflineManager] Connection lost');
+        logger.info(LogCategory.NETWORK, '[OfflineManager] Connection lost');
         this.isOnline = false;
         eventBus.emit('offlineStatusChanged', { isOnline: false });
         eventBus.emit('connectionLost');
@@ -92,7 +93,7 @@ class OfflineManager {
 
         this.saveQueue();
         
-        console.log('[OfflineManager] Action queued:', type);
+        logger.info(LogCategory.NETWORK, '[OfflineManager] Action queued:', type);
         eventBus.emit('actionQueued', { action });
 
         // Try to sync immediately if online
@@ -137,7 +138,7 @@ class OfflineManager {
             localStorage.setItem('arcadeHub_offlineQueue', 
                 JSON.stringify(this.actionQueue));
         } catch (e) {
-            console.warn('[OfflineManager] Failed to save queue:', e);
+            logger.warn(LogCategory.NETWORK, '[OfflineManager] Failed to save queue:', e);
         }
     }
 
@@ -151,7 +152,7 @@ class OfflineManager {
                 this.actionQueue = JSON.parse(saved);
             }
         } catch (e) {
-            console.warn('[OfflineManager] Failed to load queue:', e);
+            logger.warn(LogCategory.NETWORK, '[OfflineManager] Failed to load queue:', e);
         }
     }
 
@@ -194,7 +195,7 @@ class OfflineManager {
             } catch (error) {
                 action.attempts++;
                 if (action.attempts >= action.maxAttempts) {
-                    console.warn('[OfflineManager] Action max attempts reached:', action);
+                    logger.warn(LogCategory.NETWORK, '[OfflineManager] Action max attempts reached:', action);
                     failed.push(action.id);
                 }
             }
@@ -214,7 +215,7 @@ class OfflineManager {
             remaining: this.actionQueue.length
         });
 
-        console.log('[OfflineManager] Sync complete:', {
+        logger.info(LogCategory.NETWORK, '[OfflineManager] Sync complete:', {
             successful: successful.length,
             failed: failed.length
         });
@@ -247,7 +248,7 @@ class OfflineManager {
                 break;
 
             default:
-                console.warn('[OfflineManager] Unknown action type:', action.type);
+                logger.warn(LogCategory.NETWORK, '[OfflineManager] Unknown action type:', action.type);
         }
     }
 
@@ -265,7 +266,7 @@ class OfflineManager {
             localStorage.setItem(`arcadeHub_cache_${key}`, 
                 JSON.stringify(cacheEntry));
         } catch (e) {
-            console.warn('[OfflineManager] Cache error:', e);
+            logger.warn(LogCategory.NETWORK, '[OfflineManager] Cache error:', e);
         }
     }
 
@@ -290,7 +291,7 @@ class OfflineManager {
                 }
             }
         } catch (e) {
-            console.warn('[OfflineManager] Cache read error:', e);
+            logger.warn(LogCategory.NETWORK, '[OfflineManager] Cache read error:', e);
         }
         return null;
     }
@@ -308,7 +309,7 @@ class OfflineManager {
             localStorage.setItem('arcadeHub_pendingChanges', 
                 JSON.stringify(Array.from(this.pendingChanges.entries())));
         } catch (e) {
-            console.warn('[OfflineManager] Pending changes save error:', e);
+            logger.warn(LogCategory.NETWORK, '[OfflineManager] Pending changes save error:', e);
         }
     }
 
@@ -361,7 +362,7 @@ class OfflineManager {
             }
         }
 
-        console.log('[OfflineManager] All offline data cleared');
+        logger.info(LogCategory.NETWORK, '[OfflineManager] All offline data cleared');
     }
 }
 

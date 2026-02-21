@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Leaderboard Manager
  * Integrates LeaderboardList component with VirtualList for performance
  */
@@ -6,6 +6,7 @@
 import { LeaderboardList } from '../components/LeaderboardList.js';
 import { leaderboardService } from '../services/LeaderboardService.js';
 import { GAME_ICONS } from '../config/gameRegistry.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 export class LeaderboardManager {
     constructor(app) {
@@ -108,7 +109,7 @@ export class LeaderboardManager {
             showAvatar: true,
             onItemClick: (entry) => {
                 // Could open player profile
-                console.log('Clicked player:', entry);
+                logger.info(LogCategory.GAME, 'Clicked player:', entry);
             }
         });
         

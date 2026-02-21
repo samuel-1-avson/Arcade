@@ -1,4 +1,4 @@
-/**
+﻿/**
  * PartyService - Global Party System
  * Manages party state and synchronization using Firebase Realtime Database
  * Supports real cross-device party rooms
@@ -6,6 +6,7 @@
 import { globalStateManager } from './GlobalStateManager.js';
 import { notificationService } from './NotificationService.js';
 import { eventBus } from '../engine/EventBus.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 class PartyService {
     constructor() {
@@ -43,9 +44,9 @@ class PartyService {
                 }
             }
             
-            console.log('[PartyService] Initialized with Firebase RTDB, ID:', this.myPeerId);
+            logger.info(LogCategory.PARTY, '[PartyService] Initialized with Firebase RTDB, ID:', this.myPeerId);
         } else {
-            console.warn('[PartyService] Firebase RTDB not available');
+            logger.warn(LogCategory.PARTY, '[PartyService] Firebase RTDB not available');
             this.myPeerId = 'local_' + Math.random().toString(36).substring(2, 11);
         }
 
@@ -112,7 +113,7 @@ class PartyService {
             
             return this.partyId;
         } catch (error) {
-            console.error('[PartyService] Create party failed:', error);
+            logger.error(LogCategory.PARTY, '[PartyService] Create party failed:', error);
             notificationService.error('Failed to create party');
             return null;
         }
@@ -172,7 +173,7 @@ class PartyService {
             notificationService.success('Joined party!');
             return true;
         } catch (error) {
-            console.error('[PartyService] Join party failed:', error);
+            logger.error(LogCategory.PARTY, '[PartyService] Join party failed:', error);
             notificationService.error('Failed to join party');
             return false;
         }
@@ -190,7 +191,7 @@ class PartyService {
                 await this.partyRef.remove();
             }
         } catch (error) {
-            console.error('[PartyService] Leave party error:', error);
+            logger.error(LogCategory.PARTY, '[PartyService] Leave party error:', error);
         }
 
         // Clean up

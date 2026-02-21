@@ -1,3 +1,4 @@
+﻿import { logger, LogCategory } from '../utils/logger.js';
 /**
  * Sound Effects Manager
  * Provides synthesized sound effects using Web Audio API
@@ -20,7 +21,7 @@ class SoundEffects {
         try {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
         } catch (e) {
-            console.warn('Web Audio API not supported');
+            logger.warn(LogCategory.AUDIO, 'Web Audio API not supported');
             this.enabled = false;
         }
     }

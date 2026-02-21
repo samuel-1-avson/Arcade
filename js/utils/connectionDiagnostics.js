@@ -1,10 +1,11 @@
-/**
+﻿/**
  * Connection Diagnostics Tool
  * Monitors and diagnoses frontend-backend connection health
  */
 
 import { firebaseService } from '../engine/FirebaseService.js';
 import { eventBus } from '../engine/EventBus.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 class ConnectionDiagnostics {
     constructor() {
@@ -25,7 +26,7 @@ class ConnectionDiagnostics {
      * Initialize connection monitoring
      */
     init() {
-        console.log('[ConnectionDiagnostics] Initializing...');
+        logger.info(LogCategory.NETWORK, '[ConnectionDiagnostics] Initializing...');
         this.runDiagnostics();
         
         // Run periodic checks every 30 seconds
@@ -46,7 +47,7 @@ class ConnectionDiagnostics {
      * Run full diagnostic suite
      */
     async runDiagnostics() {
-        console.log('[ConnectionDiagnostics] Running diagnostics...');
+        logger.info(LogCategory.NETWORK, '[ConnectionDiagnostics] Running diagnostics...');
         
         const startTime = performance.now();
         
@@ -61,7 +62,7 @@ class ConnectionDiagnostics {
         this.status.latency = Math.round(performance.now() - startTime);
         this.status.lastChecked = new Date().toISOString();
         
-        console.log('[ConnectionDiagnostics] Status:', this.status);
+        logger.info(LogCategory.NETWORK, '[ConnectionDiagnostics] Status:', this.status);
         eventBus.emit('connectionStatus', this.status);
         
         return this.status;
@@ -75,7 +76,7 @@ class ConnectionDiagnostics {
             this.status.firebaseInitialized = firebaseService.initialized && 
                 typeof firebase !== 'undefined';
         } catch (error) {
-            console.error('[ConnectionDiagnostics] Firebase init check failed:', error);
+            logger.error(LogCategory.NETWORK, '[ConnectionDiagnostics] Firebase init check failed:', error);
             this.status.firebaseInitialized = false;
         }
     }
@@ -98,7 +99,7 @@ class ConnectionDiagnostics {
                 isAnonymous: currentUser.isAnonymous
             } : null;
         } catch (error) {
-            console.error('[ConnectionDiagnostics] Auth check failed:', error);
+            logger.error(LogCategory.NETWORK, '[ConnectionDiagnostics] Auth check failed:', error);
             this.status.authConnected = false;
         }
     }
@@ -123,7 +124,7 @@ class ConnectionDiagnostics {
                 // Permission denied means Firestore is reachable but rules blocked it
                 this.status.firestoreConnected = true;
             } else {
-                console.error('[ConnectionDiagnostics] Firestore check failed:', error);
+                logger.error(LogCategory.NETWORK, '[ConnectionDiagnostics] Firestore check failed:', error);
                 this.status.firestoreConnected = false;
             }
         }
@@ -145,7 +146,7 @@ class ConnectionDiagnostics {
             
             this.status.rtdbConnected = true;
         } catch (error) {
-            console.error('[ConnectionDiagnostics] RTDB check failed:', error);
+            logger.error(LogCategory.NETWORK, '[ConnectionDiagnostics] RTDB check failed:', error);
             this.status.rtdbConnected = false;
         }
     }
@@ -172,7 +173,7 @@ class ConnectionDiagnostics {
                 this.status.cloudFunctionsReachable = error.code === 'permission-denied';
             }
         } catch (error) {
-            console.error('[ConnectionDiagnostics] Cloud Functions check failed:', error);
+            logger.error(LogCategory.NETWORK, '[ConnectionDiagnostics] Cloud Functions check failed:', error);
             this.status.cloudFunctionsReachable = false;
         }
     }
@@ -219,16 +220,16 @@ class ConnectionDiagnostics {
      * Log detailed diagnostics to console
      */
     logDiagnostics() {
-        console.group('🔍 Connection Diagnostics');
-        console.log('Firebase Initialized:', this.status.firebaseInitialized ? '✅' : '❌');
-        console.log('Auth Connected:', this.status.authConnected ? '✅' : '❌');
-        console.log('Firestore Connected:', this.status.firestoreConnected ? '✅' : '❌');
-        console.log('RTDB Connected:', this.status.rtdbConnected ? '✅' : '❌');
-        console.log('Cloud Functions:', this.status.cloudFunctionsReachable ? '✅' : '❌');
-        console.log('Latency:', this.status.latency + 'ms');
-        console.log('Last Checked:', this.status.lastChecked);
-        console.log('Status:', this.getStatusMessage());
-        console.groupEnd();
+        logger.debug(LogCategory.NETWORK, 'GROUP:', '🔍 Connection Diagnostics');
+        logger.info(LogCategory.NETWORK, 'Firebase Initialized:', this.status.firebaseInitialized ? '✅' : '❌');
+        logger.info(LogCategory.NETWORK, 'Auth Connected:', this.status.authConnected ? '✅' : '❌');
+        logger.info(LogCategory.NETWORK, 'Firestore Connected:', this.status.firestoreConnected ? '✅' : '❌');
+        logger.info(LogCategory.NETWORK, 'RTDB Connected:', this.status.rtdbConnected ? '✅' : '❌');
+        logger.info(LogCategory.NETWORK, 'Cloud Functions:', this.status.cloudFunctionsReachable ? '✅' : '❌');
+        logger.info(LogCategory.NETWORK, 'Latency:', this.status.latency + 'ms');
+        logger.info(LogCategory.NETWORK, 'Last Checked:', this.status.lastChecked);
+        logger.info(LogCategory.NETWORK, 'Status:', this.getStatusMessage());
+        // groupEnd;
     }
 
     /**
@@ -318,7 +319,7 @@ class ConnectionDiagnostics {
      * Run comprehensive test suite
      */
     async runTestSuite() {
-        console.group('🔬 Connection Test Suite');
+        logger.debug(LogCategory.NETWORK, 'GROUP:', '🔬 Connection Test Suite');
         
         const tests = {
             'Firebase Initialization': this.status.firebaseInitialized,
@@ -335,16 +336,16 @@ class ConnectionDiagnostics {
         for (const [name, result] of Object.entries(tests)) {
             const success = typeof result === 'boolean' ? result : result.success;
             if (success) {
-                console.log(`✅ ${name}`);
+                logger.info(LogCategory.NETWORK, `✅ ${name}`);
                 passed++;
             } else {
-                console.error(`❌ ${name}:`, typeof result === 'object' ? result.error : 'Failed');
+                logger.error(LogCategory.NETWORK, `❌ ${name}:`, typeof result === 'object' ? result.error : 'Failed');
                 failed++;
             }
         }
         
-        console.log(`\nResults: ${passed} passed, ${failed} failed`);
-        console.groupEnd();
+        logger.info(LogCategory.NETWORK, `\nResults: ${passed} passed, ${failed} failed`);
+        // groupEnd;
         
         return { passed, failed, tests };
     }

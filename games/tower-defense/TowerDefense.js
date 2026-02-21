@@ -763,11 +763,6 @@ class TowerDefense extends GameEngine {
         this.score = (this.score || 0) + scoreGained;
         const scoreEl = document.querySelector('.score-value');
         if (scoreEl) scoreEl.textContent = this.score;
-
-        // SDK: Submit score
-        if (this.hubSDK) {
-            this.hubSDK.submitScore(this.score);
-        }
     }
     
     // Show floating text on canvas
@@ -829,12 +824,22 @@ class TowerDefense extends GameEngine {
                 <p><strong>${tower.name}</strong> (Lv.${tower.level})</p>
                 <p>Damage: ${tower.damage.toFixed(0)} | Range: ${tower.range.toFixed(0)}</p>
                 <div class="tower-actions">
-                    <button onclick="window.game.upgradeTower()" ${this.gold < upgradeCost ? 'disabled' : ''}>
+                    <button id="tower-upgrade-btn" data-action="upgrade" ${this.gold < upgradeCost ? 'disabled' : ''}>
                         Upgrade (${upgradeCost})
                     </button>
-                    <button onclick="window.game.sellTower()">Sell (${sellValue})</button>
+                    <button id="tower-sell-btn" data-action="sell">Sell (${sellValue})</button>
                 </div>
             `;
+            
+            // Attach event listeners to tower action buttons
+            const upgradeBtn = document.getElementById('tower-upgrade-btn');
+            const sellBtn = document.getElementById('tower-sell-btn');
+            if (upgradeBtn) {
+                upgradeBtn.addEventListener('click', () => this.upgradeTower());
+            }
+            if (sellBtn) {
+                sellBtn.addEventListener('click', () => this.sellTower());
+            }
         } else {
             infoEl.innerHTML = '<p>Select a tower and click on the map to place it.</p>';
         }
@@ -2227,13 +2232,22 @@ class TowerDefense extends GameEngine {
 
     // Override game over to show proper screens
     gameOver(isWin) {
+        // Show victory/defeat screen
         if (isWin) {
             this.showVictoryScreen('Victory! All waves cleared!');
         } else {
             this.showDefeatScreen('Your base was destroyed!');
         }
         
-        // Sync game over in multiplayer
+        // Submit score via hubSDK
+        if (this.hubSDK) {
+            this.hubSDK.submitScore(this.score);
+        }
+        
+        // Call parent gameOver for EventBus emission
+        super.gameOver(isWin);
+        
+        // Sync multiplayer
         if (this.isMultiplayer) {
             this.multiplayer.syncGameOver(isWin);
         }

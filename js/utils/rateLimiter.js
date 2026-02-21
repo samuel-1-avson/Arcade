@@ -1,3 +1,4 @@
+﻿import { logger, LogCategory } from '../utils/logger.js';
 /**
  * Rate Limiting Utility
  * Client-side rate limiting to prevent spam and abuse
@@ -27,7 +28,7 @@ class RateLimiter {
                 }
             }
         } catch (e) {
-            console.warn('[RateLimiter] Failed to load from storage:', e);
+            logger.warn(LogCategory.SERVICE, '[RateLimiter] Failed to load from storage:', e);
         }
     }
 
@@ -39,7 +40,7 @@ class RateLimiter {
             const data = Object.fromEntries(this.actions);
             localStorage.setItem(this.storageKey, JSON.stringify(data));
         } catch (e) {
-            console.warn('[RateLimiter] Failed to save to storage:', e);
+            logger.warn(LogCategory.SERVICE, '[RateLimiter] Failed to save to storage:', e);
         }
     }
 

@@ -115,8 +115,9 @@ class Minesweeper {
     
     placeMines(excludeRow, excludeCol) {
         let placed = 0;
+        let attempts = 0;
         
-        while (placed < this.mineCount) {
+        while (placed < this.mineCount && attempts < 10000) {
             const row = Math.floor(Math.random() * this.rows);
             const col = Math.floor(Math.random() * this.cols);
             
@@ -127,6 +128,7 @@ class Minesweeper {
                 this.grid[row][col].mine = true;
                 placed++;
             }
+            attempts++;
         }
         
         // Calculate adjacent mine counts
@@ -417,10 +419,9 @@ class Minesweeper {
         if (window.parent && window.parent !== window) {
             window.parent.postMessage({
                 type: 'SUBMIT_SCORE',
-                payload: {
-                    gameId: 'minesweeper',
-                    score: score,
-                    completed: completed
+                payload: { 
+                    gameId: 'minesweeper', 
+                    score: score 
                 }
             }, '*');
             console.log('[Minesweeper] Score submitted to Hub:', score);

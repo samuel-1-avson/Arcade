@@ -1,10 +1,11 @@
-/**
+﻿/**
  * EconomyService - Hub-Wide Currency and Cosmetics System
  * Manages coins, shop, and cosmetic unlocks
  */
 import { eventBus } from '../engine/EventBus.js';
 import { globalStateManager } from './GlobalStateManager.js';
 import { notificationService } from './NotificationService.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 // Currency types
 export const CURRENCY = {
@@ -213,7 +214,7 @@ class EconomyService {
      */
     init() {
         this._checkDailyLogin();
-        console.log('EconomyService initialized');
+        logger.info(LogCategory.ECONOMY, 'EconomyService initialized');
     }
 
     // ============ WALLET MANAGEMENT ============
@@ -504,7 +505,7 @@ class EconomyService {
             const saved = localStorage.getItem('arcadeHub_wallet');
             return saved ? JSON.parse(saved) : { coins: 0, gems: 0 };
         } catch (e) {
-            console.warn('Failed to load wallet:', e);
+            logger.warn(LogCategory.ECONOMY, 'Failed to load wallet:', e);
             return { coins: 0, gems: 0 };
         }
     }
@@ -517,7 +518,7 @@ class EconomyService {
         try {
             localStorage.setItem('arcadeHub_wallet', JSON.stringify(this.wallet));
         } catch (e) {
-            console.warn('Failed to save wallet:', e);
+            logger.warn(LogCategory.ECONOMY, 'Failed to save wallet:', e);
         }
     }
 
@@ -530,7 +531,7 @@ class EconomyService {
             const saved = localStorage.getItem('arcadeHub_ownedItems');
             return saved ? JSON.parse(saved) : [];
         } catch (e) {
-            console.warn('Failed to load owned items:', e);
+            logger.warn(LogCategory.ECONOMY, 'Failed to load owned items:', e);
             return [];
         }
     }
@@ -543,7 +544,7 @@ class EconomyService {
         try {
             localStorage.setItem('arcadeHub_ownedItems', JSON.stringify(this.ownedItems));
         } catch (e) {
-            console.warn('Failed to save owned items:', e);
+            logger.warn(LogCategory.ECONOMY, 'Failed to save owned items:', e);
         }
     }
 
@@ -556,7 +557,7 @@ class EconomyService {
             const saved = localStorage.getItem('arcadeHub_equipped');
             return saved ? JSON.parse(saved) : {};
         } catch (e) {
-            console.warn('Failed to load equipped items:', e);
+            logger.warn(LogCategory.ECONOMY, 'Failed to load equipped items:', e);
             return {};
         }
     }
@@ -569,7 +570,7 @@ class EconomyService {
         try {
             localStorage.setItem('arcadeHub_equipped', JSON.stringify(this.equipped));
         } catch (e) {
-            console.warn('Failed to save equipped items:', e);
+            logger.warn(LogCategory.ECONOMY, 'Failed to save equipped items:', e);
         }
     }
 

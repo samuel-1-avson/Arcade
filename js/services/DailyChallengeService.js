@@ -1,10 +1,11 @@
-/**
+﻿/**
  * DailyChallengeService - Hub-Wide Daily & Weekly Challenges
  * Cross-game challenges that reset daily and weekly
  */
 import { eventBus } from '../engine/EventBus.js';
 import { globalStateManager } from './GlobalStateManager.js';
 import { notificationService } from './NotificationService.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 // Daily challenge templates
 const DAILY_CHALLENGE_TEMPLATES = [
@@ -58,7 +59,7 @@ class DailyChallengeService {
      */
     init() {
         this._checkAndResetChallenges();
-        console.log('DailyChallengeService initialized');
+        logger.info(LogCategory.GAME, 'DailyChallengeService initialized');
     }
 
     // ============ PUBLIC METHODS ============
@@ -175,7 +176,7 @@ class DailyChallengeService {
                 this.currentWeekly = parsed.currentWeekly || null;
             }
         } catch (e) {
-            console.warn('Failed to load challenge progress:', e);
+            logger.warn(LogCategory.GAME, 'Failed to load challenge progress:', e);
         }
     }
 
@@ -193,7 +194,7 @@ class DailyChallengeService {
                 currentWeekly: this.currentWeekly
             }));
         } catch (e) {
-            console.warn('Failed to save challenge progress:', e);
+            logger.warn(LogCategory.GAME, 'Failed to save challenge progress:', e);
         }
     }
 

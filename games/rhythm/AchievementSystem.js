@@ -2,6 +2,7 @@
  * Rhythm Game - Achievement System
  * Tracks and manages player achievements
  */
+import { hubSDK } from '../../js/engine/HubSDK.js';
 
 // Achievement Categories
 export const AchievementCategory = {
@@ -547,6 +548,9 @@ export class AchievementManager {
         
         this.unlockedAchievements.add(achievementId);
         this.saveUnlocks();
+        
+        // Sync with hub
+        hubSDK.unlockAchievement(achievementId);
         
         // Queue notification
         this.pendingNotifications.push(achievement);

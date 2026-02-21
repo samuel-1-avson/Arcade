@@ -342,37 +342,63 @@ export class AchievementSystem {
     }
     
     loadUnlocked() {
-        const saved = localStorage.getItem('towerdefense_achievements_unlocked');
-        return saved ? JSON.parse(saved) : [];
+        try {
+            const saved = localStorage.getItem('towerdefense_achievements_unlocked');
+            return saved ? JSON.parse(saved) : [];
+        } catch (e) {
+            console.warn('Failed to load unlocked achievements:', e);
+            return [];
+        }
     }
     
     saveUnlocked() {
-        localStorage.setItem('towerdefense_achievements_unlocked', JSON.stringify(this.unlockedAchievements));
+        try {
+            localStorage.setItem('towerdefense_achievements_unlocked', JSON.stringify(this.unlockedAchievements));
+        } catch (e) {
+            console.warn('Failed to save unlocked achievements:', e);
+        }
     }
     
     loadProgress() {
-        const saved = localStorage.getItem('towerdefense_achievement_progress');
-        return saved ? JSON.parse(saved) : {};
+        try {
+            const saved = localStorage.getItem('towerdefense_achievement_progress');
+            return saved ? JSON.parse(saved) : {};
+        } catch (e) {
+            console.warn('Failed to load achievement progress:', e);
+            return {};
+        }
     }
     
     saveProgress() {
-        localStorage.setItem('towerdefense_achievement_progress', JSON.stringify(this.progress));
+        try {
+            localStorage.setItem('towerdefense_achievement_progress', JSON.stringify(this.progress));
+        } catch (e) {
+            console.warn('Failed to save achievement progress:', e);
+        }
     }
     
     loadPlayerData() {
-        const saved = localStorage.getItem('towerdefense_player_data');
-        if (saved) {
-            const data = JSON.parse(saved);
-            this.xp = data.xp || 0;
-            this.level = data.level || 1;
+        try {
+            const saved = localStorage.getItem('towerdefense_player_data');
+            if (saved) {
+                const data = JSON.parse(saved);
+                this.xp = data.xp || 0;
+                this.level = data.level || 1;
+            }
+        } catch (e) {
+            console.warn('Failed to load player data:', e);
         }
     }
     
     savePlayerData() {
-        localStorage.setItem('towerdefense_player_data', JSON.stringify({
-            xp: this.xp,
-            level: this.level
-        }));
+        try {
+            localStorage.setItem('towerdefense_player_data', JSON.stringify({
+                xp: this.xp,
+                level: this.level
+            }));
+        } catch (e) {
+            console.warn('Failed to save player data:', e);
+        }
     }
     
     // Check and unlock an achievement

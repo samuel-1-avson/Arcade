@@ -1,3 +1,4 @@
+﻿import { logger, LogCategory } from '../utils/logger.js';
 /**
  * BackgroundService - Dynamic AAA Background System
  * Uses Three.js to render an interactive particle void with cyber-aesthetics
@@ -51,10 +52,10 @@ class BackgroundService {
 
         // Wait for Three.js to be available
         if (typeof THREE === 'undefined') {
-            console.warn('Three.js not loaded yet, waiting...');
+            logger.warn(LogCategory.UI, 'Three.js not loaded yet, waiting...');
             await new Promise(resolve => setTimeout(resolve, 500));
             if (typeof THREE === 'undefined') {
-                console.error('Three.js failed to load. Ensure the script is included in index.html');
+                logger.error(LogCategory.UI, 'Three.js failed to load. Ensure the script is included in index.html');
                 return;
             }
         }
@@ -99,7 +100,7 @@ class BackgroundService {
             container.style.opacity = '1';
         }, 100);
 
-        console.log('BackgroundService initialized with AAA visuals');
+        logger.info(LogCategory.UI, 'BackgroundService initialized with AAA visuals');
     }
 
     createStarfield() {

@@ -455,10 +455,13 @@ export class MultiplayerManager {
         }
         
         html += `</div>`;
-        html += `<button onclick="this.parentElement.remove()" class="btn btn-primary" style="margin-top: 30px;">Close</button>`;
+        html += `<button class="btn btn-primary close-overlay-btn" style="margin-top: 30px;">Close</button>`;
         
         overlay.innerHTML = html;
         document.body.appendChild(overlay);
+        
+        // Add event listener for close button (security fix: no inline onclick)
+        overlay.querySelector('.close-overlay-btn').addEventListener('click', () => overlay.remove());
     }
     
     createInGameScoreboard() {

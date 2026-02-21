@@ -1,4 +1,4 @@
-/**
+﻿/**
  * FriendsService - Social Friends System
  * Manages friend requests, friends list, and online status tracking
  * Uses Firebase Realtime Database for real-time updates
@@ -9,6 +9,7 @@ import { globalStateManager } from './GlobalStateManager.js';
 import { notificationService } from './NotificationService.js';
 import { sanitizeDisplayName, escapeRegExp } from '../utils/sanitize.js';
 import { rateLimiter, RATE_LIMITS } from '../utils/rateLimiter.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 class FriendsService {
     constructor() {
@@ -31,7 +32,7 @@ class FriendsService {
         if (typeof firebase !== 'undefined' && firebase.database) {
             this.db = firebase.database();
         } else {
-            console.warn('[FriendsService] Firebase RTDB not available');
+            logger.warn(LogCategory.SOCIAL, '[FriendsService] Firebase RTDB not available');
             return;
         }
 
@@ -52,7 +53,7 @@ class FriendsService {
         });
 
         this.initialized = true;
-        console.log('[FriendsService] Initialized');
+        logger.info(LogCategory.SOCIAL, '[FriendsService] Initialized');
     }
 
     /**
@@ -203,7 +204,7 @@ class FriendsService {
             if (error.rateLimited) {
                 notificationService.error('Please wait before sending more friend requests');
             } else {
-                console.error('[FriendsService] Send request error:', error);
+                logger.error(LogCategory.SOCIAL, '[FriendsService] Send request error:', error);
                 notificationService.error('Failed to send friend request');
             }
             return false;
@@ -251,7 +252,7 @@ class FriendsService {
             if (error.rateLimited) {
                 notificationService.warning('Please slow down your search');
             } else {
-                console.error('[FriendsService] Search error:', error);
+                logger.error(LogCategory.SOCIAL, '[FriendsService] Search error:', error);
             }
             return [];
         }
@@ -302,7 +303,7 @@ class FriendsService {
             notificationService.success(`You are now friends with ${request.name}!`);
             return true;
         } catch (error) {
-            console.error('[FriendsService] Accept request error:', error);
+            logger.error(LogCategory.SOCIAL, '[FriendsService] Accept request error:', error);
             notificationService.error('Failed to accept request');
             return false;
         }
@@ -328,7 +329,7 @@ class FriendsService {
             notificationService.info('Friend request declined');
             return true;
         } catch (error) {
-            console.error('[FriendsService] Decline request error:', error);
+            logger.error(LogCategory.SOCIAL, '[FriendsService] Decline request error:', error);
             return false;
         }
     }
@@ -353,7 +354,7 @@ class FriendsService {
             notificationService.info('Friend request cancelled');
             return true;
         } catch (error) {
-            console.error('[FriendsService] Cancel request error:', error);
+            logger.error(LogCategory.SOCIAL, '[FriendsService] Cancel request error:', error);
             return false;
         }
     }
@@ -375,7 +376,7 @@ class FriendsService {
             notificationService.info('Friend removed');
             return true;
         } catch (error) {
-            console.error('[FriendsService] Remove friend error:', error);
+            logger.error(LogCategory.SOCIAL, '[FriendsService] Remove friend error:', error);
             return false;
         }
     }

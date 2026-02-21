@@ -1,0 +1,201 @@
+/* ==========================================================================
+   Skeleton Loading Animations — Retro Minimal
+   Pulsing placeholder UI for game cards, leaderboards, and panels
+   ========================================================================== */
+
+/* Base skeleton shimmer animation */
+@keyframes skeleton-pulse {
+  0% {
+    opacity: 0.06;
+  }
+  50% {
+    opacity: 0.12;
+  }
+  100% {
+    opacity: 0.06;
+  }
+}
+
+@keyframes skeleton-sweep {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Base skeleton block */
+.skeleton {
+  background: var(--bg-raised, #1a1a1a);
+  animation: skeleton-pulse 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  pointer-events: none;
+  user-select: none;
+}
+
+.skeleton-sweep {
+  background: linear-gradient(
+    90deg,
+    var(--bg-elevated, #111111) 25%,
+    var(--bg-raised, #1a1a1a) 50%,
+    var(--bg-elevated, #111111) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-sweep 2s ease-in-out infinite;
+}
+
+/* =========================================================================
+   Game Card Skeleton
+   Matches .game-card structure
+   ========================================================================= */
+
+.skeleton-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-elevated, #111111);
+  border: var(--border-subtle, 1px solid #1a1a1a);
+  overflow: hidden;
+  min-height: 280px;
+}
+
+.skeleton-card-art {
+  height: 140px;
+  background: var(--bg-raised, #1a1a1a);
+  animation: skeleton-pulse 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  position: relative;
+}
+
+.skeleton-card-art::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.skeleton-card-content {
+  padding: var(--space-md, 1rem);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm, 0.5rem);
+}
+
+.skeleton-line {
+  height: 12px;
+  background: var(--bg-raised, #1a1a1a);
+  animation: skeleton-pulse 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.skeleton-line--title {
+  width: 65%;
+  height: 16px;
+}
+
+.skeleton-line--desc {
+  width: 90%;
+}
+
+.skeleton-line--short {
+  width: 40%;
+}
+
+.skeleton-card-footer {
+  padding: var(--space-sm, 0.5rem) var(--space-md, 1rem);
+  border-top: var(--border-subtle, 1px solid #1a1a1a);
+}
+
+.skeleton-btn {
+  height: 36px;
+  width: 100%;
+  background: var(--bg-raised, #1a1a1a);
+  animation: skeleton-pulse 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Stagger animation delays for multiple cards */
+.skeleton-card:nth-child(2) .skeleton-card-art,
+.skeleton-card:nth-child(2) .skeleton-line,
+.skeleton-card:nth-child(2) .skeleton-btn {
+  animation-delay: 0.15s;
+}
+
+.skeleton-card:nth-child(3) .skeleton-card-art,
+.skeleton-card:nth-child(3) .skeleton-line,
+.skeleton-card:nth-child(3) .skeleton-btn {
+  animation-delay: 0.3s;
+}
+
+.skeleton-card:nth-child(4) .skeleton-card-art,
+.skeleton-card:nth-child(4) .skeleton-line,
+.skeleton-card:nth-child(4) .skeleton-btn {
+  animation-delay: 0.45s;
+}
+
+.skeleton-card:nth-child(5) .skeleton-card-art,
+.skeleton-card:nth-child(5) .skeleton-line,
+.skeleton-card:nth-child(5) .skeleton-btn {
+  animation-delay: 0.6s;
+}
+
+.skeleton-card:nth-child(6) .skeleton-card-art,
+.skeleton-card:nth-child(6) .skeleton-line,
+.skeleton-card:nth-child(6) .skeleton-btn {
+  animation-delay: 0.75s;
+}
+
+/* =========================================================================
+   Leaderboard Skeleton
+   ========================================================================= */
+
+.skeleton-leaderboard-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md, 1rem);
+  padding: var(--space-sm, 0.5rem) var(--space-md, 1rem);
+  border-bottom: var(--border-subtle, 1px solid #1a1a1a);
+}
+
+.skeleton-avatar {
+  width: 32px;
+  height: 32px;
+  background: var(--bg-raised, #1a1a1a);
+  animation: skeleton-pulse 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  flex-shrink: 0;
+}
+
+.skeleton-leaderboard-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.skeleton-leaderboard-score {
+  width: 60px;
+  height: 14px;
+  background: var(--bg-raised, #1a1a1a);
+  animation: skeleton-pulse 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  margin-left: auto;
+}
+
+/* =========================================================================
+   Transition: skeleton → real content
+   ========================================================================= */
+
+.skeleton-fade-out {
+  animation: skeleton-exit 0.25s ease-out forwards;
+}
+
+@keyframes skeleton-exit {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}

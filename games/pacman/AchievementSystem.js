@@ -347,6 +347,11 @@ export class AchievementSystem {
         this.unlockedAchievements.push(achievement.id);
         this.saveUnlocked();
 
+        // Sync with hub
+        if (typeof hubSDK !== 'undefined') {
+            hubSDK.unlockAchievement(achievement.id);
+        }
+
         // Queue popup
         this.pendingPopups.push(achievement);
         

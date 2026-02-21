@@ -1,4 +1,4 @@
-/**
+﻿/**
  * TournamentService - Hub-Wide Tournament System
  * Manages tournament creation, brackets, matchmaking, and rewards
  * Now with Firestore persistence for cross-device sync
@@ -9,6 +9,7 @@ import { notificationService } from './NotificationService.js';
 import { economyService, CURRENCY } from './EconomyService.js';
 import { firebaseService } from '../engine/FirebaseService.js';
 import { schemaVersionService } from './SchemaVersionService.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 // Tournament types
 export const TOURNAMENT_TYPES = {
@@ -57,9 +58,9 @@ class TournamentService {
             this.firestoreEnabled = true;
             await this._syncFromFirestore();
             this._subscribeToUpdates();
-            console.log('TournamentService initialized with Firestore');
+            logger.info(LogCategory.GAME, 'TournamentService initialized with Firestore');
         } else {
-            console.log('TournamentService initialized with localStorage');
+            logger.info(LogCategory.GAME, 'TournamentService initialized with localStorage');
             
             // Listen for auth state changes to sync when user signs in later
             if (firebaseService.auth) {
@@ -68,7 +69,7 @@ class TournamentService {
                         this.firestoreEnabled = true;
                         await this._syncFromFirestore();
                         this._subscribeToUpdates();
-                        console.log('TournamentService: Firestore enabled after sign-in');
+                        logger.info(LogCategory.GAME, 'TournamentService: Firestore enabled after sign-in');
                         eventBus.emit('tournamentsUpdated', this.tournaments);
                     }
                 });
@@ -605,7 +606,7 @@ class TournamentService {
             const saved = localStorage.getItem('arcadeHub_tournaments');
             return saved ? JSON.parse(saved) : [];
         } catch (e) {
-            console.warn('Failed to load tournaments:', e);
+            logger.warn(LogCategory.GAME, 'Failed to load tournaments:', e);
             return [];
         }
     }
@@ -619,7 +620,7 @@ class TournamentService {
         try {
             localStorage.setItem('arcadeHub_tournaments', JSON.stringify(this.tournaments));
         } catch (e) {
-            console.warn('Failed to save tournaments locally:', e);
+            logger.warn(LogCategory.GAME, 'Failed to save tournaments locally:', e);
         }
 
         // Also save to Firestore if enabled
@@ -637,9 +638,9 @@ class TournamentService {
                 }
 
                 await batch.commit();
-                console.log('[Tournaments] Saved to Firestore');
+                logger.info(LogCategory.GAME, '[Tournaments] Saved to Firestore');
             } catch (e) {
-                console.warn('Failed to save tournaments to Firestore:', e);
+                logger.warn(LogCategory.GAME, 'Failed to save tournaments to Firestore:', e);
             }
         }
     }
@@ -658,7 +659,7 @@ class TournamentService {
                 updatedAt: firebaseService.serverTimestamp()
             }, { merge: true });
         } catch (e) {
-            console.warn('Failed to save tournament to Firestore:', e);
+            logger.warn(LogCategory.GAME, 'Failed to save tournament to Firestore:', e);
         }
     }
 
@@ -684,9 +685,9 @@ class TournamentService {
             // Merge with local tournaments
             this.tournaments = this._mergeTournaments(firestoreTournaments);
             
-            console.log(`[Tournaments] Synced ${firestoreTournaments.length} from Firestore`);
+            logger.info(LogCategory.GAME, `[Tournaments] Synced ${firestoreTournaments.length} from Firestore`);
         } catch (e) {
-            console.warn('Failed to sync from Firestore:', e);
+            logger.warn(LogCategory.GAME, 'Failed to sync from Firestore:', e);
             // Fall back to localStorage
             this.tournaments = this._loadTournaments();
         }
@@ -738,10 +739,10 @@ class TournamentService {
                     
                     eventBus.emit('tournamentsUpdated', this.tournaments);
                 }, error => {
-                    console.warn('Tournament subscription error:', error);
+                    logger.warn(LogCategory.GAME, 'Tournament subscription error:', error);
                 });
         } catch (e) {
-            console.warn('Failed to subscribe to tournament updates:', e);
+            logger.warn(LogCategory.GAME, 'Failed to subscribe to tournament updates:', e);
         }
     }
 
@@ -777,7 +778,7 @@ class TournamentService {
         // Also clear from Firestore if enabled
         if (this.firestoreEnabled && firebaseService.db) {
             // Note: This would need admin permissions in production
-            console.warn('Firestore tournaments not cleared - requires admin');
+            logger.warn(LogCategory.GAME, 'Firestore tournaments not cleared - requires admin');
         }
     }
 
@@ -787,17 +788,17 @@ class TournamentService {
      */
     async migrateToFirestore() {
         if (!firebaseService.db || !firebaseService.isSignedIn()) {
-            console.warn('Cannot migrate: Firestore not available');
+            logger.warn(LogCategory.GAME, 'Cannot migrate: Firestore not available');
             return false;
         }
 
         const localTournaments = this._loadTournaments();
         if (localTournaments.length === 0) {
-            console.log('No local tournaments to migrate');
+            logger.info(LogCategory.GAME, 'No local tournaments to migrate');
             return true;
         }
 
-        console.log(`Migrating ${localTournaments.length} tournaments to Firestore...`);
+        logger.info(LogCategory.GAME, `Migrating ${localTournaments.length} tournaments to Firestore...`);
 
         try {
             const db = firebaseService.db;
@@ -813,10 +814,10 @@ class TournamentService {
             }
 
             await batch.commit();
-            console.log('Migration complete!');
+            logger.info(LogCategory.GAME, 'Migration complete!');
             return true;
         } catch (e) {
-            console.error('Migration failed:', e);
+            logger.error(LogCategory.GAME, 'Migration failed:', e);
             return false;
         }
     }
