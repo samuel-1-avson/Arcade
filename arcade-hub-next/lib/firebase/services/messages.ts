@@ -195,56 +195,69 @@ export const messagesService = {
 
   // Get messages for a conversation
   getMessages: async (conversationId: string, limitCount: number = 50): Promise<Message[]> => {
-    const db = await getFirebaseDb();
-    if (!db) return [];
+    try {
+      const db = await getFirebaseDb();
+      if (!db) return [];
 
-    const messagesRef = collection(db, MESSAGES_COLLECTION);
-    const q = query(
-      messagesRef,
-      where('conversationId', '==', conversationId),
-      orderBy('timestamp', 'desc'),
-      limit(limitCount)
-    );
-    const snapshot = await getDocs(q);
+      const messagesRef = collection(db, MESSAGES_COLLECTION);
+      const q = query(
+        messagesRef,
+        where('conversationId', '==', conversationId),
+        orderBy('timestamp', 'desc'),
+        limit(limitCount)
+      );
+      const snapshot = await getDocs(q);
 
-    return snapshot.docs
-      .map(doc => ({
-        id: doc.id,
-        conversationId: doc.data().conversationId,
-        senderId: doc.data().senderId,
-        senderName: doc.data().senderName,
-        senderPhoto: doc.data().senderPhoto,
-        text: doc.data().text,
-        timestamp: doc.data().timestamp?.toDate() || new Date(),
-        read: doc.data().read || false,
-      }))
-      .reverse();
+      return snapshot.docs
+        .map(doc => ({
+          id: doc.id,
+          conversationId: doc.data().conversationId,
+          senderId: doc.data().senderId,
+          senderName: doc.data().senderName,
+          senderPhoto: doc.data().senderPhoto,
+          text: doc.data().text,
+          timestamp: doc.data().timestamp?.toDate() || new Date(),
+          read: doc.data().read || false,
+        }))
+        .reverse();
+    } catch (error) {
+      console.error('[Messages] getMessages error:', error);
+      return [];
+    }
   },
 
   // Mark messages as read
   markAsRead: async (conversationId: string, userId: string): Promise<void> => {
-    const db = await getFirebaseDb();
-    if (!db) return;
+    try {
+      const db = await getFirebaseDb();
+      if (!db) return;
 
-    // Update unread count in conversation
-    await updateDoc(doc(db, CONVERSATIONS_COLLECTION, conversationId), {
-      [`unreadCount.${userId}`]: 0,
-    });
+      // Update unread count in conversation
+      await updateDoc(doc(db, CONVERSATIONS_COLLECTION, conversationId), {
+        [`unreadCount.${userId}`]: 0,
+      });
 
-    // Mark all messages as read
-    const messagesRef = collection(db, MESSAGES_COLLECTION);
-    const q = query(
-      messagesRef,
-      where('conversationId', '==', conversationId),
-      where('senderId', '!=', userId),
-      where('read', '==', false)
-    );
-    const snapshot = await getDocs(q);
+      // Mark unread messages as read (only those NOT sent by current user)
+      // Avoid using != filter which requires complex composite indexes
+      const messagesRef = collection(db, MESSAGES_COLLECTION);
+      const q = query(
+        messagesRef,
+        where('conversationId', '==', conversationId),
+        where('read', '==', false)
+      );
+      const snapshot = await getDocs(q);
 
-    const updates = snapshot.docs.map(docSnap => 
-      updateDoc(doc(db, MESSAGES_COLLECTION, docSnap.id), { read: true })
-    );
-    await Promise.all(updates);
+      // Filter in code: only mark messages from OTHER users as read
+      const updates = snapshot.docs
+        .filter(docSnap => docSnap.data().senderId !== userId)
+        .map(docSnap => 
+          updateDoc(doc(db, MESSAGES_COLLECTION, docSnap.id), { read: true })
+        );
+      await Promise.all(updates);
+    } catch (error) {
+      // Silently handle - marking as read is non-critical
+      console.warn('[Messages] markAsRead error:', error);
+    }
   },
 
   // Subscribe to messages in a conversation
