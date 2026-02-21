@@ -1,13 +1,30 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Trophy, Users, Calendar, CheckCircle } from 'lucide-react';
+import { Trophy, Users, Calendar, CheckCircle, Plus, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { tournamentsService, Tournament } from '@/lib/firebase/services/tournaments';
 import { cn } from '@/lib/utils';
+import { Card } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 type TabType = 'upcoming' | 'active' | 'ended';
+
+const GAMES = [
+  { id: 'snake', name: 'Snake' },
+  { id: 'tetris', name: 'Tetris' },
+  { id: 'breakout', name: 'Breakout' },
+  { id: 'asteroids', name: 'Asteroids' },
+  { id: '2048', name: '2048' },
+  { id: 'minesweeper', name: 'Minesweeper' },
+  { id: 'pacman', name: 'Pac-Man' },
+  { id: 'rhythm', name: 'Rhythm' },
+  { id: 'roguelike', name: 'Roguelike' },
+  { id: 'toonshooter', name: 'Toon Shooter' },
+  { id: 'tower-defense', name: 'Tower Defense' },
+];
 
 export default function TournamentsPage() {
   const { user } = useAuth();
@@ -16,6 +33,19 @@ export default function TournamentsPage() {
   const [joinedTournaments, setJoinedTournaments] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [joining, setJoining] = useState<string | null>(null);
+  
+  // Create tournament dialog state
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [newTournament, setNewTournament] = useState({
+    name: '',
+    game: GAMES[0].id,
+    description: '',
+    maxParticipants: 8,
+    prize: 100,
+    startTime: '',
+  });
 
   useEffect(() => {
     const loadTournaments = async () => {
@@ -41,7 +71,7 @@ export default function TournamentsPage() {
         if (user) {
           const joined = new Set<string>();
           for (const tournament of data) {
-            const isJoined = await tournamentsService.isParticipant(user.id, tournament.id);
+            const isJoined = await tournamentsService.isParticipant(user.uid, tournament.id);
             if (isJoined) joined.add(tournament.id);
           }
           setJoinedTournaments(joined);
@@ -62,10 +92,10 @@ export default function TournamentsPage() {
     setJoining(tournament.id);
     try {
       const success = await tournamentsService.joinTournament(
-        user.id,
+        user.uid,
         tournament.id,
         user.displayName || 'Anonymous',
-        user.avatar?.startsWith('http') ? user.avatar : undefined
+        user.photoURL || undefined
       );
       
       if (success) {
@@ -81,6 +111,69 @@ export default function TournamentsPage() {
       // Error joining tournament - handled by UI
     } finally {
       setJoining(null);
+    }
+  };
+
+  const handleCreateTournament = async () => {
+    if (!user) return;
+    
+    // Validate inputs
+    if (!newTournament.name.trim()) {
+      setCreateError('Tournament name is required');
+      return;
+    }
+    if (!newTournament.startTime) {
+      setCreateError('Start time is required');
+      return;
+    }
+    if (newTournament.maxParticipants < 2 || newTournament.maxParticipants > 100) {
+      setCreateError('Max participants must be between 2 and 100');
+      return;
+    }
+    if (newTournament.prize < 0) {
+      setCreateError('Prize cannot be negative');
+      return;
+    }
+
+    setIsCreating(true);
+    setCreateError(null);
+    
+    try {
+      const tournamentId = await tournamentsService.createTournament(
+        user.uid,
+        {
+          name: newTournament.name.trim(),
+          game: newTournament.game,
+          description: newTournament.description.trim(),
+          maxParticipants: newTournament.maxParticipants,
+          prize: newTournament.prize,
+          startTime: new Date(newTournament.startTime),
+        }
+      );
+      
+      if (tournamentId) {
+        // Reset form and close dialog
+        setNewTournament({
+          name: '',
+          game: GAMES[0].id,
+          description: '',
+          maxParticipants: 8,
+          prize: 100,
+          startTime: '',
+        });
+        setIsCreateDialogOpen(false);
+        
+        // Refresh tournaments list
+        const data = await tournamentsService.getUpcomingTournaments();
+        setTournaments(data);
+        setActiveTab('upcoming');
+      } else {
+        setCreateError('Failed to create tournament. Please try again.');
+      }
+    } catch (error) {
+      setCreateError('An error occurred while creating the tournament');
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -124,7 +217,11 @@ export default function TournamentsPage() {
             {user ? 'Compete in tournaments for big prizes' : 'Sign in to join tournaments'}
           </p>
         </div>
-        <Button disabled={!user}>
+        <Button 
+          disabled={!user}
+          onClick={() => setIsCreateDialogOpen(true)}
+        >
+          <Plus className="w-4 h-4 mr-2" />
           Create Tournament
         </Button>
       </div>
@@ -245,13 +342,179 @@ export default function TournamentsPage() {
                   : 'No past tournaments to display'}
             </p>
             {activeTab === 'upcoming' && (
-              <Button disabled={!user}>
+              <Button 
+                disabled={!user}
+                onClick={() => setIsCreateDialogOpen(true)}
+              >
+                <Plus className="w-4 h-4 mr-2" />
                 Create Tournament
               </Button>
             )}
           </div>
         )}
       </div>
+
+      {/* Create Tournament Dialog */}
+      {isCreateDialogOpen && (
+        <>
+          {/* Overlay */}
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+            onClick={() => !isCreating && setIsCreateDialogOpen(false)}
+          />
+          
+          {/* Dialog */}
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <Card className="w-full max-w-lg max-h-[90vh] flex flex-col">
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 border-b border-white/[0.05]">
+                <h2 className="font-display text-lg font-bold uppercase tracking-wider text-primary">
+                  Create Tournament
+                </h2>
+                <button
+                  onClick={() => !isCreating && setIsCreateDialogOpen(false)}
+                  disabled={isCreating}
+                  className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors rounded-lg hover:bg-white/5 disabled:opacity-50"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              {/* Form */}
+              <ScrollArea className="flex-1 p-4">
+                <div className="space-y-4">
+                  {/* Tournament Name */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-primary">
+                      Tournament Name *
+                    </label>
+                    <Input
+                      placeholder="e.g., Weekend Snake Championship"
+                      value={newTournament.name}
+                      onChange={(e) => setNewTournament(prev => ({ ...prev, name: e.target.value }))}
+                      disabled={isCreating}
+                    />
+                  </div>
+                  
+                  {/* Game Selection */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-primary">
+                      Game *
+                    </label>
+                    <select
+                      value={newTournament.game}
+                      onChange={(e) => setNewTournament(prev => ({ ...prev, game: e.target.value }))}
+                      disabled={isCreating}
+                      className="w-full h-10 px-3 bg-transparent border border-input rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                      {GAMES.map(game => (
+                        <option key={game.id} value={game.id}>{game.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  {/* Description */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-primary">
+                      Description
+                    </label>
+                    <textarea
+                      placeholder="Describe your tournament..."
+                      value={newTournament.description}
+                      onChange={(e) => setNewTournament(prev => ({ ...prev, description: e.target.value }))}
+                      disabled={isCreating}
+                      rows={3}
+                      className="w-full px-3 py-2 bg-transparent border border-input rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                    />
+                  </div>
+                  
+                  {/* Max Participants */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-primary">
+                      Max Participants *
+                    </label>
+                    <Input
+                      type="number"
+                      min={2}
+                      max={100}
+                      value={newTournament.maxParticipants}
+                      onChange={(e) => setNewTournament(prev => ({ ...prev, maxParticipants: parseInt(e.target.value) || 8 }))}
+                      disabled={isCreating}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Minimum 2, maximum 100 players
+                    </p>
+                  </div>
+                  
+                  {/* Prize */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-primary">
+                      Prize (coins) *
+                    </label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={newTournament.prize}
+                      onChange={(e) => setNewTournament(prev => ({ ...prev, prize: parseInt(e.target.value) || 0 }))}
+                      disabled={isCreating}
+                    />
+                  </div>
+                  
+                  {/* Start Time */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-primary">
+                      Start Time *
+                    </label>
+                    <Input
+                      type="datetime-local"
+                      value={newTournament.startTime}
+                      onChange={(e) => setNewTournament(prev => ({ ...prev, startTime: e.target.value }))}
+                      disabled={isCreating}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Tournament will start automatically at this time
+                    </p>
+                  </div>
+                  
+                  {/* Error Message */}
+                  {createError && (
+                    <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                      <p className="text-sm text-red-400">{createError}</p>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+              
+              {/* Footer */}
+              <div className="flex justify-end gap-3 p-4 border-t border-white/[0.05]">
+                <Button
+                  variant="ghost"
+                  onClick={() => setIsCreateDialogOpen(false)}
+                  disabled={isCreating}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreateTournament}
+                  disabled={isCreating}
+                >
+                  {isCreating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Trophy className="w-4 h-4 mr-2" />
+                      Create Tournament
+                    </>
+                  )}
+                </Button>
+              </div>
+            </Card>
+          </div>
+        </>
+      )}
     </div>
   );
 }
