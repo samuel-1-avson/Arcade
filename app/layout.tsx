@@ -1,7 +1,12 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Providers } from '@/components/providers';
-import { BackgroundCanvas } from '@/components/background-canvas';
+import dynamic from 'next/dynamic';
+
+const BackgroundCanvas = dynamic(() => import('@/components/background-canvas').then(mod => mod.BackgroundCanvas), { 
+  ssr: false,
+  loading: () => <div className="fixed inset-0 bg-background" />
+});
 
 export const metadata: Metadata = {
   title: 'Arcade Gaming Hub',
