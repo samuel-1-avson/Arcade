@@ -1,0 +1,411 @@
+/* ==========================================
+   UNIFIED MODAL SYSTEM (Retro Minimal)
+   ========================================== */
+
+/* Modal Overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(45, 40, 35, 0.85);
+    backdrop-filter: blur(5px);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Modal Content Base */
+.modal-content {
+    background: #fbf8f1;
+    color: #776e65;
+    padding: 30px;
+    border-radius: 6px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    border: 2px solid #8f7a66;
+    animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Typography & Headers */
+.modal-content h2 {
+    font-size: 28px;
+    margin-bottom: 25px;
+    color: #776e65;
+    text-align: center;
+    border-bottom: 2px solid #eee4da;
+    padding-bottom: 10px;
+    font-weight: bold;
+}
+
+.modal-content h3 {
+    font-size: 20px;
+    margin: 20px 0 10px;
+    color: #776e65;
+}
+
+/* Close Button */
+.modal-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: #776e65;
+    cursor: pointer;
+    transition: transform 0.2s, color 0.2s;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    color: #000;
+    transform: rotate(90deg);
+}
+
+/* Buttons */
+.btn-primary, .btn-secondary {
+    padding: 10px 20px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+    transition: transform 0.1s, background 0.2s;
+    margin: 5px;
+}
+
+.btn-primary {
+    background: #8f7a66;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #7f6a56;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: #bbada0;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #a39487;
+    transform: translateY(-2px);
+}
+
+/* ==========================================
+   STATISTICS DASHBOARD
+   ========================================== */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.stat-card {
+    background: #eee4da;
+    padding: 15px;
+    border-radius: 4px;
+    text-align: center;
+    border: 1px solid #dccfc2;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #776e65;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #8f7a66;
+    text-transform: uppercase;
+}
+
+.stats-chart {
+    background: white;
+    padding: 15px;
+    border-radius: 4px;
+    border: 1px solid #eee;
+    margin-bottom: 20px;
+}
+
+.chart-container {
+    height: 150px;
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    padding-top: 10px;
+}
+
+.chart-bar {
+    flex: 1;
+    background: #edc22e;
+    border-radius: 2px 2px 0 0;
+    transition: height 0.5s ease;
+    opacity: 0.8;
+}
+
+.chart-bar:hover {
+    opacity: 1;
+    background: #f67c5f;
+}
+
+.tile-bars .tile-bar-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.tile-label {
+    width: 40px;
+    text-align: right;
+    margin-right: 10px;
+    font-weight: bold;
+}
+
+.bar-track {
+    flex: 1;
+    background: #eee4da;
+    height: 12px;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-right: 10px;
+}
+
+.bar-fill {
+    height: 100%;
+    background: #f65e3b;
+    border-radius: 6px;
+}
+
+.tile-count {
+    width: 30px;
+    font-size: 12px;
+    color: #776e65;
+}
+
+/* ==========================================
+   ACHIEVEMENTS SYSTEM
+   ========================================== */
+.achievements-progress {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    background: #fff;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.achievement-card {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #eee;
+    transition: transform 0.2s;
+}
+
+.achievement-card.locked {
+    opacity: 0.6;
+    background: #f4f4f4;
+}
+
+.achievement-card.unlocked {
+    border-color: #edc22e;
+    background: #faf8ef;
+}
+
+.achievement-icon {
+    font-size: 32px;
+    margin-right: 15px;
+    width: 40px;
+    text-align: center;
+}
+
+.achievement-info {
+    flex: 1;
+}
+
+.achievement-name {
+    font-weight: bold;
+    color: #776e65;
+    margin-bottom: 3px;
+}
+
+.achievement-desc {
+    font-size: 12px;
+    color: #999;
+}
+
+/* Toasts */
+.achievement-toast, .challenge-complete-toast, .level-up-notification {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: white;
+    padding: 15px 25px;
+    border-radius: 50px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    z-index: 3000;
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 2px solid #edc22e;
+}
+
+.achievement-toast.show, .challenge-complete-toast.show, .level-up-notification.show {
+    transform: translateX(-50%) translateY(0);
+}
+
+/* ==========================================
+   LEADERBOARD
+   ========================================== */
+.leaderboard-header {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #eee4da;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.leaderboard-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: #eee;
+    cursor: pointer;
+    border-radius: 4px;
+    font-weight: bold;
+    color: #776e65;
+    transition: background 0.2s;
+}
+
+.tab-btn.active {
+    background: #8f7a66;
+    color: white;
+}
+
+.leaderboard-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.leaderboard-entry {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    border-bottom: 1px solid #eee;
+    background: white;
+}
+
+.leaderboard-entry.is-player {
+    background: #fef4e0;
+    font-weight: bold;
+}
+
+.entry-rank {
+    width: 40px;
+    font-weight: bold;
+    font-size: 18px;
+    color: #8f7a66;
+}
+
+.entry-info {
+    flex: 1;
+}
+
+.entry-score {
+    font-weight: bold;
+}
+
+/* ==========================================
+   DAILY CHALLENGE
+   ========================================== */
+.challenge-card {
+    background: #fff;
+    border: 2px solid #edc22e;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.challenge-card::before {
+    content: 'DAILY';
+    position: absolute;
+    top: -10px;
+    right: -20px;
+    background: #edc22e;
+    color: white;
+    padding: 20px 40px;
+    transform: rotate(45deg);
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.challenge-header {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.challenge-reward {
+    display: inline-block;
+    background: #e0f2f1;
+    color: #00695c;
+    padding: 5px 15px;
+    border-radius: 15px;
+    font-size: 14px;
+    margin: 10px 0;
+}
+
+.streak-display {
+    text-align: center;
+    margin-top: 20px;
+    padding: 15px;
+    background: #fff3e0;
+    border-radius: 8px;
+}

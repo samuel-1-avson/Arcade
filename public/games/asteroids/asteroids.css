@@ -1,0 +1,1022 @@
+/* Asteroids Ultimate - Retro Minimal Theme */
+/* Based on Zen Retro Design System (Dieter Rams / 80s Industrial) */
+
+:root {
+    /* Local Overrides mapping to System Variables */
+    --ast-bg: #0a0a0a;
+    --ast-panel: #141414;
+    --ast-primary: #ff4d00; /* International Orange */
+    --ast-secondary: #00bcd4;
+    --ast-text: #b0b0b0;
+    --ast-text-highlight: #ffffff;
+    --ast-border: #333333;
+    --ast-shadow: 4px 4px 0px #000000;
+}
+
+body {
+    background-color: var(--ast-bg);
+    color: var(--ast-text);
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    margin: 0;
+    overflow: hidden; /* Prevent page scroll */
+    height: 100vh;
+}
+
+/* Layout */
+.asteroids-layout {
+    width: 100%;
+    padding: 10px 20px 20px 20px; /* Reduced top padding */
+    box-sizing: border-box;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 32px;
+    height: 80px;
+    width: 100%;
+    flex-shrink: 0;
+    background: #080808;
+    border-bottom: 2px solid #222;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    z-index: 10;
+}
+
+.game-header-left {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex: 1;
+}
+
+.game-header-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0; /* Gap handled by borders */
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 4px; /* Slight round for the 'unit' feel */
+    height: 56px;
+    padding: 0 16px;
+}
+
+.game-header-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    flex: 1;
+}
+
+/* Module 1: System Nav */
+.game-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--ast-text-highlight);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+}
+
+.game-title .icon-svg {
+    color: var(--ast-primary);
+    filter: drop-shadow(0 0 4px var(--ast-primary));
+}
+
+.back-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #666;
+    text-decoration: none;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 8px 16px;
+    border: 1px solid #333;
+    background: linear-gradient(to bottom, #1a1a1a, #111);
+    transition: all 0.2s ease;
+}
+
+.back-btn:hover {
+    color: #fff;
+    border-color: #ff3333; /* Warning Red for Exit */
+    box-shadow: 0 0 8px rgba(255, 51, 51, 0.3);
+}
+
+/* Module 2: Mission Data (Segmented Display) */
+.game-header-center > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 24px;
+    position: relative;
+    height: 100%;
+}
+
+.game-header-center > div:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 15%;
+    height: 70%;
+    width: 1px;
+    background: #333;
+}
+
+.score-label, .highscore-label, .wave-label, .lives-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.65rem;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+}
+
+.score-value, .highscore-value, .wave-value, .lives-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--ast-primary);
+    line-height: 1;
+}
+
+.lives-value {
+    display: flex;
+    gap: 4px; /* For heart/ship icons */
+}
+
+/* Module 3: Ship Controls (Toggle Switches) */
+.icon-btn {
+    background: #111;
+    border: 1px solid #333;
+    color: #666;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 2px;
+}
+
+.icon-btn:hover {
+    color: var(--ast-primary);
+    border-color: var(--ast-primary);
+    background: #151515;
+    box-shadow: 0 0 8px rgba(255, 77, 0, 0.2);
+}
+
+.icon-btn:active {
+    transform: scale(0.95);
+    background: #000;
+}
+
+
+.game-main-layout {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr) 280px; /* Center fills space */
+    gap: 24px;
+    justify-content: center;
+    align-items: stretch; /* Stretch to fill height */
+    width: 100%;
+    flex: 1; /* Fill remaining vertical space */
+    min-height: 0; /* Allow shrinking */
+}
+
+/* Sidebars */
+.game-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto; /* Internal scrolling */
+    padding-right: 8px; /* Room for scrollbar */
+    max-height: 100%;
+}
+
+/* Panels */
+.sidebar-panel {
+    background: var(--ast-panel);
+    border: 1px solid var(--ast-border);
+    padding: 16px;
+    box-shadow: var(--ast-shadow);
+    border-radius: 0;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.panel-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--ast-text-highlight);
+    border-bottom: 2px solid var(--ast-primary);
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+}
+
+/* Buttons */
+.panel-btn, .mode-btn {
+    background: transparent;
+    border: 1px solid var(--ast-border);
+    color: var(--ast-text);
+    padding: 12px;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    transition: all 0.1s ease;
+    border-radius: 0;
+    width: 100%;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.panel-btn:hover, .mode-btn:hover {
+    background: var(--ast-primary);
+    color: #000;
+    border-color: var(--ast-primary);
+    box-shadow: 2px 2px 0px #000;
+    transform: translate(-1px, -1px);
+}
+
+.mode-btn.active {
+    background: var(--ast-text-highlight);
+    color: #000;
+    border-color: var(--ast-text-highlight);
+    font-weight: bold;
+    box-shadow: 2px 2px 0px #000;
+} 
+
+/* Canvas Container */
+.game-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    border: 4px solid var(--ast-border);
+    background: #050505;
+    box-shadow: var(--ast-shadow);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Canvas Wrapper */
+.asteroids-canvas {
+    width: 100%;
+    flex: 1; /* Fill available space */
+    position: relative;
+    background: #000;
+    overflow: hidden;
+    /* Aspect ratio removed to fill screen */
+}
+
+.asteroids-canvas canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Keeps aspect ratio of drawing without stretching */
+}
+
+/* Controls Hint Bar */
+.controls-hint {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    padding: 8px 12px;
+    background: var(--ast-panel);
+    border-top: 4px solid var(--ast-border);
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+
+.control-key {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.7rem;
+    color: var(--ast-text);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.control-key .key {
+    background: #222;
+    border: 1px solid var(--ast-primary);
+    padding: 4px 6px;
+    color: var(--ast-text-highlight);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    min-width: 20px;
+    text-align: center;
+    box-shadow: 2px 2px 0px #000;
+}
+
+/* Overlays */
+.game-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(10, 10, 10, 0.95);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.overlay-title {
+    font-size: 3rem;
+    font-weight: 900;
+    color: var(--ast-primary);
+    text-transform: uppercase;
+    letter-spacing: 6px;
+    margin-bottom: 32px;
+    text-shadow: 4px 4px 0px #000;
+    background: #000;
+    padding: 10px 20px;
+    border: 1px solid var(--ast-primary);
+}
+
+.overlay-message {
+    font-size: 1.1rem;
+    color: var(--ast-text);
+    margin-bottom: 32px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-align: center;
+    max-width: 600px;
+    line-height: 1.5;
+}
+
+/* HUD / Stats */
+.game-stats-panel {
+    display: flex;
+    justify-content: space-between;
+    background: var(--ast-panel);
+    border: 1px solid var(--ast-border);
+    padding: 16px 24px;
+    margin-top: 24px;
+    box-shadow: var(--ast-shadow);
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: var(--ast-text);
+    margin-bottom: 4px;
+    letter-spacing: 1px;
+}
+
+.stat-value {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: var(--ast-primary);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* Icons */
+.icon-svg {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5em;
+    height: 1.5em;
+    fill: none;
+    stroke: currentColor; 
+}
+
+/* Exceptions for filled icons */
+.icon-svg[data-icon="LIVES"] {
+    fill: currentColor;
+    stroke: none;
+}
+
+.icon-svg svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* Ship Panel */
+.ship-preview {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--ast-border);
+}
+
+.ship-name {
+    color: var(--ast-primary);
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.ship-stats .stat-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+    font-size: 0.75rem;
+}
+
+.ship-stats .bar {
+    flex: 1;
+    height: 8px;
+    background: #222;
+    border: 1px solid #333;
+}
+
+.ship-stats .bar-fill {
+    height: 100%;
+    background: var(--ast-primary);
+}
+
+/* Powerups */
+.powerup-indicators {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    gap: 12px;
+    flex-direction: column;
+}
+
+.powerup-indicator {
+    background: #000;
+    border: 1px solid var(--ast-primary);
+    color: var(--ast-text-highlight);
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    box-shadow: 2px 2px 0px rgba(0,0,0,0.5);
+}
+
+.powerup-time {
+    color: var(--ast-primary);
+    font-weight: bold;
+}
+
+/* Popups */
+.achievement-popup, .level-popup, .challenge-popup {
+    background: var(--ast-panel);
+    border: 2px solid var(--ast-primary);
+    box-shadow: 8px 8px 0px #000;
+    border-radius: 0;
+    color: var(--ast-text-highlight);
+    padding: 24px;
+    position: fixed;
+    z-index: 1000;
+}
+
+.achievement-popup { top: 100px; right: -400px; transition: right 0.3s cubic-bezier(0,0,0,1); }
+.achievement-popup.show { right: 20px; }
+
+.level-popup {
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    opacity: 0;
+    transition: all 0.2s ease-out;
+}
+.level-popup.show {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+.challenge-popup { top: 150px; right: -400px; transition: right 0.3s ease; }
+.challenge-popup.show { right: 20px; }
+
+/* Utilities */
+.hidden { display: none !important; }
+.text-gradient { color: var(--ast-primary); background: none; -webkit-text-fill-color: initial; }
+
+a.back-btn {
+    color: var(--ast-text);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+a.back-btn:hover {
+    color: var(--ast-primary); 
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-thumb { background: #333; border: 1px solid #000; }
+::-webkit-scrollbar-thumb:hover { background: var(--ast-primary); }
+
+
+/* ===== Responsive & Polish ===== */
+
+/* Responsive Layout */
+@media (max-width: 1400px) {
+    .game-main-layout {
+        grid-template-columns: 240px minmax(500px, 1fr) 240px;
+        gap: 16px;
+    }
+}
+
+@media (max-width: 1100px) {
+    .game-main-layout {
+        grid-template-columns: 1fr;
+        grid-template-areas: 
+            "game"
+            "sidebar-left"
+            "sidebar-right";
+    }
+
+    .game-container {
+        grid-area: game;
+        min-height: 50vh;
+    }
+
+    .game-sidebar-left {
+        grid-area: sidebar-left;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+    }
+
+    .game-sidebar-right {
+        grid-area: sidebar-right;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+    }
+    
+    .game-sidebar {
+        max-height: none;
+        overflow-y: visible;
+    }
+}
+
+@media (max-width: 600px) {
+    .game-main-layout {
+        padding: 0 10px;
+    }
+    
+    .game-header {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+}
+
+/* Panel Polish */
+.panel-title {
+    position: relative;
+    padding-left: 12px;
+}
+
+.panel-title::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%) translateY(-5px); /* Adjust for padding-bottom */
+    width: 4px;
+    height: 12px;
+    background: var(--ast-primary);
+}
+
+/* Overlay Centering Fix */
+.game-overlay {
+    backdrop-filter: blur(4px); /* Slight blur for focus */
+}
+
+/* Button & Interactable Polish */
+.panel-btn, .mode-btn, .back-btn {
+    transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), 
+                background 0.1s ease,
+                box-shadow 0.1s ease;
+}
+
+.panel-btn:active, .mode-btn:active {
+    transform: translate(1px, 1px);
+    box-shadow: none;
+}
+
+/* Scrollbar Polish */
+::-webkit-scrollbar-track {
+    background: #050505;
+    border-left: 1px solid #222;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #333;
+    border: 1px solid #000;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--ast-primary);
+}
+
+/* =========================================
+   MODAL & OVERLAY SYSTEMS
+   ========================================= */
+
+/* Common Overlay Base */
+.ship-menu-overlay,
+.weapon-menu-overlay,
+.achievement-gallery-overlay,
+.story-menu-overlay,
+.level-complete-overlay,
+.world-complete-overlay,
+.story-dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: auto;
+}
+
+.ship-menu-overlay.show,
+.weapon-menu-overlay.show,
+.achievement-gallery-overlay.show,
+.story-menu-overlay.show,
+.level-complete-overlay.show,
+.world-complete-overlay.show,
+.story-dialog-overlay.show {
+    opacity: 1;
+}
+
+/* Common Modal Container */
+.ship-menu,
+.weapon-menu,
+.achievement-gallery,
+.story-menu {
+    background: #0a0a0a;
+    border: 2px solid var(--ast-border);
+    width: 90%;
+    max-width: 1000px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+    overflow: hidden;
+    position: relative;
+}
+
+/* Headers */
+.ship-menu-header,
+.weapon-menu h2,
+.gallery-header,
+.story-header {
+    background: #111;
+    border-bottom: 1px solid var(--ast-border);
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ship-menu-header h2,
+.weapon-menu h2,
+.gallery-header h2,
+.story-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--ast-text-highlight);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ship-close,
+.weapon-close,
+.gallery-close,
+.story-close {
+    background: transparent;
+    border: 1px solid var(--ast-border);
+    color: var(--ast-text);
+    padding: 8px 16px;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+}
+
+.ship-close:hover,
+.weapon-close:hover,
+.gallery-close:hover,
+.story-close:hover {
+    background: #333;
+    color: #fff;
+    border-color: #fff;
+}
+
+/* Grids */
+.ship-grid,
+.weapon-grid,
+.gallery-grid,
+.worlds-container,
+.upgrade-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 24px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--ast-primary) #111;
+}
+
+/* Custom Scrollbar */
+.ship-grid::-webkit-scrollbar,
+.weapon-grid::-webkit-scrollbar,
+.gallery-grid::-webkit-scrollbar,
+.upgrade-grid::-webkit-scrollbar,
+.worlds-container::-webkit-scrollbar {
+    width: 8px;
+}
+.ship-grid::-webkit-scrollbar-thumb,
+.weapon-grid::-webkit-scrollbar-thumb,
+.gallery-grid::-webkit-scrollbar-thumb,
+.upgrade-grid::-webkit-scrollbar-thumb,
+.worlds-container::-webkit-scrollbar-thumb {
+    background: var(--ast-primary);
+}
+.ship-grid::-webkit-scrollbar-track,
+.weapon-grid::-webkit-scrollbar-track,
+.gallery-grid::-webkit-scrollbar-track,
+.upgrade-grid::-webkit-scrollbar-track,
+.worlds-container::-webkit-scrollbar-track {
+    background: #111;
+}
+
+/* Base Card Style */
+.ship-card, 
+.weapon-card, 
+.gallery-item,
+.world-card,
+.upgrade-card {
+    background: #111;
+    border: 1px solid #333;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: all 0.2s ease;
+    position: relative;
+    border-radius: 0;
+}
+
+/* Unlocked/Interactive Cards */
+.ship-card.unlocked:hover, 
+.weapon-card.unlocked:hover,
+.world-card.unlocked:hover,
+.upgrade-card.available:hover {
+    border-color: var(--ast-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 0 rgba(255, 77, 0, 0.2);
+    cursor: pointer;
+}
+
+/* Current/Equipped State */
+.ship-card.current,
+.weapon-card.current {
+    border-color: var(--ast-secondary);
+    background: rgba(0, 188, 212, 0.05);
+}
+
+.ship-card.current::after,
+.weapon-card.current::after {
+    content: 'ACTIVE';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 0.7rem;
+    color: var(--ast-secondary);
+    border: 1px solid var(--ast-secondary);
+    padding: 2px 6px;
+    border-radius: 2px;
+}
+
+/* Locked State */
+.ship-card.locked,
+.weapon-card.locked,
+.world-card.locked {
+    opacity: 0.5;
+    background: #080808;
+}
+
+.ship-unlock,
+.weapon-unlock {
+    color: #ff3333;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Specific Content Styles */
+.ship-icon, .weapon-icon, .gallery-item-icon, .upgrade-icon {
+    font-size: 2rem;
+    color: var(--ast-primary);
+    margin-bottom: 8px;
+}
+
+.ship-name, .weapon-name, .gallery-item-name, .world-name, .upgrade-name {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #fff;
+    text-transform: uppercase;
+}
+
+.ship-desc, .weapon-desc, .gallery-item-desc, .world-desc {
+    font-size: 0.85rem;
+    color: #888;
+    line-height: 1.4;
+}
+
+.ship-stats span, .weapon-level {
+    font-size: 0.8rem;
+    color: var(--ast-secondary);
+    display: block;
+}
+
+/* Achievement Gallery Specifics */
+.gallery-category h3 {
+    grid-column: 1 / -1;
+    color: var(--ast-primary);
+    border-bottom: 1px solid #333;
+    padding-bottom: 8px;
+    margin-top: 16px;
+    font-size: 1rem;
+    text-transform: uppercase;
+}
+.gallery-item.hidden {
+    filter: grayscale(1);
+    opacity: 0.3;
+}
+.gallery-item-xp {
+    color: #ffd700;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+/* Story Menu Specifics */
+.story-header {
+    background: linear-gradient(to right, #111, #0a0a0a);
+}
+.story-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 200px;
+}
+.story-progress span {
+    font-size: 0.8rem;
+    text-align: right;
+    color: #888;
+}
+.story-progress .progress-bar {
+    height: 6px;
+    background: #222;
+    border-radius: 3px;
+    overflow: hidden;
+}
+.story-progress .progress-fill {
+    height: 100%;
+    background: var(--ast-secondary);
+}
+
+.world-card {
+    min-height: 180px;
+}
+.world-number {
+    font-size: 3rem;
+    font-weight: 900;
+    color: #222;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    z-index: 0;
+}
+.world-info {
+    z-index: 1;
+}
+.world-card.complete .world-number {
+    color: var(--ast-secondary);
+    opacity: 0.2;
+}
+.world-complete-badge {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    color: var(--ast-secondary);
+    font-size: 1.5rem;
+}
+
+/* Messages & Notifications */
+.ship-message,
+.weapon-unlock-message,
+.story-message,
+.boss-intro,
+.challenge-popup {
+    position: fixed;
+    top: 20%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid var(--ast-primary);
+    padding: 24px 48px;
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    text-align: center;
+    z-index: 2000;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: none;
+    box-shadow: 0 0 30px rgba(255, 77, 0, 0.4);
+}
+
+.ship-message.show,
+.weapon-unlock-message.show,
+.story-message.show,
+.boss-intro.show,
+.challenge-popup.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+/* Dialog Overlay */
+.story-dialog {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    max-width: 800px;
+    background: rgba(10, 10, 10, 0.95);
+    border: 2px solid var(--ast-secondary);
+    padding: 24px;
+    z-index: 1500;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 0 20px rgba(0, 188, 212, 0.3);
+}
+
+.dialog-speaker {
+    font-size: 1.1rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.dialog-text {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    color: #fff;
+    min-height: 60px;
+}
+
+.dialog-continue {
+    font-size: 0.8rem;
+    color: #666;
+    text-align: right;
+    animation: blink 2s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}

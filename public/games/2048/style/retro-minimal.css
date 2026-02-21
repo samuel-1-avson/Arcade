@@ -1,0 +1,614 @@
+/* Retro Minimal Design System - Dark Arcade Theme - ULTIMATE OVERRIDE V15 */
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+:root {
+  --bg-color: #050505;
+  --panel-bg: #000000;
+  --text-main: #e0e0e0;
+  --text-dim: #888;
+  --accent-primary: #ff4d00; /* Deep Orange */
+  --accent-secondary: #00ff88; /* Neon Green */
+  --accent-blue: #00ccff; /* Neon Blue */
+  --border-color: rgba(255, 255, 255, 0.2);
+  --cell-bg: #222222;
+  --font-main: 'VT323', monospace;
+}
+
+/* ==========================================================================
+   GLOBAL RESETS & DARK MODE ENFORCEMENT
+   ========================================================================== */
+html, body, 
+body.theme-classic, body.theme-dark, body.theme-retro,
+body.theme-ocean, body.theme-forest, body.theme-sunset, 
+body.theme-lavender, body.theme-midnight {
+  background-color: #050505 !important;
+  color: #e0e0e0 !important;
+  font-family: 'VT323', monospace !important;
+  background-image: none !important;
+  overflow-x: hidden;
+}
+
+/* CRT Scanline Overlay */
+body::after {
+  content: "";
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+  background-size: 100% 4px;
+  z-index: 99999;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* ==========================================================================
+   LAYOUT GRID
+   ========================================================================== */
+.container {
+    padding: 0 !important; /* Reset default padding */
+}
+
+.game-layout-wrapper {
+  display: flex !important;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 30px;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+/* Sidebar Styling */
+.sidebar {
+    width: 300px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* 
+   Explicitly target ALL panels including streak-display 
+   using high specificity to kill textures 
+*/
+.sidebar-panel, 
+.stat-card, 
+.mode-card, 
+.challenge-card,
+.streak-display, 
+.chart-container,
+div.chart-container,
+.bar-track,
+div.mode-card, 
+div.challenge-card,
+div.streak-display,
+.modal-content.stats-modal,
+.modal-content.achievements-modal,
+.modal-content.leaderboard-modal,
+.modal-content.challenge-modal,
+.achievement-card,
+.stats-chart .chart-container,
+.stats-chart,
+.stats-tiles,
+.player-info-card,
+.leaderboard-tabs,
+.leaderboard-entry,
+.theme-picker,
+.theme-toggle-btn { 
+  background: #000000 !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 0 !important;
+  padding: 15px !important;
+  box-shadow: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 15px !important;
+  color: var(--text-main) !important;
+}
+
+.theme-toggle-btn {
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* FORCE TRANSPARENCY ON ACHIEVEMENT HEADER CONTAINERS */
+.achievements-progress,
+.achievements-progress > div,
+.leaderboard-header { 
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Streak Display Specifics in Modal */
+.streak-display {
+    flex-direction: row !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 20px !important;
+    padding: 20px !important;
+    border-bottom: 2px solid var(--accent-primary) !important;
+    margin-bottom: 20px !important;
+}
+.streak-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+.streak-icon {
+    color: var(--accent-primary) !important;
+}
+.streak-divider {
+    width: 1px;
+    height: 40px;
+    background: var(--border-color);
+}
+
+
+/* Challenge Card Specifics */
+.challenge-card {
+    position: relative !important;
+    border-left-width: 5px !important; /* Keep difficulty color on left */
+    overflow: hidden;
+    margin-bottom: 15px !important;
+}
+
+.challenge-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.challenge-name {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #fff;
+    text-transform: uppercase;
+}
+
+.challenge-desc {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+}
+
+.challenge-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.challenge-reward {
+    color: var(--accent-secondary);
+    font-weight: bold;
+}
+
+.challenge-status {
+    color: var(--accent-success);
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+/* Ribbons */
+.challenge-ribbon {
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: 10px;
+    font-weight: bold;
+    color: #000;
+    padding: 2px 10px;
+    text-transform: uppercase;
+    transform: none;
+    top: 10px;
+    right: 10px;
+    border-radius: 4px;
+}
+.challenge-ribbon.easy { background: #8bc34a; }
+.challenge-ribbon.medium { background: #ff9800; }
+.challenge-ribbon.hard { background: #f44336; }
+
+
+.panel-title {
+  color: var(--accent-primary) !important;
+  font-family: var(--font-main) !important;
+  font-size: 1.4rem !important;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  border-bottom: 1px solid var(--border-color) !important;
+  padding-bottom: 10px !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.panel-title svg {
+    margin-right: 10px !important;
+    fill: var(--accent-primary) !important;
+}
+
+/* ==========================================================================
+   SIDEBAR CONTENT & WIDGETS
+   ========================================================================== */
+
+/* Buttons & Interactive Elements */
+.panel-btn, .mode-btn, .share-btn, 
+.restart-button, .retry-button, .keep-playing-button, 
+.btn-primary, .btn-secondary,
+.tab-btn,
+.back-button,
+.theme-option {
+  background: #000000 !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-main) !important;
+  font-family: var(--font-main) !important;
+  font-size: 16px !important;
+  padding: 10px 15px !important;
+  cursor: pointer !important;
+  text-transform: uppercase;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 0 !important;
+  transition: all 0.2s ease;
+  box-sizing: border-box !important;
+  line-height: 1.2 !important;
+  text-decoration: none !important;
+}
+
+/* Sidebar buttons need left alignment */
+.panel-btn, .mode-btn, .share-btn {
+    text-align: left; 
+    justify-content: flex-start;
+    width: 100% !important;
+}
+
+/* Hover Effects */
+.panel-btn:hover, .mode-btn:hover, .share-btn:hover,
+.restart-button:hover, .retry-button:hover, .keep-playing-button:hover,
+.btn-primary:hover, .btn-secondary:hover, .tab-btn:hover,
+.back-button:hover, .theme-toggle-btn:hover, .theme-option:hover {
+  border-color: var(--text-main) !important;
+  background: #111 !important;
+  box-shadow: 0 0 10px rgba(255,255,255,0.2) !important;
+  transform: translateY(-2px);
+  color: #fff !important;
+}
+
+.btn-primary {
+    border-color: var(--accent-primary) !important;
+    color: var(--accent-primary) !important;
+}
+.btn-primary:hover {
+    background: rgba(255, 77, 0, 0.1) !important;
+    box-shadow: 0 0 15px rgba(255, 77, 0, 0.3) !important;
+}
+
+/* Active State for Mode Buttons & tabs */
+.mode-btn.active, .tab-btn.active, .theme-option.active {
+    border-color: var(--accent-secondary) !important;
+    color: var(--accent-secondary) !important;
+    background: rgba(0, 255, 136, 0.05) !important;
+    box-shadow: inset 3px 0 0 var(--accent-secondary) !important;
+}
+
+/* Tab container specific */
+.leaderboard-tabs {
+    flex-direction: row !important;
+    gap: 10px !important;
+    padding: 0 !important;
+    border: none !important; /* Tabs contain the buttons, no border needed on container */
+    background: transparent !important; /* Transparent container */
+}
+
+
+/* Game Modes List Layout */
+.modes-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+}
+
+.stat-item, .stat-card {
+    background: #0a0a0a !important;
+    padding: 10px !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    text-align: center;
+}
+
+.stat-value, .stat-label {
+    display: block;
+}
+.stat-value {
+    font-size: 1.2rem;
+    color: #fff;
+    margin-bottom: 5px;
+}
+.stat-label {
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+}
+
+/* "No Data" text fix */
+.chart-container {
+    position: relative !important;
+}
+.no-data {
+    color: var(--text-dim) !important;
+    font-style: italic;
+    background: transparent !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 100% !important;
+    text-align: center !important;
+    margin: 0 !important;
+}
+
+/* Achievement & Leaderboard Specifics */
+.achievements-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+    gap: 15px !important;
+}
+
+.achievement-card {
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+.achievement-card.locked .achievement-icon {
+    opacity: 0.6 !important;
+    color: #888 !important; /* Brighter lock icon */
+}
+.achievement-card.locked .achievement-name {
+    color: #ccc !important; /* Brighter locked name */
+}
+.achievement-card.locked .achievement-desc {
+    color: #999 !important; /* Brighter locked desc */
+}
+
+.achievement-card.unlocked {
+    border-color: var(--accent-secondary) !important;
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.1) !important;
+}
+.achievement-card.unlocked .achievement-icon {
+    color: var(--accent-secondary) !important;
+}
+
+.progress-bar-container {
+    background: #111 !important;
+    border: 1px solid #333 !important;
+    height: 14px !important;
+    border-radius: 0 !important;
+    width: 100%;
+    margin-top: 5px;
+}
+
+.progress-fill {
+    background: var(--accent-secondary) !important;
+    height: 100% !important;
+    border-radius: 0 !important;
+    box-shadow: 0 0 10px var(--accent-secondary) !important;
+}
+
+/* Leaderboard Player Card */
+.player-info-card {
+    border: 1px solid var(--accent-primary) !important;
+    box-shadow: 0 0 10px rgba(255, 77, 0, 0.1) !important;
+}
+.code-value {
+    background: #222 !important;
+    border: 1px solid #444 !important;
+    color: var(--accent-secondary) !important;
+}
+
+/* Leaderboard Entries */
+.leaderboard-entry {
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+}
+.leaderboard-entry.is-player {
+    border-color: var(--accent-secondary) !important;
+    box-shadow: inset 0 0 10px rgba(0, 255, 136, 0.1) !important;
+}
+
+/* Leaderboard Toast */
+.leaderboard-toast, .challenge-complete-toast {
+    background: #000 !important;
+    border: 1px solid var(--accent-secondary) !important;
+    color: #fff !important;
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.3) !important;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 20px;
+    border-radius: 4px;
+}
+
+.challenge-complete-icon {
+    color: var(--accent-secondary); 
+}
+.challenge-complete-header {
+    color: var(--accent-primary);
+    font-weight: bold;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+}
+.challenge-complete-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+
+/* Share Button & Theme Specifics */
+.share-btn span svg, .theme-option-icon svg, .theme-icon svg {
+    fill: currentColor;
+    vertical-align: middle;
+}
+.sidebar-panel-small {
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+}
+.sidebar-panel-small .share-btn {
+    border: 1px solid var(--accent-blue) !important;
+    color: var(--accent-blue) !important;
+    justify-content: center;
+}
+.sidebar-panel-small .share-btn:hover {
+    background: rgba(0, 204, 255, 0.1) !important;
+    box-shadow: 0 0 15px rgba(0, 204, 255, 0.3) !important;
+}
+
+/* Back Button Specific Override */
+.back-button {
+    font-size: 14px !important;
+    border-radius: 0 !important;
+    padding: 8px 15px !important;
+    border: 1px solid var(--border-color) !important;
+    text-transform: uppercase;
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+}
+.back-button:hover {
+    border-color: var(--accent-primary) !important;
+    color: var(--accent-primary) !important;
+    box-shadow: 0 0 10px rgba(255, 77, 0, 0.3) !important;
+}
+
+/* Theme Picker Specifics */
+.theme-picker {
+   width: 320px !important; 
+}
+.theme-grid {
+    grid-template-columns: repeat(4, 1fr) !important; 
+    gap: 10px !important;
+}
+
+.theme-option {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    padding: 10px !important;
+    height: auto !important;
+}
+.theme-preview {
+    border: 1px solid #fff;
+    margin-bottom: 5px;
+}
+
+.theme-picker-header {
+    color: var(--accent-primary) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    margin-bottom: 15px !important;
+}
+
+
+/* ==========================================================================
+   GAME BOARD AREA
+   ========================================================================== */
+.game-container {
+  background: #0a0a0a !important;
+  border: 2px solid var(--border-color) !important;
+  border-radius: 0 !important;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.8) !important;
+  padding: 15px !important;
+  margin-top: 0 !important;
+}
+
+.grid-cell {
+  background: var(--cell-bg) !important;
+  border-radius: 0 !important;
+  border: 1px solid rgba(255,255,255,0.05);
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+}
+
+.tile {
+  border-radius: 0 !important; 
+}
+
+.tile-inner {
+  border-radius: 0 !important;
+  font-family: var(--font-main) !important;
+  font-weight: normal !important;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: none !important;
+}
+
+/* Tile Colors - Adjusted for Retro Neon Look */
+.tile.tile-2 .tile-inner { background: #1a1a1a !important; color: #fff !important; }
+.tile.tile-4 .tile-inner { background: #2a2a2a !important; color: #fff !important; border-color: #555 !important; }
+.tile.tile-8 .tile-inner { background: #5a2e00 !important; color: #ffae00 !important; border-color: #ffae00 !important; }
+.tile.tile-16 .tile-inner { background: #7a3a00 !important; color: #ff7700 !important; border-color: #ff7700 !important; }
+.tile.tile-32 .tile-inner { background: #9a0000 !important; color: #ff3300 !important; border-color: #ff3300 !important; }
+.tile.tile-64 .tile-inner { background: #ba0000 !important; color: #ff0000 !important; border-color: #ff0000 !important; box-shadow: 0 0 10px #ff0000 !important; }
+
+/* 2048 Tile Special */
+.tile.tile-2048 .tile-inner { 
+    background: #000 !important; 
+    color: #00ff88 !important; 
+    border: 2px solid #00ff88 !important; 
+    box-shadow: 0 0 20px #00ff88 !important;
+    text-shadow: 0 0 10px #00ff88;
+}
+
+/* Game Header */
+.game-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+h1.title {
+  color: #fff !important;
+  font-size: 80px !important;
+  margin: 0 !important;
+  text-shadow: 4px 4px 0 #333;
+}
+.score-container, .best-container {
+    background: #000 !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 0 !important;
+    padding: 5px 15px !important;
+    min-width: 100px;
+    box-shadow: none !important;
+}
+.score-container:after, .best-container:after {
+    color: var(--text-dim) !important;
+    text-transform: uppercase;
+    text-shadow: none !important;
+}
+
+/* Hide extraneous elements */
+.theme-switcher, .feature-menu-bar { display: none !important; }
+
+/* Responsive */
+@media screen and (max-width: 1200px) {
+  .game-layout-wrapper {
+    flex-wrap: wrap;
+  }
+  .sidebar {
+      width: 100%;
+      flex-direction: row;
+      flex-wrap: wrap;
+  }
+  .sidebar-panel {
+      flex: 1 1 300px;
+  }
+}

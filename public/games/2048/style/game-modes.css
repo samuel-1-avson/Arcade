@@ -1,0 +1,98 @@
+/* Mode UI Styles */
+.game-timer {
+    display: none;
+    background: #f8f9fa;
+    padding: 10px 20px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    font-weight: bold;
+    color: #333;
+    font-size: 18px;
+}
+
+.timer-warning {
+    color: #e74c3c;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.mode-card {
+    cursor: pointer;
+    border-radius: 8px;
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+    border: 2px solid transparent;
+}
+
+.mode-card:hover {
+    transform: translateY(-5px);
+}
+
+.mode-card.active {
+    border-color: #8bac8b;
+    box-shadow: 0 0 0 3px rgba(139, 172, 139, 0.3);
+}
+
+.mode-card-header {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #8bac8b;
+}
+
+.mode-card-icon {
+    font-size: 32px;
+}
+
+.mode-card-body {
+    padding: 15px;
+}
+
+.mode-card-name {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.mode-card-desc {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 10px;
+    min-height: 32px;
+}
+
+.mode-card-info {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.mode-card-info span {
+    font-size: 10px;
+    padding: 2px 6px;
+    background: #eee;
+    border-radius: 4px;
+    color: #555;
+}
+
+.modes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.mode-selector-modal {
+    max-width: 800px;
+    width: 90%;
+}

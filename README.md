@@ -1,169 +1,164 @@
-# 🎮 Arcade Gaming Hub
+# Arcade Gaming Hub - Next.js
 
-> A retro-futuristic arcade experience built with modern web technologies.
+A modern React + Next.js + TypeScript rebuild of the Arcade Gaming Hub.
 
-![Version](https://img.shields.io/badge/version-1.5.0-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Status](https://img.shields.io/badge/status-active-success.svg)
+## 🎮 Features
 
-## 📖 Overview
-
-**Arcade Gaming Hub** is a Single Page Application (SPA) that brings the nostalgia of classic arcade gaming into a modern, sleek web environment. Designed with a "Retro-Futuristic" aesthetic, it features a collection of 13+ fully playable games, a robust user progression system, real-time social features, and a high-performance engine.
-
-Whether you're looking to challenge your reflexes in *Snake 3D*, strategize in *Tower Defense*, or relax in *Zen Mode*, the Arcade Hub provides a seamless and immersive experience across desktop and mobile devices.
-
----
-
-## ✨ Key Features
-
-### 🕹️ Game Experience
--   **Diverse Library**: A curated collection of classic and modern games.
--   **Instant Play**: Zero load times between games thanks to SPA architecture.
--   **Responsive Design**: Optimized controls for both Keyboard/Mouse and Touch interfaces.
--   **Zen Mode**: A distraction-free mode for relaxed gameplay.
-
-### 👤 User Progression
--   **Profile System**: Custom avatars, titles, and XP-based leveling.
--   **Global Leaderboards**: Real-time ranking against players worldwide.
--   **Achievements**: Unlockable badges and rewards for mastering specific challenges.
--   **Stats Tracking**: Comprehensive tracking of play time, games played, and high scores.
-
-### 🌐 Social & Online
--   **Authentication**: Seamless Google Sign-In and Guest mode support.
--   **Party System**: Real-time chat and lobby system for grouping up with friends.
--   **Tournaments**: Create and join bracket-style tournaments (4, 8, or 16 players).
--   **Live Events**: Time-limited challenges and global community events.
-
-### 🛠️ Technical
--   **PWA Support**: Installable on mobile and desktop for a native app-like experience.
--   **Offline Capable**: Service Worker integration for offline asset caching.
--   **Cloud Sync**: Real-time data synchronization using Firebase Firestore.
-
----
-
-## 🎮 Game Library
-
-| Game | Genre | Description |
-|------|-------|-------------|
-| **🐍 Snake** | Classic | Eat food, grow longer, and avoid collisions. Includes a modern 3D mode. |
-| **👻 Pac-Man** | Arcade | Navigate mazes, eat pellets, and avoid the ghosts. |
-| **☄️ Asteroids** | Shooter | Survive in deep space by blasting asteroids and UFOs. |
-| **🧱 Breakout** | Arcade | Smash bricks with a bouncing ball and paddle. |
-| **🧩 Tetris** | Puzzle | Stack falling blocks to clear lines. |
-| **💣 Minesweeper** | Logic | Clear the minefield without detonating any hidden mines. |
-| **🏰 Tower Defense** | Strategy | Build defenses to stop waves of incoming enemies. |
-| **🏃 Platformer** | Action | Jump, run, and collect items in this side-scrolling adventure. |
-| **🎵 Rhythm** | Music | Hit notes in time with the beat. |
-| **⚔️ Roguelike** | RPG | Explore dungeons, fight monsters, and collect loot. |
-| **👽 Space Invaders** | Shooter | Defend Earth from waves of alien invaders. |
-| **🔫 Toon Shooter** | FPS | A 3D shooter set in a cartoon arena. |
-| **🔢 2048** | Puzzle | Combine tiles to reach the 2048 tile. |
-
----
-
-## 💻 Tech Stack
-
-### Frontend
--   **Core**: Vanilla JavaScript (ES Modules), HTML5, CSS3.
--   **Architecture**: Custom SPA framework (Router, EventBus, Component system).
--   **Styling**: Native CSS Variables, Flexbox, Grid, Glassmorphism effects.
--   **3D Graphics**: [Three.js](https://threejs.org/) (v0.182.0) for Toon Shooter and 3D elements.
--   **Audio**: Web Audio API for immersive soundscapes.
-
-### Backend & Services
--   **Authentication**: Firebase Authentication (Google Provider).
--   **Database**: Firebase Firestore (NoSQL) & Realtime Database.
--   **Hosting**: Vercel / Firebase Hosting.
--   **Serverless**: Firebase Cloud Functions.
-
-### Development Tools
--   **Linter**: ESLint.
--   **Formatter**: Prettier.
--   **Local Server**: `serve` package.
-
----
+- **Next.js 14** with App Router
+- **TypeScript** for type safety
+- **Tailwind CSS** for styling
+- **Zustand** for state management
+- **Firebase** for authentication and data
+- **Framer Motion** for animations
+- **Retro arcade aesthetic** with scanlines and neon accents
 
 ## 🚀 Getting Started
 
-Follow these instructions to set up the project locally.
-
 ### Prerequisites
--   **Node.js**: v18.0.0 or higher.
--   **npm**: v9.0.0 or higher.
+
+- Node.js 18+
+- npm or yarn
 
 ### Installation
 
-1.  **Clone the repository**
-    ```bash
-    git clone https://github.com/yourusername/arcade-hub.git
-    cd arcade-hub
-    ```
+1. Clone the repository:
+```bash
+git clone <repo-url>
+cd arcade-hub-next
+```
 
-2.  **Install dependencies**
-    ```bash
-    npm install
-    ```
+2. Install dependencies:
+```bash
+npm install
+```
 
-3.  **Configure Environment**
-    -   Ensure you have a `firebase.json` configured if deploying to Firebase.
-    -   Local development typically does not require complex env setup for the frontend-only features, but Firebase features require a valid configuration object in `js/config/firebase-config.js` (or similar).
+3. Set up environment variables:
+```bash
+cp .env.local.example .env.local
+# Edit .env.local with your Firebase credentials
+```
 
-### Running Locally
-
-To start the development server:
-
+4. Run the development server:
 ```bash
 npm run dev
 ```
 
-This will launch a local server (usually at `http://localhost:3000` or `http://localhost:5000`).
+5. Open [http://localhost:3000](http://localhost:3000)
 
----
+## 🏗️ Build for Production
 
-## 📂 Project Structure
-
-```
-arcade-hub/
-├── 📁 css/                 # Global styles and themes
-│   ├── hub.css            # Main Hub UI styles
-│   ├── style.css          # Base styles and variables
-│   └── ...
-├── 📁 games/               # Game modules
-│   ├── 📁 snake/          # Snake game source
-│   ├── 📁 pacman/         # Pac-Man game source
-│   └── ...
-├── 📁 js/                  # Core application logic
-│   ├── 📁 components/     # Reusable UI components
-│   ├── 📁 engine/         # Core engines (EventBus, Storage, Sync)
-│   ├── 📁 services/       # Business logic (Auth, Chat, Friends)
-│   └── app.js             # Main entry point
-├── 📁 docs/                # Documentation
-├── 📄 index.html           # Main entry HTML file
-├── 📄 package.json         # Project metadata and scripts
-├── 📄 sw.js                # Service Worker for PWA
-└── 📄 vercel.json          # Vercel deployment config
+```bash
+npm run build
 ```
 
----
+The static output will be in the `dist/` directory.
+
+## 📁 Project Structure
+
+```
+app/                    # Next.js app router
+├── hub/               # Hub pages (home, games, leaderboard, etc.)
+├── game/[gameId]/     # Game launcher
+├── layout.tsx         # Root layout
+└── globals.css        # Global styles
+
+components/
+├── ui/                # UI components (Button, Modal, etc.)
+├── layout/            # Layout components (Sidebar, Header)
+├── game/              # Game-related components
+├── features/          # Feature components (Auth, CommandPalette)
+└── providers.tsx      # App providers
+
+lib/
+├── store/             # Zustand stores
+├── firebase/          # Firebase configuration
+└── utils.ts           # Utility functions
+
+hooks/                 # Custom React hooks
+
+types/                 # TypeScript types
+
+public/games/          # Game files (HTML/CSS/JS)
+```
+
+## 🎨 Design System
+
+- **Primary Color**: Cyan (#00e5ff)
+- **Background**: Black (#000000)
+- **Surface**: Dark gray (#0a0a0a)
+- **Font Display**: Orbitron
+- **Font Body**: Space Mono
+
+## 🔧 Configuration
+
+### Firebase Setup
+
+1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
+2. Enable Authentication (Google and Anonymous)
+3. Create a Firestore database
+4. Copy your Firebase config to `.env.local`
+
+### Adding New Games
+
+1. Copy game files to `public/games/[game-name]/`
+2. Add game to `hooks/useGames.ts`
+3. Ensure game uses postMessage for score submission:
+
+```javascript
+// In your game
+window.parent.postMessage({ type: 'GAME_SCORE', score: 1000 }, '*');
+window.parent.postMessage({ type: 'GAME_EXIT' }, '*');
+```
+
+## 📝 Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_FIREBASE_API_KEY` | Firebase API key |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Firebase Auth domain |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Firebase project ID |
+| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Firebase storage bucket |
+| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Firebase messaging sender ID |
+| `NEXT_PUBLIC_FIREBASE_APP_ID` | Firebase app ID |
+| `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` | Firebase analytics ID (optional) |
+
+## 🚀 Deployment
+
+### Vercel (Recommended)
+
+1. Push to GitHub
+2. Connect to Vercel
+3. Set environment variables in Vercel dashboard
+4. Deploy
+
+### Static Hosting
+
+```bash
+npm run build
+# Deploy dist/ folder to any static host
+```
+
+## 🐛 Troubleshooting
+
+### Games not loading
+- Check that game files are in `public/games/`
+- Ensure games use correct paths
+- Check browser console for errors
+
+### Firebase auth not working
+- Verify environment variables are set
+- Check Firebase console for authorized domains
+- Enable Anonymous and Google sign-in methods
+
+### Styling issues
+- Ensure Tailwind CSS is compiled
+- Check for CSS conflicts
+- Verify fonts are loading
+
+## 📄 License
+
+MIT
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please follow these steps:
-
-1.  Fork the repository.
-2.  Create a feature branch (`git checkout -b feature/AmazingFeature`).
-3.  Commit your changes (`git commit -m 'Add some AmazingFeature'`).
-4.  Push to the branch (`git push origin feature/AmazingFeature`).
-5.  Open a Pull Request.
-
-Please ensure your code follows the existing style guidelines and passes the linter.
-
----
-
-## 📜 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
-
----
-
-<center>Built with ❤️ by Antigravity</center>
+Contributions welcome! Please read the contributing guidelines first.
