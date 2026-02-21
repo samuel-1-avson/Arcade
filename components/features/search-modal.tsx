@@ -231,7 +231,7 @@ function SearchResultItem({
   result: SearchResult; 
   onClick: () => void;
 }) {
-  const icon = result.type === 'user' ? User : Gamepad2;
+  const Icon = result.type === 'user' ? User : Gamepad2;
   const href = result.type === 'user' 
     ? `/hub/profile/${result.id}/` 
     : `/game/${result.id}/`;
@@ -253,7 +253,7 @@ function SearchResultItem({
         />
       ) : (
         <div className="w-10 h-10 rounded bg-elevated flex items-center justify-center">
-          <icon className="w-5 h-5 text-muted-foreground" />
+          <Icon className="w-5 h-5 text-muted-foreground" />
         </div>
       )}
       <div className="flex-1 min-w-0">

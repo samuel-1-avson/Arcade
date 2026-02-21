@@ -95,24 +95,10 @@ export const searchService = {
 
   // Search games
   searchGames: async (searchTerm: string, maxResults: number = 10): Promise<SearchResult[]> => {
-    try {
-      // This searches through locally available games
-      // In a real app, you might store games in Firestore for server-side search
-      const { allGames } = await import('@/hooks/useGames');
-      
-      if (!searchTerm || searchTerm.length < 2) {
-        return [];
-      }
-
-      const normalizedTerm = searchTerm.toLowerCase().trim();
-      
-      // For now, return empty array - games should be loaded from useGames hook
-      // In production, store games in Firestore for proper search
-      return [];
-    } catch (error) {
-      console.error('[Search] searchGames error:', error);
-      return [];
-    }
+    // NOTE: Game search is not implemented yet
+    // Games should be stored in Firestore for proper server-side search
+    // For now, return empty array - users can browse games from the hub
+    return [];
   },
 
   // Universal search
