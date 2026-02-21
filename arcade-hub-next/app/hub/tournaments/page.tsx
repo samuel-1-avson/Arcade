@@ -7,8 +7,8 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { tournamentsService, Tournament } from '@/lib/firebase/services/tournaments';
 import { cn } from '@/lib/utils';
-import { Card } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Modal, ModalFooter } from '@/components/ui/modal';
+
 
 type TabType = 'upcoming' | 'active' | 'ended';
 
@@ -364,36 +364,14 @@ export default function TournamentsPage() {
         )}
       </div>
 
-      {/* Create Tournament Dialog */}
-      {console.log('[Tournaments] Rendering dialog, isCreateDialogOpen:', isCreateDialogOpen)}
-      {isCreateDialogOpen && (
-        <>
-          {/* Overlay */}
-          <div 
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
-            onClick={() => !isCreating && setIsCreateDialogOpen(false)}
-          />
-          
-          {/* Dialog */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <Card className="w-full max-w-lg max-h-[90vh] flex flex-col">
-              {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-white/[0.05]">
-                <h2 className="font-display text-lg font-bold uppercase tracking-wider text-primary">
-                  Create Tournament
-                </h2>
-                <button
-                  onClick={() => !isCreating && setIsCreateDialogOpen(false)}
-                  disabled={isCreating}
-                  className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors rounded-lg hover:bg-white/5 disabled:opacity-50"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              
-              {/* Form */}
-              <ScrollArea className="flex-1 p-4">
-                <div className="space-y-4">
+      {/* Create Tournament Modal */}
+      <Modal
+        isOpen={isCreateDialogOpen}
+        onClose={() => !isCreating && setIsCreateDialogOpen(false)}
+        title="Create Tournament"
+        size="lg"
+      >
+        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                   {/* Tournament Name */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-primary">
@@ -487,45 +465,39 @@ export default function TournamentsPage() {
                     </p>
                   </div>
                   
-                  {/* Error Message */}
-                  {createError && (
-                    <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                      <p className="text-sm text-red-400">{createError}</p>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-              
-              {/* Footer */}
-              <div className="flex justify-end gap-3 p-4 border-t border-white/[0.05]">
-                <Button
-                  variant="ghost"
-                  onClick={() => setIsCreateDialogOpen(false)}
-                  disabled={isCreating}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleCreateTournament}
-                  disabled={isCreating}
-                >
-                  {isCreating ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      Creating...
-                    </>
-                  ) : (
-                    <>
-                      <Trophy className="w-4 h-4 mr-2" />
-                      Create Tournament
-                    </>
-                  )}
-                </Button>
-              </div>
-            </Card>
+        {/* Error Message */}
+        {createError && (
+          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <p className="text-sm text-red-400">{createError}</p>
           </div>
-        </>
-      )}
+        )}
+        
+        <ModalFooter>
+          <Button
+            variant="ghost"
+            onClick={() => setIsCreateDialogOpen(false)}
+            disabled={isCreating}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleCreateTournament}
+            disabled={isCreating}
+          >
+            {isCreating ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                Creating...
+              </>
+            ) : (
+              <>
+                <Trophy className="w-4 h-4 mr-2" />
+                Create Tournament
+              </>
+            )}
+          </Button>
+        </ModalFooter>
+      </Modal>
     </div>
   );
 }
