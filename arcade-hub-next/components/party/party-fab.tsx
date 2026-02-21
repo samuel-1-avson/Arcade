@@ -362,7 +362,7 @@ export function PartyFAB() {
                               ? 'bg-accent text-accent-foreground' 
                               : 'bg-white/10 text-primary'
                           )}>
-                            {msg.userId !== user?.uid && (
+                            {msg.userId !== user?.id && (
                               <span className="text-xs opacity-70 block mb-0.5">
                                 {msg.displayName}
                               </span>
