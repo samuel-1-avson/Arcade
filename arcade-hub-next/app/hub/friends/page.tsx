@@ -159,11 +159,11 @@ export default function FriendsPage() {
     
     // Find or create conversation object
     const existingConv = conversations.find(c => c.id === conversationId);
-    const conv = existingConv || {
+    const conv: Conversation = existingConv || {
       id: conversationId,
       participants: [user.id, friend.id],
       participantNames: [user.displayName || 'You', friend.displayName],
-      participantPhotos: [user.avatar, friend.photoURL],
+      participantPhotos: [user.avatar || '', friend.photoURL || ''],
       unreadCount: {},
       createdAt: new Date(),
       updatedAt: new Date(),

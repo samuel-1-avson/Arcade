@@ -82,8 +82,8 @@ export const messagesService = {
         user2Data.displayName || 'Anonymous'
       ],
       participantPhotos: [
-        user1Data.photoURL || null,
-        user2Data.photoURL || null
+        user1Data.photoURL || '',
+        user2Data.photoURL || ''
       ],
       unreadCount: { [userId1]: 0, [userId2]: 0 },
       createdAt: serverTimestamp(),
