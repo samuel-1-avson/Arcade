@@ -221,6 +221,88 @@ service cloud.firestore {
     }
     
     // ============================================
+    // FRIENDS SYSTEM
+    // ============================================
+    
+    match /friends/{friendshipId} {
+      allow read: if isSignedIn() && (
+        friendshipId.matches('^' + request.auth.uid + '_.+$') ||
+        friendshipId.matches('^.+_' + request.auth.uid + '$')
+      );
+      allow create: if isSignedIn();
+      allow update: if false;
+      allow delete: if isSignedIn() && (
+        friendshipId.matches('^' + request.auth.uid + '_.+$') ||
+        friendshipId.matches('^.+_' + request.auth.uid + '$')
+      );
+    }
+    
+    match /friendRequests/{requestId} {
+      allow read: if isSignedIn() && (
+        resource.data.fromUserId == request.auth.uid ||
+        resource.data.toUserId == request.auth.uid
+      );
+      allow create: if isSignedIn() 
+        && request.resource.data.fromUserId == request.auth.uid;
+      allow update: if isSignedIn() && (
+        resource.data.toUserId == request.auth.uid ||
+        resource.data.fromUserId == request.auth.uid
+      );
+      allow delete: if isSignedIn() && (
+        resource.data.fromUserId == request.auth.uid ||
+        resource.data.toUserId == request.auth.uid
+      );
+    }
+    
+    // ============================================
+    // PRESENCE - Online status
+    // ============================================
+    
+    match /presence/{userId} {
+      allow read: if true;
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if false;
+    }
+    
+    // ============================================
+    // PUBLIC PROFILES
+    // ============================================
+    
+    match /publicProfiles/{userId} {
+      allow read: if true;
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if false;
+    }
+    
+    // ============================================
+    // PARTY SYSTEM
+    // ============================================
+    
+    match /parties/{partyId} {
+      allow read: if isSignedIn() && 
+        resource.data.memberIds.hasAny([request.auth.uid]);
+      allow create: if isSignedIn()
+        && request.resource.data.leaderId == request.auth.uid;
+      allow update: if isSignedIn() && (
+        resource.data.leaderId == request.auth.uid ||
+        resource.data.memberIds.hasAny([request.auth.uid])
+      );
+      allow delete: if isSignedIn() && 
+        resource.data.leaderId == request.auth.uid;
+    }
+    
+    match /partyMessages/{messageId} {
+      allow read: if isSignedIn() && 
+        get(/databases/$(database)/documents/parties/$(resource.data.partyId)).data.memberIds.hasAny([request.auth.uid]);
+      allow create: if isSignedIn() 
+        && request.resource.data.userId == request.auth.uid;
+      allow update: if false;
+      allow delete: if false;
+    }
+    
+    // ============================================
     // ADMIN COLLECTION
     // ============================================
     

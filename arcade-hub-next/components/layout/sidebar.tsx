@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { 
   Home, Trophy, Target, BarChart3, Award, 
-  ShoppingCart, Settings, Gamepad2 
+  ShoppingCart, Settings, Gamepad2, Users
 } from 'lucide-react';
 
 const navItems = [
@@ -15,6 +15,7 @@ const navItems = [
   { icon: Target, label: 'Challenges', href: '/hub/challenges/' },
   { icon: BarChart3, label: 'Leaderboard', href: '/hub/leaderboard/' },
   { icon: Award, label: 'Achievements', href: '/hub/achievements/' },
+  { icon: Users, label: 'Friends', href: '/hub/friends/' },
 ];
 
 const secondaryNavItems = [

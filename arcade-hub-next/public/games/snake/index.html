@@ -251,29 +251,6 @@
 
     <script type="module" src="../../js/utils/GameBridge.js"></script>
     <script type="module" src="Snake.js"></script>
-    <!-- Arcade Hub Integration -->
-    <script src="/games/game-bridge.js"></script>
-    <script>
-        // Notify hub when game is ready
-        if (window.ArcadeHub) {
-            ArcadeHub.notifyReady();
-        }
-        
-        // Hook into game over to submit score
-        const originalGameOver = window.gameOver || function(){};
-        window.gameOver = function(score) {
-            if (window.ArcadeHub && score) {
-                ArcadeHub.submitScore(score);
-            }
-            return originalGameOver.apply(this, arguments);
-        };
-    </script>
-    <!-- Arcade Hub Integration -->
-    <script src="/games/game-bridge.js"></script>
-    <script>
-        if (window.ArcadeHub) {
-            ArcadeHub.notifyReady();
-        }
-    </script>
+    <!-- Arcade Hub Integration --><script src="/games/game-bridge.js"></script>
 </body>
 </html>
