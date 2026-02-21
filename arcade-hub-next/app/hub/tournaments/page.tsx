@@ -71,7 +71,7 @@ export default function TournamentsPage() {
         if (user) {
           const joined = new Set<string>();
           for (const tournament of data) {
-            const isJoined = await tournamentsService.isParticipant(user.uid, tournament.id);
+            const isJoined = await tournamentsService.isParticipant(user.id, tournament.id);
             if (isJoined) joined.add(tournament.id);
           }
           setJoinedTournaments(joined);
@@ -92,10 +92,10 @@ export default function TournamentsPage() {
     setJoining(tournament.id);
     try {
       const success = await tournamentsService.joinTournament(
-        user.uid,
+        user.id,
         tournament.id,
         user.displayName || 'Anonymous',
-        user.photoURL || undefined
+        user.avatar?.startsWith('http') ? user.avatar : undefined
       );
       
       if (success) {
@@ -140,7 +140,7 @@ export default function TournamentsPage() {
     
     try {
       const tournamentId = await tournamentsService.createTournament(
-        user.uid,
+        user.id,
         {
           name: newTournament.name.trim(),
           game: newTournament.game,
