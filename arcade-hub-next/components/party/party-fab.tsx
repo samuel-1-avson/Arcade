@@ -80,7 +80,7 @@ export function PartyFAB() {
     }
   };
 
-  const isLeader = currentParty?.leaderId === user?.uid;
+  const isLeader = currentParty?.leaderId === user?.id;
 
   return (
     <>
@@ -311,13 +311,13 @@ export function PartyFAB() {
                 {currentParty?.status === 'waiting' && (
                   <Button
                     onClick={() => {
-                      const member = currentParty.members.find(m => m.userId === user?.uid);
+                      const member = currentParty.members.find(m => m.userId === user?.id);
                       setReady(!member?.isReady);
                     }}
-                    variant={currentParty.members.find(m => m.userId === user?.uid)?.isReady ? 'outline' : 'default'}
+                    variant={currentParty.members.find(m => m.userId === user?.id)?.isReady ? 'outline' : 'default'}
                     className="w-full mt-3"
                   >
-                    {currentParty.members.find(m => m.userId === user?.uid)?.isReady ? (
+                    {currentParty.members.find(m => m.userId === user?.id)?.isReady ? (
                       <>
                         <X className="w-4 h-4 mr-2" />
                         Cancel Ready
@@ -353,12 +353,12 @@ export function PartyFAB() {
                           key={msg.id}
                           className={cn(
                             'flex flex-col',
-                            msg.userId === user?.uid && 'items-end'
+                            msg.userId === user?.id && 'items-end'
                           )}
                         >
                           <div className={cn(
                             'max-w-[85%] px-3 py-2 rounded-lg',
-                            msg.userId === user?.uid 
+                            msg.userId === user?.id 
                               ? 'bg-accent text-accent-foreground' 
                               : 'bg-white/10 text-primary'
                           )}>
