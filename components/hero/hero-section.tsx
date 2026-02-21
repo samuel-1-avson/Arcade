@@ -17,37 +17,16 @@ interface FeaturedGame {
 }
 
 const FEATURED_GAMES: FeaturedGame[] = [
-  {
-    id: 'pacman',
-    name: 'Pac-Man',
-    description: 'Navigate the maze, eat all the dots, and avoid the ghosts. The arcade classic that started it all.',
-    icon: 'Ghost',
-    difficulty: 'medium',
-    category: 'arcade',
-    path: '/games/pacman/',
-  },
-  {
-    id: 'snake',
-    name: 'Snake',
-    description: 'Eat food, grow longer, and avoid colliding with yourself in this timeless classic.',
-    icon: 'Gamepad2',
-    difficulty: 'easy',
-    category: 'classic',
-    path: '/games/snake/',
-  },
-  {
-    id: 'tetris',
-    name: 'Tetris',
-    description: 'Stack falling blocks to clear lines in the world\'s most addictive puzzle game.',
-    icon: 'Grid3x3',
-    difficulty: 'medium',
-    category: 'puzzle',
-    path: '/games/tetris/',
-  },
+  // Featured games will be added here
 ];
 
 export function HeroSection() {
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Return null if no featured games
+  if (FEATURED_GAMES.length === 0) {
+    return null;
+  }
 
   const currentGame = FEATURED_GAMES[currentIndex];
 
