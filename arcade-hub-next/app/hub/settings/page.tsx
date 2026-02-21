@@ -1,48 +1,44 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Volume2, Music, Bell, Moon, Monitor, LogOut, User } from 'lucide-react';
+import { Volume2, Music, Bell, Moon, LogOut, User, Save, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
+import { useSettingsStore, type Settings } from '@/lib/store/settings-store';
 
 interface SettingItem {
-  id: string;
+  id: keyof Settings;
   label: string;
   description: string;
   icon: React.ElementType;
-  type: 'toggle' | 'button';
 }
 
-const SETTINGS: SettingItem[] = [
+const SETTINGS_CONFIG: SettingItem[] = [
   {
-    id: 'sound',
+    id: 'soundEnabled',
     label: 'Sound Effects',
     description: 'Play sounds for game actions',
     icon: Volume2,
-    type: 'toggle',
   },
   {
-    id: 'music',
+    id: 'musicEnabled',
     label: 'Background Music',
     description: 'Play music in games',
     icon: Music,
-    type: 'toggle',
   },
   {
-    id: 'notifications',
+    id: 'notificationsEnabled',
     label: 'Notifications',
     description: 'Show achievement popups and alerts',
     icon: Bell,
-    type: 'toggle',
   },
   {
-    id: 'darkmode',
+    id: 'darkMode',
     label: 'Dark Mode',
     description: 'Always use dark theme',
     icon: Moon,
-    type: 'toggle',
   },
 ];
 
@@ -51,13 +47,15 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (value: boo
     <button
       onClick={() => onChange(!checked)}
       className={cn(
-        'relative w-11 h-6 transition-colors focus:outline-none',
+        'relative w-11 h-6 transition-colors focus:outline-none focus:ring-2 focus:ring-accent/50 rounded-sm',
         checked ? 'bg-accent' : 'bg-elevated border border-white/[0.08]'
       )}
+      role="switch"
+      aria-checked={checked}
     >
       <span
         className={cn(
-          'absolute top-1 left-1 w-4 h-4 bg-primary transition-transform',
+          'absolute top-1 left-1 w-4 h-4 bg-primary transition-transform rounded-sm',
           checked && 'translate-x-5'
         )}
       />
@@ -67,53 +65,66 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (value: boo
 
 export default function SettingsPage() {
   const { user, signOut, updateProfile } = useAuth();
-  const [settings, setSettings] = useState<Record<string, boolean>>({
-    sound: true,
-    music: true,
-    notifications: true,
-    darkmode: true,
-  });
+  const {
+    soundEnabled,
+    musicEnabled,
+    notificationsEnabled,
+    darkMode,
+    setSetting,
+    syncToFirestore,
+    loadFromFirestore,
+  } = useSettingsStore();
+
   const [isLoading, setIsLoading] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
 
-  // Load settings from localStorage on mount
+  // Build settings values map for the UI
+  const settingsValues: Record<keyof Settings, boolean> = {
+    soundEnabled,
+    musicEnabled,
+    notificationsEnabled,
+    darkMode,
+  };
+
+  // Load settings from Firestore on mount (if signed in)
   useEffect(() => {
-    const savedSettings = localStorage.getItem('arcade_hub_settings');
-    if (savedSettings) {
-      try {
-        const parsed = JSON.parse(savedSettings);
-        setSettings(prev => ({ ...prev, ...parsed }));
-      } catch (e) {
-        // Invalid settings
-      }
+    if (user?.id) {
+      loadFromFirestore(user.id);
     }
-    
     if (user?.displayName) {
       setDisplayName(user.displayName);
     }
-  }, [user?.displayName]);
+  }, [user?.id, user?.displayName, loadFromFirestore]);
 
-  const handleToggle = (id: string, value: boolean) => {
-    const newSettings = { ...settings, [id]: value };
-    setSettings(newSettings);
-    
-    // Save to localStorage
-    localStorage.setItem('arcade_hub_settings', JSON.stringify(newSettings));
-    
+  const handleToggle = async (id: keyof Settings, value: boolean) => {
+    // Update store (persists to localStorage automatically)
+    setSetting(id, value);
+
     // Apply dark mode immediately
-    if (id === 'darkmode') {
+    if (id === 'darkMode') {
       document.documentElement.classList.toggle('dark', value);
+    }
+
+    // Sync to Firestore if signed in
+    if (user?.id) {
+      setSaveStatus('saving');
+      await syncToFirestore(user.id);
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
     }
   };
 
   const handleSaveProfile = async () => {
     if (!displayName.trim()) return;
-    
+
     setIsLoading(true);
     try {
       await updateProfile?.(displayName.trim());
       setShowEditProfile(false);
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (error) {
       alert('Failed to update profile');
     } finally {
@@ -121,16 +132,39 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSignOut = async () => {
+    if (!confirm('Are you sure you want to sign out?')) return;
+    try {
+      await signOut();
+    } catch (error) {
+      alert('Failed to sign out');
+    }
+  };
+
   return (
     <div className="space-y-6 animate-fade-in max-w-2xl">
       {/* Header */}
-      <div>
-        <h1 className="font-display text-2xl font-bold uppercase tracking-wider text-primary mb-2">
-          Settings
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          Customize your arcade experience
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold uppercase tracking-wider text-primary mb-2">
+            Settings
+          </h1>
+          <p className="text-muted-foreground text-sm">
+            Customize your arcade experience
+          </p>
+        </div>
+        {saveStatus === 'saved' && (
+          <div className="flex items-center gap-2 text-success text-sm animate-fade-in">
+            <CheckCircle className="w-4 h-4" />
+            <span>Saved</span>
+          </div>
+        )}
+        {saveStatus === 'saving' && (
+          <div className="flex items-center gap-2 text-muted-foreground text-sm animate-fade-in">
+            <Save className="w-4 h-4 animate-pulse" />
+            <span>Saving...</span>
+          </div>
+        )}
       </div>
 
       {/* Preferences Section */}
@@ -141,7 +175,7 @@ export default function SettingsPage() {
           </h2>
         </div>
         <div className="divide-y divide-white/[0.03]">
-          {SETTINGS.map((setting) => {
+          {SETTINGS_CONFIG.map((setting) => {
             const Icon = setting.icon;
             return (
               <div key={setting.id} className="flex items-center justify-between px-4 py-4">
@@ -154,12 +188,10 @@ export default function SettingsPage() {
                     <p className="text-xs text-muted-foreground">{setting.description}</p>
                   </div>
                 </div>
-                {setting.type === 'toggle' && (
-                  <Toggle
-                    checked={settings[setting.id] ?? true}
-                    onChange={(value) => handleToggle(setting.id, value)}
-                  />
-                )}
+                <Toggle
+                  checked={settingsValues[setting.id]}
+                  onChange={(value) => handleToggle(setting.id, value)}
+                />
               </div>
             );
           })}
@@ -189,7 +221,7 @@ export default function SettingsPage() {
               {showEditProfile ? 'Cancel' : 'Edit'}
             </Button>
           </div>
-          
+
           {/* Edit Profile Form */}
           {showEditProfile && (
             <div className="pl-14 space-y-3">
@@ -200,13 +232,23 @@ export default function SettingsPage() {
                 maxLength={20}
               />
               <div className="flex gap-2">
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   onClick={handleSaveProfile}
                   disabled={isLoading || !displayName.trim()}
                 >
                   {isLoading ? 'Saving...' : 'Save'}
                 </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Email */}
+          {user?.email && (
+            <div className="flex items-center gap-4 pl-14">
+              <div>
+                <h3 className="font-medium text-primary text-sm">Email</h3>
+                <p className="text-xs text-muted-foreground">{user.email}</p>
               </div>
             </div>
           )}
@@ -231,7 +273,7 @@ export default function SettingsPage() {
                 <p className="text-xs text-muted-foreground">Sign out of your account</p>
               </div>
             </div>
-            <Button variant="danger" size="sm" onClick={signOut}>
+            <Button variant="danger" size="sm" onClick={handleSignOut}>
               Sign Out
             </Button>
           </div>
