@@ -73,9 +73,9 @@ export default function PublicProfilePage() {
         return;
       }
       
-      const requests = await friendsService.getFriendRequests(currentUser.id);
-      const sentRequest = requests.sent.some(r => r.toUserId === userId);
-      const receivedRequest = requests.received.some(r => r.fromUserId === userId);
+      const pendingRequests = await friendsService.getPendingRequests(currentUser.id);
+      const sentRequest = pendingRequests.some(r => r.fromUserId === currentUser.id && r.toUserId === userId);
+      const receivedRequest = pendingRequests.some(r => r.fromUserId === userId && r.toUserId === currentUser.id);
       
       if (sentRequest) {
         setFriendStatus('pending_sent');
