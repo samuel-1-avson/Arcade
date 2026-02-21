@@ -52,3 +52,21 @@ dist/
 
 # OS files
 *.log
+
+# local development
+.env.local.backup
+.env.development.local
+.env.test.local
+.env.production.local
+*.local
+firebase-config.js
+config-secret.js
+secrets.json
+service-account.json
+
+# temporary files
+tmp/
+temp/
+diff.txt
+*.bak
+*.swp

@@ -9,18 +9,19 @@ import { Float } from "@react-three/drei";
 export function AbstractBackground() {
   const { theme } = useTheme();
   
-  // Resolve current accent color based on theme
   const accentColor = useMemo(() => {
     switch (theme) {
-      case "neon-pink":
-        return "#ff007f";
-      case "retro-80s":
-        return "#ff4d00";
-      case "matrix":
-        return "#00ff00";
+      case "neon-pink":   return "#ff007f";
+      case "retro-80s":  return "#ff4d00";
+      case "matrix":     return "#00ff41";
+      case "synthwave":  return "#e040fb";
+      case "dracula":    return "#bd93f9";
+      case "ocean":      return "#00b4d8";
+      case "blood-moon": return "#ff1744";
+      case "solar-gold": return "#ffc107";
+      case "arctic":     return "#80deea";
       case "dark":
-      default:
-        return "#00e5ff"; // Cyberpunk default
+      default:           return "#00e5ff";
     }
   }, [theme]);
 

@@ -23,7 +23,23 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
           <FirebaseInit>
-            <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="dark"
+              enableSystem={false}
+              themes={[
+                "dark",
+                "neon-pink",
+                "retro-80s",
+                "matrix",
+                "synthwave",
+                "dracula",
+                "ocean",
+                "blood-moon",
+                "solar-gold",
+                "arctic",
+              ]}
+            >
               {children}
             </ThemeProvider>
           </FirebaseInit>
