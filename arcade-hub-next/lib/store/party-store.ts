@@ -42,7 +42,7 @@ export const usePartyStore = create<PartyState>()((set, get) => ({
   
   joinParty: async (code) => {
     // Will integrate with Firebase
-    console.log('Joining party:', code);
+    // Joining party - TODO: implement with Firebase
   },
   
   leaveParty: () => {

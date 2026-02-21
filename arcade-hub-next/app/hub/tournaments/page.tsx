@@ -47,7 +47,7 @@ export default function TournamentsPage() {
           setJoinedTournaments(joined);
         }
       } catch (error) {
-        console.error('Error loading tournaments:', error);
+        // Error loading tournaments - handled by UI
       } finally {
         setIsLoading(false);
       }
@@ -78,7 +78,7 @@ export default function TournamentsPage() {
         ));
       }
     } catch (error) {
-      console.error('Error joining tournament:', error);
+      // Error joining tournament - handled by UI
     } finally {
       setJoining(null);
     }

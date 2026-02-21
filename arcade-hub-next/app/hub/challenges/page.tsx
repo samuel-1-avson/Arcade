@@ -50,7 +50,7 @@ export default function ChallengesPage() {
 
         setChallenges(merged as (Challenge & UserChallenge)[]);
       } catch (error) {
-        console.error('Error loading challenges:', error);
+        // Error loading challenges - handled by UI
       } finally {
         setIsLoading(false);
       }
@@ -78,7 +78,7 @@ export default function ChallengesPage() {
         }
       }
     } catch (error) {
-      console.error('Error claiming reward:', error);
+      // Error claiming reward - handled by UI
     } finally {
       setClaiming(null);
     }

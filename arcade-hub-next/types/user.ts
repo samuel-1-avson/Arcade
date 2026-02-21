@@ -18,11 +18,3 @@ export interface UserPreferences {
   theme: 'dark' | 'light';
 }
 
-export interface UserStats {
-  totalScore: number;
-  level: number;
-  xp: number;
-  gamesPlayed: number;
-  achievements: number;
-  playTime: number;
-}

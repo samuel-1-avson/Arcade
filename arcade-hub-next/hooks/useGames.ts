@@ -80,7 +80,7 @@ const GAMES: Game[] = [
 ];
 
 export function useGames() {
-  const { games, filter, selectedGame, highScores, setGames, setFilter, selectGame, setHighScore } = useGameStore();
+  const { games, filter, highScores, setGames, setFilter } = useGameStore();
 
   useEffect(() => {
     // Initialize games with high scores
@@ -97,23 +97,12 @@ export function useGames() {
     return games.filter((g) => g.difficulty === filter);
   }, [games, filter]);
 
-  const selectGameById = (id: string) => {
-    const game = games.find(g => g.id === id);
-    if (game) {
-      selectGame(game);
-    }
-    return game;
-  };
+
 
   return {
     games: filteredGames,
     allGames: games,
     filter,
-    selectedGame,
-    highScores,
     setFilter,
-    selectGame,
-    selectGameById,
-    setHighScore,
   };
 }

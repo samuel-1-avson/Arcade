@@ -63,7 +63,7 @@ export default function AchievementsPage() {
 
         setAchievements(merged as (Achievement & UserAchievement)[]);
       } catch (error) {
-        console.error('Error loading achievements:', error);
+        // Error loading achievements - handled by UI
       } finally {
         setIsLoading(false);
       }

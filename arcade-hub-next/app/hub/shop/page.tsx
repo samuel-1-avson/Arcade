@@ -68,7 +68,7 @@ export default function ShopPage() {
           setUserStats(stats);
         }
       } catch (error) {
-        console.error('Error loading shop data:', error);
+        // Error loading shop data - handled by UI
       } finally {
         setIsLoading(false);
       }
@@ -99,7 +99,7 @@ export default function ShopPage() {
         alert(result.error || 'Purchase failed');
       }
     } catch (error) {
-      console.error('Error purchasing item:', error);
+      // Error purchasing item - handled by UI
     } finally {
       setPurchasing(null);
     }
@@ -120,7 +120,7 @@ export default function ShopPage() {
         }));
       }
     } catch (error) {
-      console.error('Error equipping item:', error);
+      // Error equipping item - handled by UI
     }
   };
 

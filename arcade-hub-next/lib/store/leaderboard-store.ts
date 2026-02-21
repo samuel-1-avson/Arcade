@@ -45,7 +45,7 @@ export const useLeaderboardStore = create<LeaderboardState>()((set) => ({
         set({ currentUserRank: rank });
       }
     } catch (error) {
-      console.error('Error fetching leaderboard:', error);
+      // Error fetching leaderboard - handled by setting error state
       set({ 
         error: 'Failed to load leaderboard', 
         isLoading: false,

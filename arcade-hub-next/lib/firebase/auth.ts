@@ -18,7 +18,7 @@ const googleProvider = new GoogleAuthProvider();
 export const authService = {
   // Use POPUP by default - it's more reliable for this use case
   signInWithGoogle: async (): Promise<User | null> => {
-    console.log('Starting Google sign-in with popup...');
+    // Starting Google sign-in with popup
     const auth = await getFirebaseAuth();
     if (!auth) {
       throw new Error('Firebase Auth not initialized');
@@ -26,14 +26,14 @@ export const authService = {
     
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      console.log('Popup sign-in successful:', result.user.email);
+      // Popup sign-in successful
       return mapFirebaseUser(result.user);
     } catch (error: any) {
-      console.error('Popup sign-in error:', error?.code, error?.message);
+      // Error handled by caller
       
       // If popup is blocked, fall back to redirect
       if (error?.code === 'auth/popup-blocked') {
-        console.log('Popup blocked, falling back to redirect...');
+        // Popup blocked, falling back to redirect
         await signInWithRedirect(auth, googleProvider);
         return null;
       }
@@ -44,22 +44,22 @@ export const authService = {
 
   handleRedirectResult: async (): Promise<User | null> => {
     try {
-      console.log('Checking for redirect result...');
+      // Checking for redirect result
       const auth = await getFirebaseAuth();
       if (!auth) {
-        console.error('Auth not initialized');
+        // Auth not initialized
         return null;
       }
       
       const result = await getRedirectResult(auth);
       if (result && result.user) {
-        console.log('Redirect result found:', result.user.email);
+      // Redirect result found
         return mapFirebaseUser(result.user);
       }
-      console.log('No redirect result found');
+      // No redirect result found
       return null;
     } catch (error: any) {
-      console.error('Redirect result error:', error?.code, error?.message);
+      // Error handled by caller
       return null;
     }
   },
@@ -86,13 +86,13 @@ export const authService = {
     
     getFirebaseAuth().then((auth) => {
       if (!auth) {
-        console.error('Cannot listen to auth changes - Firebase not initialized');
+        // Cannot listen to auth changes - Firebase not initialized
         callback(null);
         return;
       }
       
       unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-        console.log('Firebase auth state changed:', firebaseUser?.email || 'null');
+      // Auth state changed
         callback(firebaseUser ? mapFirebaseUser(firebaseUser) : null);
       });
     });

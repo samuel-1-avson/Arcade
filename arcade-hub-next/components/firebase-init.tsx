@@ -17,16 +17,16 @@ export function FirebaseInit({ children }: { children: React.ReactNode }) {
       
       const auth = await getFirebaseAuth();
       if (!auth) {
-        console.error('Firebase Auth not available');
+        // Firebase Auth not available - silent fail
         setLoading(false);
         setInitialized(true);
         return;
       }
 
       // Set up auth state listener
-      console.log('Setting up auth listener...');
+      // Setting up auth listener
       unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-        console.log('Auth state:', firebaseUser?.email || 'null');
+        // Auth state updated
         if (firebaseUser) {
           setUser({
             id: firebaseUser.uid,

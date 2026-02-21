@@ -9,23 +9,23 @@ export function useAuth() {
 
   const signInWithGoogle = useCallback(async () => {
     try {
-      console.log('Starting Google sign-in...');
+      // Google sign-in started
       const user = await authService.signInWithGoogle();
       // For popup flow, user is returned directly
       if (user) {
-        console.log('Sign-in successful:', user.email);
+        // Sign-in successful
         setUser(user);
       }
       return user;
     } catch (error: any) {
-      console.error('Google sign in error:', error?.code, error?.message);
+      // Error handled in UI
       
       // Show user-friendly error
       if (error?.code === 'auth/popup-blocked') {
         alert('Please allow popups for this site to sign in with Google.');
       } else if (error?.code === 'auth/cancelled-popup-request') {
         // User cancelled, don't show error
-        console.log('User cancelled sign-in');
+        // User cancelled sign-in - silent fail
       } else {
         alert('Sign-in failed. Please try again.');
       }
@@ -40,7 +40,7 @@ export function useAuth() {
       setUser(user);
       return user;
     } catch (error) {
-      console.error('Guest sign in error:', error);
+      // Error handled in UI
       throw error;
     }
   }, [setUser]);
@@ -50,7 +50,7 @@ export function useAuth() {
       await authService.signOut();
       signOut();
     } catch (error) {
-      console.error('Sign out error:', error);
+      // Error handled in UI
       throw error;
     }
   }, [signOut]);
@@ -60,7 +60,7 @@ export function useAuth() {
       await authService.updateUserProfile(displayName, photoURL);
       useAuthStore.getState().updateProfile({ displayName, avatar: photoURL });
     } catch (error) {
-      console.error('Update profile error:', error);
+      // Error handled in UI
       throw error;
     }
   }, []);

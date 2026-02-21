@@ -73,7 +73,7 @@ export default function SettingsPage() {
 
   const handleToggle = (id: string, value: boolean) => {
     // TODO: Update user preferences
-    console.log('Toggle:', id, value);
+    // Toggle setting changed
   };
 
   return (

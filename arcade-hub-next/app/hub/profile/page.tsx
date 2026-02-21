@@ -50,7 +50,7 @@ export default function ProfilePage() {
         const achievements = await achievementsService.getUserAchievements(user.id);
         setAchievementsCount(achievements.filter(a => a.unlocked).length);
       } catch (error) {
-        console.error('Error loading user stats:', error);
+        // Error loading user stats - handled by UI
       } finally {
         setStatsLoading(false);
       }

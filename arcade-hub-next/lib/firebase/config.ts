@@ -39,28 +39,28 @@ async function initFirebase() {
     try {
       if (getApps().length === 0) {
         if (!firebaseConfig.apiKey || firebaseConfig.apiKey === 'undefined') {
-          console.error('Firebase API key is missing.');
+          // Firebase API key is missing
           return { app: null, auth: null, db: null };
         }
         
-        console.log('Initializing Firebase...');
+        // Firebase initialization started
         app = initializeApp(firebaseConfig);
       } else {
         app = getApps()[0];
-        console.log('Using existing Firebase app');
+        // Using existing Firebase app
       }
       
       auth = getAuth(app);
       
       // Set persistence to local to maintain auth state
       await setPersistence(auth, browserLocalPersistence);
-      console.log('Auth persistence set to local');
+      // Auth persistence set to local
       
       db = getFirestore(app);
       
       return { app, auth, db };
     } catch (error) {
-      console.error('Firebase initialization error:', error);
+      // Firebase initialization error handled by caller
       return { app: null, auth: null, db: null };
     }
   })();
