@@ -1,9 +1,9 @@
-import { 
-  collection, 
-  query, 
-  where, 
-  getDocs, 
-  doc, 
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  doc,
   getDoc,
   setDoc,
   updateDoc,
@@ -11,13 +11,13 @@ import {
   serverTimestamp,
   onSnapshot,
   QuerySnapshot,
-  DocumentData
-} from 'firebase/firestore';
-import { getFirebaseDb } from '../config';
+  DocumentData,
+} from "firebase/firestore";
+import { getFirebaseDb } from "../config";
 
-const FRIENDS_COLLECTION = 'friends';
-const FRIEND_REQUESTS_COLLECTION = 'friendRequests';
-const PRESENCE_COLLECTION = 'presence';
+const FRIENDS_COLLECTION = "friends";
+const FRIEND_REQUESTS_COLLECTION = "friendRequests";
+const PRESENCE_COLLECTION = "presence";
 
 export interface Friend {
   id: string;
@@ -37,7 +37,7 @@ export interface FriendRequest {
   fromUserName: string;
   fromUserPhoto?: string;
   toUserId: string;
-  status: 'pending' | 'accepted' | 'rejected';
+  status: "pending" | "accepted" | "rejected";
   createdAt: Date;
 }
 
@@ -53,43 +53,61 @@ export interface UserPresence {
 
 export const friendsService = {
   // Send a friend request
-  sendFriendRequest: async (fromUserId: string, toUserId: string): Promise<{ success: boolean; error?: string }> => {
+  sendFriendRequest: async (
+    fromUserId: string,
+    toUserId: string,
+  ): Promise<{ success: boolean; error?: string }> => {
     try {
       const db = await getFirebaseDb();
-      if (!db) return { success: false, error: 'Database not available' };
-      if (fromUserId === toUserId) return { success: false, error: 'Cannot friend yourself' };
+      if (!db) return { success: false, error: "Database not available" };
+      if (fromUserId === toUserId)
+        return { success: false, error: "Cannot friend yourself" };
 
       // Check if already friends (from localStorage fallback)
       const localKey = `friends_${fromUserId}`;
-      const localData = typeof window !== 'undefined' ? localStorage.getItem(localKey) : null;
+      const localData =
+        typeof window !== "undefined" ? localStorage.getItem(localKey) : null;
       const localFriends = localData ? JSON.parse(localData) : [];
       if (localFriends.some((f: any) => f.id === toUserId)) {
-        return { success: false, error: 'Already friends' };
+        return { success: false, error: "Already friends" };
       }
 
       // Check for existing request
       try {
         const requestsRef = collection(db, FRIEND_REQUESTS_COLLECTION);
-        const q = query(
-          requestsRef,
-          where('fromUserId', 'in', [fromUserId, toUserId]),
-          where('toUserId', 'in', [fromUserId, toUserId]),
-          where('status', '==', 'pending')
-        );
-        const existing = await getDocs(q);
-        if (!existing.empty) return { success: false, error: 'Request already pending' };
+        // Check both directions separately (Firestore doesn't support multiple 'in' filters)
+        const [q1Result, q2Result] = await Promise.all([
+          getDocs(
+            query(
+              requestsRef,
+              where("fromUserId", "==", fromUserId),
+              where("toUserId", "==", toUserId),
+              where("status", "==", "pending"),
+            ),
+          ),
+          getDocs(
+            query(
+              requestsRef,
+              where("fromUserId", "==", toUserId),
+              where("toUserId", "==", fromUserId),
+              where("status", "==", "pending"),
+            ),
+          ),
+        ]);
+        if (!q1Result.empty || !q2Result.empty)
+          return { success: false, error: "Request already pending" };
       } catch (e) {
         // Continue without duplicate check if query fails
       }
 
       // Get sender info
-      let senderName = 'Anonymous';
+      let senderName = "Anonymous";
       let senderPhoto = null;
-      
+
       try {
-        const senderDoc = await getDoc(doc(db, 'users', fromUserId));
+        const senderDoc = await getDoc(doc(db, "users", fromUserId));
         const senderData = senderDoc.exists() ? senderDoc.data() : {};
-        senderName = senderData.displayName || 'Anonymous';
+        senderName = senderData.displayName || "Anonymous";
         senderPhoto = senderData.photoURL || null;
       } catch (e) {
         // Use defaults
@@ -102,30 +120,33 @@ export const friendsService = {
         fromUserName: senderName,
         fromUserPhoto: senderPhoto,
         toUserId,
-        status: 'pending',
+        status: "pending",
         createdAt: serverTimestamp(),
       });
 
       return { success: true };
     } catch (error) {
-      return { success: false, error: 'Failed to send request' };
+      return { success: false, error: "Failed to send request" };
     }
   },
 
   // Accept a friend request
-  acceptFriendRequest: async (requestId: string, userId: string): Promise<boolean> => {
+  acceptFriendRequest: async (
+    requestId: string,
+    userId: string,
+  ): Promise<boolean> => {
     const db = await getFirebaseDb();
     if (!db) return false;
 
     const requestRef = doc(db, FRIEND_REQUESTS_COLLECTION, requestId);
     const requestSnap = await getDoc(requestRef);
-    
+
     if (!requestSnap.exists()) return false;
     const data = requestSnap.data();
     if (data.toUserId !== userId) return false;
 
     // Update request status
-    await updateDoc(requestRef, { status: 'accepted' });
+    await updateDoc(requestRef, { status: "accepted" });
 
     // Create friendship document (store twice for easy querying)
     const friendshipId = `${data.fromUserId}_${data.toUserId}`;
@@ -139,18 +160,21 @@ export const friendsService = {
   },
 
   // Reject a friend request
-  rejectFriendRequest: async (requestId: string, userId: string): Promise<boolean> => {
+  rejectFriendRequest: async (
+    requestId: string,
+    userId: string,
+  ): Promise<boolean> => {
     const db = await getFirebaseDb();
     if (!db) return false;
 
     const requestRef = doc(db, FRIEND_REQUESTS_COLLECTION, requestId);
     const requestSnap = await getDoc(requestRef);
-    
+
     if (!requestSnap.exists()) return false;
     const data = requestSnap.data();
     if (data.toUserId !== userId) return false;
 
-    await updateDoc(requestRef, { status: 'rejected' });
+    await updateDoc(requestRef, { status: "rejected" });
     return true;
   },
 
@@ -158,11 +182,12 @@ export const friendsService = {
   getFriends: async (userId: string): Promise<Friend[]> => {
     try {
       const db = await getFirebaseDb();
-      
+
       // Try localStorage fallback
       const localKey = `friends_${userId}`;
-      const localData = typeof window !== 'undefined' ? localStorage.getItem(localKey) : null;
-      
+      const localData =
+        typeof window !== "undefined" ? localStorage.getItem(localKey) : null;
+
       if (!db) {
         return localData ? JSON.parse(localData) : [];
       }
@@ -170,18 +195,18 @@ export const friendsService = {
       // Query friendships where user is either user1 or user2
       const friendsRef = collection(db, FRIENDS_COLLECTION);
       const [q1, q2] = await Promise.all([
-        getDocs(query(friendsRef, where('user1Id', '==', userId))),
-        getDocs(query(friendsRef, where('user2Id', '==', userId)))
+        getDocs(query(friendsRef, where("user1Id", "==", userId))),
+        getDocs(query(friendsRef, where("user2Id", "==", userId))),
       ]);
 
       const friendIds: string[] = [];
       const friendshipMap = new Map();
-      
-      q1.docs.forEach(d => {
+
+      q1.docs.forEach((d) => {
         friendIds.push(d.data().user2Id);
         friendshipMap.set(d.data().user2Id, d.id);
       });
-      q2.docs.forEach(d => {
+      q2.docs.forEach((d) => {
         friendIds.push(d.data().user1Id);
         friendshipMap.set(d.data().user1Id, d.id);
       });
@@ -191,24 +216,24 @@ export const friendsService = {
       for (const friendId of friendIds) {
         try {
           const [userDoc, presenceDoc] = await Promise.all([
-            getDoc(doc(db, 'users', friendId)),
-            getDoc(doc(db, PRESENCE_COLLECTION, friendId))
+            getDoc(doc(db, "users", friendId)),
+            getDoc(doc(db, PRESENCE_COLLECTION, friendId)),
           ]);
 
           if (userDoc.exists()) {
             const userData = userDoc.data();
             const presenceData = presenceDoc.exists() ? presenceDoc.data() : {};
-            
+
             friends.push({
               id: friendId,
               userId: friendId,
-              displayName: userData.displayName || 'Anonymous',
+              displayName: userData.displayName || "Anonymous",
               photoURL: userData.photoURL,
               level: userData.level || 1,
               isOnline: presenceData.online || false,
               lastSeen: presenceData.lastSeen?.toDate() || new Date(),
               currentGame: presenceData.currentGame,
-              friendshipId: friendshipMap.get(friendId) || '',
+              friendshipId: friendshipMap.get(friendId) || "",
             });
           }
         } catch (e) {
@@ -217,15 +242,18 @@ export const friendsService = {
       }
 
       // Cache to localStorage
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         localStorage.setItem(localKey, JSON.stringify(friends));
       }
 
-      return friends.sort((a, b) => (b.isOnline ? 1 : 0) - (a.isOnline ? 1 : 0));
+      return friends.sort(
+        (a, b) => (b.isOnline ? 1 : 0) - (a.isOnline ? 1 : 0),
+      );
     } catch (error) {
       // Fallback to localStorage
       const localKey = `friends_${userId}`;
-      const localData = typeof window !== 'undefined' ? localStorage.getItem(localKey) : null;
+      const localData =
+        typeof window !== "undefined" ? localStorage.getItem(localKey) : null;
       return localData ? JSON.parse(localData) : [];
     }
   },
@@ -234,11 +262,12 @@ export const friendsService = {
   getPendingRequests: async (userId: string): Promise<FriendRequest[]> => {
     try {
       const db = await getFirebaseDb();
-      
+
       // Try localStorage fallback
       const localKey = `friendRequests_${userId}`;
-      const localData = typeof window !== 'undefined' ? localStorage.getItem(localKey) : null;
-      
+      const localData =
+        typeof window !== "undefined" ? localStorage.getItem(localKey) : null;
+
       if (!db) {
         return localData ? JSON.parse(localData) : [];
       }
@@ -246,12 +275,12 @@ export const friendsService = {
       const requestsRef = collection(db, FRIEND_REQUESTS_COLLECTION);
       const q = query(
         requestsRef,
-        where('toUserId', '==', userId),
-        where('status', '==', 'pending')
+        where("toUserId", "==", userId),
+        where("status", "==", "pending"),
       );
       const snapshot = await getDocs(q);
 
-      const requests = snapshot.docs.map(doc => ({
+      const requests = snapshot.docs.map((doc) => ({
         id: doc.id,
         fromUserId: doc.data().fromUserId,
         fromUserName: doc.data().fromUserName,
@@ -260,9 +289,9 @@ export const friendsService = {
         status: doc.data().status,
         createdAt: doc.data().createdAt?.toDate() || new Date(),
       }));
-      
+
       // Cache to localStorage
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         localStorage.setItem(localKey, JSON.stringify(requests));
       }
 
@@ -270,7 +299,8 @@ export const friendsService = {
     } catch (error) {
       // Fallback to localStorage
       const localKey = `friendRequests_${userId}`;
-      const localData = typeof window !== 'undefined' ? localStorage.getItem(localKey) : null;
+      const localData =
+        typeof window !== "undefined" ? localStorage.getItem(localKey) : null;
       return localData ? JSON.parse(localData) : [];
     }
   },
@@ -285,7 +315,7 @@ export const friendsService = {
 
     const [doc1, doc2] = await Promise.all([
       getDoc(doc(db, FRIENDS_COLLECTION, friendshipId1)),
-      getDoc(doc(db, FRIENDS_COLLECTION, friendshipId2))
+      getDoc(doc(db, FRIENDS_COLLECTION, friendshipId2)),
     ]);
 
     return doc1.exists() || doc2.exists();
@@ -301,17 +331,25 @@ export const friendsService = {
   },
 
   // Update user presence
-  updatePresence: async (userId: string, online: boolean, currentGame?: string): Promise<void> => {
+  updatePresence: async (
+    userId: string,
+    online: boolean,
+    currentGame?: string,
+  ): Promise<void> => {
     const db = await getFirebaseDb();
     if (!db) return;
 
     const presenceRef = doc(db, PRESENCE_COLLECTION, userId);
-    await setDoc(presenceRef, {
-      online,
-      lastSeen: serverTimestamp(),
-      currentGame: currentGame || null,
-      lastChanged: serverTimestamp(),
-    }, { merge: true });
+    await setDoc(
+      presenceRef,
+      {
+        online,
+        lastSeen: serverTimestamp(),
+        currentGame: currentGame || null,
+        lastChanged: serverTimestamp(),
+      },
+      { merge: true },
+    );
   },
 
   // Get online users
@@ -321,7 +359,7 @@ export const friendsService = {
       if (!db) return [];
 
       const presenceRef = collection(db, PRESENCE_COLLECTION);
-      const q = query(presenceRef, where('online', '==', true));
+      const q = query(presenceRef, where("online", "==", true));
       const snapshot = await getDocs(q);
 
       // Fetch user details for each online user
@@ -329,12 +367,12 @@ export const friendsService = {
       for (const docSnap of snapshot.docs) {
         try {
           const data = docSnap.data();
-          const userDoc = await getDoc(doc(db, 'users', docSnap.id));
+          const userDoc = await getDoc(doc(db, "users", docSnap.id));
           const userData = userDoc.exists() ? userDoc.data() : {};
-          
+
           onlineUsers.push({
             userId: docSnap.id,
-            displayName: userData.displayName || 'Anonymous',
+            displayName: userData.displayName || "Anonymous",
             photoURL: userData.photoURL,
             online: data.online,
             lastSeen: data.lastSeen?.toDate() || new Date(),
@@ -353,34 +391,37 @@ export const friendsService = {
   },
 
   // Subscribe to friends presence changes
-  subscribeToFriends: (userId: string, callback: (friends: Friend[]) => void): (() => void) => {
+  subscribeToFriends: (
+    userId: string,
+    callback: (friends: Friend[]) => void,
+  ): (() => void) => {
     let unsubscribes: (() => void)[] = [];
-    
-    getFirebaseDb().then(db => {
+
+    getFirebaseDb().then((db) => {
       if (!db) return;
 
       // Subscribe to friendships
       const friendsRef = collection(db, FRIENDS_COLLECTION);
-      
+
       const setupSubscriptions = async () => {
         const [q1, q2] = await Promise.all([
-          getDocs(query(friendsRef, where('user1Id', '==', userId))),
-          getDocs(query(friendsRef, where('user2Id', '==', userId)))
+          getDocs(query(friendsRef, where("user1Id", "==", userId))),
+          getDocs(query(friendsRef, where("user2Id", "==", userId))),
         ]);
 
         const friendIds = [
-          ...q1.docs.map(d => d.data().user2Id),
-          ...q2.docs.map(d => d.data().user1Id)
+          ...q1.docs.map((d) => d.data().user2Id),
+          ...q2.docs.map((d) => d.data().user1Id),
         ];
 
         // Subscribe to each friend's presence
-        friendIds.forEach(friendId => {
+        friendIds.forEach((friendId) => {
           const unsub = onSnapshot(
             doc(db, PRESENCE_COLLECTION, friendId),
             () => {
               // Refetch all friends when any presence changes
               friendsService.getFriends(userId).then(callback);
-            }
+            },
           );
           unsubscribes.push(unsub);
         });
@@ -392,30 +433,32 @@ export const friendsService = {
       setupSubscriptions();
     });
 
-    return () => unsubscribes.forEach(unsub => unsub());
+    return () => unsubscribes.forEach((unsub) => unsub());
   },
 
   // Subscribe to online users (real-time)
-  subscribeToOnlineUsers: (callback: (users: UserPresence[]) => void): (() => void) => {
+  subscribeToOnlineUsers: (
+    callback: (users: UserPresence[]) => void,
+  ): (() => void) => {
     let unsubscribe = () => {};
-    
-    getFirebaseDb().then(db => {
+
+    getFirebaseDb().then((db) => {
       if (!db) return;
 
       const presenceRef = collection(db, PRESENCE_COLLECTION);
-      const q = query(presenceRef, where('online', '==', true));
-      
+      const q = query(presenceRef, where("online", "==", true));
+
       unsubscribe = onSnapshot(q, async (snapshot) => {
         const onlineUsers: UserPresence[] = [];
-        
+
         for (const docSnap of snapshot.docs) {
           const data = docSnap.data();
-          const userDoc = await getDoc(doc(db, 'users', docSnap.id));
+          const userDoc = await getDoc(doc(db, "users", docSnap.id));
           const userData = userDoc.exists() ? userDoc.data() : {};
-          
+
           onlineUsers.push({
             userId: docSnap.id,
-            displayName: userData.displayName || 'Anonymous',
+            displayName: userData.displayName || "Anonymous",
             photoURL: userData.photoURL,
             online: data.online,
             lastSeen: data.lastSeen?.toDate() || new Date(),
@@ -423,7 +466,7 @@ export const friendsService = {
             lastChanged: data.lastChanged?.toDate() || new Date(),
           });
         }
-        
+
         callback(onlineUsers);
       });
     });
@@ -432,23 +475,28 @@ export const friendsService = {
   },
 
   // Search users by display name
-  searchUsers: async (searchTerm: string, currentUserId: string): Promise<{id: string; displayName: string; photoURL?: string; level: number}[]> => {
+  searchUsers: async (
+    searchTerm: string,
+    currentUserId: string,
+  ): Promise<
+    { id: string; displayName: string; photoURL?: string; level: number }[]
+  > => {
     const db = await getFirebaseDb();
     if (!db || searchTerm.length < 3) return [];
 
     // Note: This is a simple implementation. For production, consider Algolia or similar
-    const usersRef = collection(db, 'users');
+    const usersRef = collection(db, "users");
     const snapshot = await getDocs(usersRef);
 
     return snapshot.docs
-      .filter(doc => doc.id !== currentUserId)
-      .filter(doc => {
-        const name = doc.data().displayName || '';
+      .filter((doc) => doc.id !== currentUserId)
+      .filter((doc) => {
+        const name = doc.data().displayName || "";
         return name.toLowerCase().includes(searchTerm.toLowerCase());
       })
-      .map(doc => ({
+      .map((doc) => ({
         id: doc.id,
-        displayName: doc.data().displayName || 'Anonymous',
+        displayName: doc.data().displayName || "Anonymous",
         photoURL: doc.data().photoURL,
         level: doc.data().level || 1,
       }))

@@ -82,8 +82,8 @@ service cloud.firestore {
     // ============================================
     
     match /users/{userId} {
-      // Only owner can read/write their own private data
-      allow read: if isOwner(userId);
+      // Any signed-in user can read profiles (needed for friend lookups, messaging, etc.)
+      allow read: if isSignedIn();
       allow create: if isSignedIn() && isOwner(userId)
         && isValidDisplayName(request.resource.data.displayName);
       allow update: if isOwner(userId)
@@ -329,6 +329,18 @@ service cloud.firestore {
         allow create: if isSignedIn();
         allow update, delete: if false;
       }
+    }
+    
+    
+
+    // ============================================
+    // PARTY MESSAGES (top-level collection)
+    // ============================================
+    
+    match /partyMessages/{messageId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if false;
     }
     
     // ============================================
