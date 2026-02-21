@@ -225,15 +225,18 @@ service cloud.firestore {
     // ============================================
     
     match /friends/{friendshipId} {
+      // Allow read if user is part of the friendship
       allow read: if isSignedIn() && (
-        friendshipId.matches('^' + request.auth.uid + '_.+$') ||
-        friendshipId.matches('^.+_' + request.auth.uid + '$')
+        resource.data.user1Id == request.auth.uid ||
+        resource.data.user2Id == request.auth.uid
       );
+      // Allow create for any authenticated user
       allow create: if isSignedIn();
       allow update: if false;
+      // Allow delete if user is part of the friendship
       allow delete: if isSignedIn() && (
-        friendshipId.matches('^' + request.auth.uid + '_.+$') ||
-        friendshipId.matches('^.+_' + request.auth.uid + '$')
+        resource.data.user1Id == request.auth.uid ||
+        resource.data.user2Id == request.auth.uid
       );
     }
     
