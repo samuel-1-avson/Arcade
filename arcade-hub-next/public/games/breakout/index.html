@@ -267,5 +267,12 @@
         // Initial update after game loads
         setTimeout(updateSidebars, 1000);
     </script>
+    <!-- Arcade Hub Integration -->
+    <script src="/games/game-bridge.js"></script>
+    <script>
+        if (window.ArcadeHub) {
+            ArcadeHub.notifyReady();
+        }
+    </script>
 </body>
 </html>

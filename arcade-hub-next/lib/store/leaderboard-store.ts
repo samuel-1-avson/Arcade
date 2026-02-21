@@ -33,11 +33,9 @@ export const useLeaderboardStore = create<LeaderboardState>()((set) => ({
     set({ isLoading: true, error: null });
     
     try {
-      let entries: LeaderboardEntry[];
+      const result = await leaderboardService.getLeaderboard(gameId, 50);
       
-      entries = await leaderboardService.getLeaderboard(gameId, 50);
-      
-      set({ entries, isLoading: false });
+      set({ entries: result.entries, isLoading: false });
       
       // Fetch user's rank if userId provided
       if (userId) {

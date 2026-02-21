@@ -239,5 +239,12 @@
     </div>
 
     <script type="module" src="Asteroids.js"></script>
+    <!-- Arcade Hub Integration -->
+    <script src="/games/game-bridge.js"></script>
+    <script>
+        if (window.ArcadeHub) {
+            ArcadeHub.notifyReady();
+        }
+    </script>
 </body>
 </html>

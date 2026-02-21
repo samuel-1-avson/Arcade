@@ -5878,5 +5878,12 @@
       world.scene.add(world.reticle);
     }
   </script>
+    <!-- Arcade Hub Integration -->
+    <script src="/games/game-bridge.js"></script>
+    <script>
+        if (window.ArcadeHub) {
+            ArcadeHub.notifyReady();
+        }
+    </script>
 </body>
 </html>

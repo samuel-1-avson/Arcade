@@ -4,6 +4,7 @@ import {
   where, 
   orderBy, 
   limit, 
+  startAfter,
   getDocs, 
   addDoc, 
   serverTimestamp,
@@ -62,8 +63,12 @@ export const leaderboardService = {
     }
   },
 
-  // Get leaderboard for a specific game
-  getLeaderboard: async (gameId: string, limitCount: number = 50): Promise<LeaderboardEntry[]> => {
+  // Get leaderboard for a specific game with optional pagination
+  getLeaderboard: async (
+    gameId: string, 
+    limitCount: number = 50,
+    startAfterScore?: number
+  ): Promise<{ entries: LeaderboardEntry[]; lastScore?: number }> => {
     const db = await getFirebaseDb();
     if (!db) throw new Error('Firebase not initialized');
 
@@ -73,46 +78,70 @@ export const leaderboardService = {
     
     if (gameId === 'global') {
       // Global leaderboard - sum of all best scores per user
-      q = query(userStatsRef, orderBy('bestScore', 'desc'), limit(limitCount));
+      if (startAfterScore) {
+        q = query(
+          userStatsRef, 
+          orderBy('bestScore', 'desc'), 
+          startAfter(startAfterScore),
+          limit(limitCount)
+        );
+      } else {
+        q = query(userStatsRef, orderBy('bestScore', 'desc'), limit(limitCount));
+      }
     } else {
-      q = query(
-        userStatsRef, 
-        where('gameId', '==', gameId),
-        orderBy('bestScore', 'desc'), 
-        limit(limitCount)
-      );
+      if (startAfterScore) {
+        q = query(
+          userStatsRef, 
+          where('gameId', '==', gameId),
+          orderBy('bestScore', 'desc'), 
+          startAfter(startAfterScore),
+          limit(limitCount)
+        );
+      } else {
+        q = query(
+          userStatsRef, 
+          where('gameId', '==', gameId),
+          orderBy('bestScore', 'desc'), 
+          limit(limitCount)
+        );
+      }
     }
 
     const snapshot = await getDocs(q);
     
-    // Get unique users and their display info
+    // Get unique users and batch fetch their profiles
     const userIds = Array.from(new Set(snapshot.docs.map(doc => doc.data().userId)));
     
-    // Fetch user profiles
+    // Batch fetch user profiles using 'in' queries (Firestore limit: 10 per query)
     const userProfiles: Record<string, { displayName: string; avatar: string; photoURL?: string }> = {};
-    for (const userId of userIds) {
-      const userRef = doc(db, 'users', userId);
-      const userSnap = await getDoc(userRef);
-      if (userSnap.exists()) {
-        const data = userSnap.data();
-        userProfiles[userId] = {
+    const BATCH_SIZE = 10;
+    
+    for (let i = 0; i < userIds.length; i += BATCH_SIZE) {
+      const batch = userIds.slice(i, i + BATCH_SIZE);
+      const usersQuery = query(collection(db, 'users'), where('__name__', 'in', batch));
+      const usersSnap = await getDocs(usersQuery);
+      
+      usersSnap.docs.forEach(doc => {
+        const data = doc.data();
+        userProfiles[doc.id] = {
           displayName: data.displayName || 'Anonymous',
           avatar: data.avatar || 'User',
           photoURL: data.photoURL,
         };
-      }
+      });
     }
 
     // Build leaderboard entries
     const entries: LeaderboardEntry[] = [];
     let rank = 1;
+    let lastScore: number | undefined;
     
     for (const docSnap of snapshot.docs) {
       const data = docSnap.data();
       const profile = userProfiles[data.userId] || { displayName: 'Anonymous', avatar: 'User' };
       
       entries.push({
-        rank,
+        rank: startAfterScore ? rank + 50 : rank, // Adjust rank for pagination
         userId: data.userId,
         displayName: profile.displayName,
         avatar: profile.avatar,
@@ -121,9 +150,10 @@ export const leaderboardService = {
         timestamp: data.lastPlayed?.toDate() || new Date(),
       });
       rank++;
+      lastScore = data.bestScore;
     }
 
-    return entries;
+    return { entries, lastScore };
   },
 
   // Get user's rank for a specific game

@@ -34,13 +34,21 @@ service cloud.firestore {
         name.matches('^[a-zA-Z0-9 _-]+$');
     }
     
+    // Valid game IDs
+    function isValidGameId(gameId) {
+      return gameId in [
+        'snake', 'pacman', 'tetris', 'breakout', 
+        'asteroids', 'minesweeper', '2048', 'tictactoe'
+      ];
+    }
+    
     // Validate score data
     function isValidScore() {
       return request.resource.data.score is number 
         && request.resource.data.score >= 0
         && request.resource.data.score <= 100000000
         && request.resource.data.gameId is string
-        && request.resource.data.gameId.size() > 0
+        && isValidGameId(request.resource.data.gameId)
         && request.resource.data.userId == request.auth.uid;
     }
     

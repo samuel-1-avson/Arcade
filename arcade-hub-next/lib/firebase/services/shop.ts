@@ -6,6 +6,7 @@ import {
   getDoc,
   setDoc,
   updateDoc,
+  runTransaction,
   serverTimestamp,
   arrayUnion
 } from 'firebase/firestore';
@@ -234,53 +235,75 @@ export const shopService = {
     return defaultInventory;
   },
 
-  // Purchase item
+  // Purchase item with atomic transaction
   purchaseItem: async (userId: string, itemId: string): Promise<{ success: boolean; error?: string }> => {
     const db = await getFirebaseDb();
     if (!db) return { success: false, error: 'Database not available' };
 
-    // Get item details
-    const itemDoc = doc(db, SHOP_ITEMS_COLLECTION, itemId);
-    const itemSnap = await getDoc(itemDoc);
-    
-    if (!itemSnap.exists()) {
-      return { success: false, error: 'Item not found' };
-    }
-    
-    const item = itemSnap.data() as ShopItem;
-    
-    if (!item.active) {
-      return { success: false, error: 'Item not available' };
-    }
-
-    // Check if user already owns this item
-    const inventory = await shopService.getUserInventory(userId);
-    if (inventory.items.includes(itemId)) {
-      return { success: false, error: 'Item already owned' };
-    }
-
-    // Get user stats for coin balance
-    const { userStatsService } = await import('./user-stats');
-    const stats = await userStatsService.getUserStats(userId);
-    
-    if (stats.coins < item.price) {
-      return { success: false, error: 'Not enough coins' };
-    }
-
-    // Spend coins
-    const success = await userStatsService.spendCoins(userId, item.price);
-    if (!success) {
-      return { success: false, error: 'Purchase failed' };
-    }
-
-    // Add to inventory
+    const itemRef = doc(db, SHOP_ITEMS_COLLECTION, itemId);
+    const userRef = doc(db, 'users', userId);
     const inventoryRef = doc(db, USER_INVENTORY_COLLECTION, userId);
-    await updateDoc(inventoryRef, {
-      items: arrayUnion(itemId),
-      updatedAt: serverTimestamp(),
-    });
 
-    return { success: true };
+    try {
+      const result = await runTransaction(db, async (transaction) => {
+        // Read all documents first
+        const itemSnap = await transaction.get(itemRef);
+        const userSnap = await transaction.get(userRef);
+        const inventorySnap = await transaction.get(inventoryRef);
+
+        // Validate item exists and is active
+        if (!itemSnap.exists()) {
+          return { success: false, error: 'Item not found' };
+        }
+
+        const item = itemSnap.data() as ShopItem;
+        if (!item.active) {
+          return { success: false, error: 'Item not available' };
+        }
+
+        // Check if already owned
+        const inventory = inventorySnap.exists() 
+          ? inventorySnap.data() as UserInventory
+          : { items: [], equipped: {} };
+        
+        if (inventory.items.includes(itemId)) {
+          return { success: false, error: 'Item already owned' };
+        }
+
+        // Check coin balance
+        const userData = userSnap.exists() ? userSnap.data() : {};
+        const currentCoins = userData.coins || 0;
+        
+        if (currentCoins < item.price) {
+          return { success: false, error: 'Not enough coins' };
+        }
+
+        // Perform atomic updates
+        transaction.update(userRef, {
+          coins: currentCoins - item.price,
+          updatedAt: serverTimestamp(),
+        });
+
+        if (inventorySnap.exists()) {
+          transaction.update(inventoryRef, {
+            items: arrayUnion(itemId),
+            updatedAt: serverTimestamp(),
+          });
+        } else {
+          transaction.set(inventoryRef, {
+            items: [itemId],
+            equipped: {},
+            updatedAt: serverTimestamp(),
+          });
+        }
+
+        return { success: true };
+      });
+
+      return result;
+    } catch (error) {
+      return { success: false, error: 'Transaction failed' };
+    }
   },
 
   // Equip item
