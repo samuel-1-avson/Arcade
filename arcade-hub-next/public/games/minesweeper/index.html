@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Play Minesweeper Enhanced - Story Mode, Achievements, Multiple Game Modes!">
+    <title>💣 Minesweeper Enhanced | Arcade Hub</title>
+    
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="minesweeper.css">
+    <link rel="stylesheet" href="minesweeper-enhanced.css">
+    
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💣</text></svg>">
+</head>
+<body>
+    <div class="game-wrapper">
+        <header class="game-header">
+            <div class="game-header-left">
+                <button id="mines-back-btn" class="back-btn" onclick="window.location.href='../../index.html'">
+                    <span class="icon-back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></span>
+                    <span>BACK</span>
+                </button>
+                <div class="game-branding">
+                    <span class="icon-brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="6"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg></span>
+                    <h1 class="game-title">MINESWEEPER</h1>
+                </div>
+            </div>
+            
+            <div class="game-header-center">
+                <div class="mines-display">
+                    <div class="mines-label">Mines</div>
+                    <div class="mines-value">10</div>
+                </div>
+                <div class="timer-display">
+                    <div class="timer-label">Time</div>
+                    <div class="timer-value">000</div>
+                </div>
+                <div class="highscore-display">
+                    <div class="highscore-label">Best</div>
+                    <div class="highscore-value">---</div>
+                </div>
+            </div>
+            
+            <div class="game-header-right">
+                <select id="difficulty-select" class="difficulty-select">
+                    <option value="easy">Easy (9×9)</option>
+                    <option value="medium">Medium (16×16)</option>
+                    <option value="hard">Hard (30×16)</option>
+                </select>
+                <button class="icon-btn" id="restart-btn" title="New Game">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                </button>
+                <button class="icon-btn" id="achievements-btn" title="Achievements">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10c0 8.5-7 8.5-10 0z"/><path d="M17 4v8a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/><path d="M7 4v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3"/></svg>
+                </button>
+            </div>
+        </header>
+
+        <div class="minesweeper-enhanced">
+            <!-- Left Sidebar -->
+            <aside class="minesweeper-sidebar left">
+                <!-- Game Modes -->
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">
+                        <span class="section-icon-mode"></span> Game Mode
+                    </div>
+                    <div class="mode-selector" id="mode-selector">
+                        <button class="mode-btn active" data-mode="classic">
+                            <span class="mode-btn-icon"></span>
+                            <div class="mode-btn-text">
+                                <span class="mode-btn-name">Classic</span>
+                                <span class="mode-btn-desc">Traditional gameplay</span>
+                            </div>
+                        </button>
+                        <button class="mode-btn" data-mode="timeAttack">
+                            <span class="mode-btn-icon"></span>
+                            <div class="mode-btn-text">
+                                <span class="mode-btn-name">Time Attack</span>
+                                <span class="mode-btn-desc">Race against the clock</span>
+                            </div>
+                        </button>
+                        <button class="mode-btn" data-mode="zen">
+                            <span class="mode-btn-icon"></span>
+                            <div class="mode-btn-text">
+                                <span class="mode-btn-name">Zen Mode</span>
+                                <span class="mode-btn-desc">Relaxed, unlimited hints</span>
+                            </div>
+                        </button>
+                        <button class="mode-btn" data-mode="puzzle">
+                            <span class="mode-btn-icon"></span>
+                            <div class="mode-btn-text">
+                                <span class="mode-btn-name">Puzzle</span>
+                                <span class="mode-btn-desc">Handcrafted challenges</span>
+                            </div>
+                        </button>
+                        <button class="mode-btn" data-mode="campaign">
+                            <span class="mode-btn-icon"></span>
+                            <div class="mode-btn-text">
+                                <span class="mode-btn-name">Campaign</span>
+                                <span class="mode-btn-desc">Story adventure</span>
+                            </div>
+                        </button>
+                        <button class="mode-btn" data-mode="custom">
+                            <span class="mode-btn-icon"></span>
+                            <div class="mode-btn-text">
+                                <span class="mode-btn-name">Custom</span>
+                                <span class="mode-btn-desc">Your own rules</span>
+                            </div>
+                        </button>
+                        <button class="mode-btn" data-mode="coop" id="coop-mode-btn">
+                            <span class="mode-btn-icon"></span>
+                            <div class="mode-btn-text">
+                                <span class="mode-btn-name">Co-op</span>
+                                <span class="mode-btn-desc">Play with friends online</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- World Selector (for Campaign) -->
+                <div class="sidebar-section" id="world-selector-section" style="display: none;">
+                    <div class="sidebar-section-title">
+                        <span class="section-icon-world"></span> Select World
+                    </div>
+                    <div class="world-selector" id="world-selector">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Custom Settings -->
+                <div class="sidebar-section" id="custom-settings-section" style="display: none;">
+                    <div class="sidebar-section-title">
+                        <span class="section-icon-settings"></span> Custom Settings
+                    </div>
+                    <div class="custom-settings">
+                        <div class="setting-row">
+                            <label>Rows</label>
+                            <input type="number" id="custom-rows" min="5" max="30" value="10">
+                        </div>
+                        <div class="setting-row">
+                            <label>Columns</label>
+                            <input type="number" id="custom-cols" min="5" max="30" value="10">
+                        </div>
+                        <div class="setting-row">
+                            <label>Mines</label>
+                            <input type="number" id="custom-mines" min="1" max="100" value="15">
+                        </div>
+                        <button class="view-all-btn" id="apply-custom-btn">Apply Settings</button>
+                    </div>
+                </div>
+
+                <!-- Power-Ups -->
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">
+                        <span class="section-icon-powerup"></span> Power-Ups
+                    </div>
+                    <div class="power-up-bar" id="power-up-bar">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Game Area -->
+            <main class="game-container minesweeper-container minesweeper-main">
+                <div class="minesweeper-board" id="game-board">
+                    <!-- Grid will be generated by JavaScript -->
+                </div>
+                
+                <div class="game-overlay hidden" id="game-overlay">
+                    <h2 class="overlay-title">MINESWEEPER</h2>
+                    <div class="overlay-score"></div>
+                    <p class="overlay-message"></p>
+                    <div class="overlay-buttons">
+                        <button class="btn btn-primary" id="start-btn">▶ New Game</button>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Right Sidebar -->
+            <aside class="minesweeper-sidebar right">
+                <!-- Player Level -->
+                <div class="sidebar-section">
+                    <div class="level-display" id="level-display">
+                        <div class="level-badge" id="level-badge">1</div>
+                        <div class="level-info">
+                            <div class="level-text">Level <span id="level-number">1</span></div>
+                            <div class="xp-bar">
+                                <div class="xp-fill" id="xp-fill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Daily Challenge -->
+                <div class="sidebar-section">
+                    <div class="daily-challenge" id="daily-challenge">
+                        <div class="daily-challenge-header">
+                            <span class="daily-challenge-icon"></span>
+                            <span class="daily-challenge-title">Daily Challenge</span>
+                        </div>
+                        <div class="daily-challenge-desc" id="daily-desc">Loading...</div>
+                        <div class="daily-challenge-reward" id="daily-reward"></div>
+                        <div class="daily-challenge-timer" id="daily-timer"></div>
+                    </div>
+                </div>
+
+                <!-- Achievements Preview -->
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">
+                        <span class="section-icon-trophy"></span> Achievements
+                    </div>
+                    <div class="achievement-preview" id="achievement-preview">
+                        <!-- Populated dynamically -->
+                    </div>
+                    <button class="view-all-btn" id="view-achievements-btn">View All Achievements</button>
+                </div>
+
+                <!-- Stats -->
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">
+                        <span class="section-icon-stats"></span> Statistics
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-wins">0</div>
+                            <div class="stat-label">Wins</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-games">0</div>
+                            <div class="stat-label">Games</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-streak">0</div>
+                            <div class="stat-label">Streak</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-best">---</div>
+                            <div class="stat-label">Best Time</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Multiplayer Panel (hidden by default) -->
+                <div class="sidebar-section multiplayer-panel" id="multiplayer-panel" style="display: none;">
+                    <div class="sidebar-section-title">
+                        <span class="section-icon-users"></span> Team <span id="room-code-display" style="margin-left: auto; font-family: monospace;"></span>
+                    </div>
+                    <div class="player-list" id="player-list">
+                        <!-- Populated dynamically -->
+                    </div>
+                    <button class="view-all-btn" id="mp-start-btn" style="display: none;">▶ Start Game</button>
+                    <button class="view-all-btn" id="mp-leave-btn" style="background: rgba(255,0,0,0.1); border-color: var(--color-danger); color: var(--color-danger);">Leave Room</button>
+                    
+                    <div class="chat-container">
+                        <div id="chat-messages"></div>
+                        <div class="chat-input-row">
+                            <input type="text" id="chat-input" placeholder="Type a message...">
+                            <button id="chat-send-btn">➤</button>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <div class="controls-hint">
+            <div class="control-key">
+                <span class="key">LEFT CLICK</span>
+                <span>Reveal Cell</span>
+            </div>
+            <div class="control-key">
+                <span class="key">RIGHT CLICK</span>
+                <span>Flag Mine</span>
+            </div>
+            <div class="control-key">
+                <span class="key">MIDDLE CLICK</span>
+                <span>Chord</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK for Multiplayer -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+    
+    <!-- Firebase Configuration -->
+    <script>
+        // Initialize Firebase for multiplayer
+        const firebaseConfig = {
+            apiKey: "AIzaSyCumtfvMCnSRXMHtOghgLv87PdvmwD3yjA",
+            authDomain: "arcade-7f03c.firebaseapp.com",
+            projectId: "arcade-7f03c",
+            storageBucket: "arcade-7f03c.firebasestorage.app",
+            messagingSenderId: "883884342768",
+            appId: "1:883884342768:web:8c6a43c1c3c01790d2f135",
+            databaseURL: "https://arcade-7f03c-default-rtdb.firebaseio.com"
+        };
+        
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+    </script>
+
+    <script type="module" src="../../js/utils/GameBridge.js"></script>
+    <script type="module" src="MinesweeperEnhanced.js"></script>
+</body>
+</html>

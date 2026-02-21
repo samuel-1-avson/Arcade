@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Play Tower Defense - Build strategic towers and stop the enemy invasion! Premium industrial-grade gaming experience.">
+    <meta name="theme-color" content="#0a0a0a">
+    <title>Tower Defense | Arcade Hub</title>
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="tower-defense.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ff4d00' stroke-width='2'><path d='M4 21V7l8-4 8 4v14'/><path d='M4 10h16'/><rect x='8' y='14' width='3' height='7'/><rect x='13' y='14' width='3' height='7'/></svg>">
+    
+    <!-- Google Fonts - Premium Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Orbitron:wght@400;600;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Skip to content (accessibility) -->
+    <a href="#game-canvas" class="skip-link">Skip to game</a>
+    
+    <div class="game-wrapper">
+        <!-- Header - Command Bar -->
+        <header class="game-header">
+            <div class="game-header-left">
+                <button id="td-back-btn" class="back-btn" aria-label="Return to Arcade Hub">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
+                    <span>Back</span>
+                </button>
+                <h1 class="game-title">
+                    <svg class="icon icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V7l8-4 8 4v14"/><path d="M4 10h16"/><rect x="8" y="14" width="3" height="7"/><rect x="13" y="14" width="3" height="7"/></svg>
+                    Tower Defense
+                </h1>
+            </div>
+            
+            <!-- Game Stats -->
+            <div class="game-header-center" role="status" aria-live="polite">
+                <div class="wave-display">
+                    <div class="wave-label">Wave</div>
+                    <div class="wave-value" id="wave-display">1</div>
+                </div>
+                <div class="gold-display">
+                    <div class="gold-label">Gold</div>
+                    <div class="gold-value" id="gold-display">
+                        <svg class="icon icon-sm" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M8 10h8M8 14h8" stroke="#000" stroke-width="1.5"/></svg>
+                        <span>100</span>
+                    </div>
+                </div>
+                <div class="lives-display">
+                    <div class="lives-label">Lives</div>
+                    <div class="lives-value" id="lives-display">
+                        <svg class="icon icon-sm" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        <span>20</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Header Actions -->
+            <div class="game-header-right">
+                <button class="icon-btn" id="achievements-btn" title="Achievements" aria-label="View Achievements">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 22V8a2 2 0 0 1 2-2 2 2 0 0 1 2 2v14"/><path d="M8 6h8"/><path d="M8 9h8"/></svg>
+                </button>
+                <button class="icon-btn" id="story-btn" title="Story Mode" aria-label="Story Mode">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                </button>
+                <button class="icon-btn" id="pause-btn" title="Pause Game" aria-label="Pause Game">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                </button>
+                <button class="icon-btn" id="restart-btn" title="Restart Game" aria-label="Restart Game">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Game Area -->
+        <main class="game-container tower-container">
+            <!-- Canvas Wrapper -->
+            <div class="canvas-wrapper tower-canvas">
+                <canvas id="game-canvas" width="800" height="600" aria-label="Tower Defense game board"></canvas>
+                
+                <!-- Game Overlay / Main Menu -->
+                <div class="game-overlay" id="game-overlay" role="dialog" aria-labelledby="overlay-title" aria-modal="true">
+                    <h2 class="overlay-title" id="overlay-title">Tower Defense</h2>
+                    <p class="overlay-message">Choose Your Game Mode</p>
+                    
+                    <div class="overlay-buttons">
+                        <!-- Story Mode - Featured -->
+                        <button class="btn" id="story-mode-btn">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                            <span>Story Mode</span>
+                        </button>
+                        
+                        <!-- Classic Mode -->
+                        <button class="btn btn-primary" id="classic-btn">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="12" x2="6" y2="12"/><line x1="10" y1="12" x2="10" y2="12"/><circle cx="17" cy="12" r="2"/></svg>
+                            <span>Classic</span>
+                        </button>
+                        
+                        <!-- Endless Mode -->
+                        <button class="btn btn-primary" id="endless-btn">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.178 8c5.096 0 5.096 8 0 8-5.095 0-7.133-8-12.739-8-4.585 0-4.585 8 0 8 5.606 0 7.644-8 12.74-8z"/></svg>
+                            <span>Endless</span>
+                        </button>
+                        
+                        <!-- Challenge Mode -->
+                        <button class="btn btn-secondary" id="challenge-btn">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                            <span>Challenge</span>
+                        </button>
+                        
+                        <!-- Speed Run Mode -->
+                        <button class="btn btn-secondary" id="speedrun-btn">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <span>Speed Run</span>
+                        </button>
+                        
+                        <!-- Survival Mode -->
+                        <button class="btn btn-secondary" id="survival-btn">
+                            <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                            <span>Survival</span>
+                        </button>
+                        
+                        <!-- Multiplayer Mode -->
+                        <button class="btn btn-accent" id="multiplayer-btn">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            <span>Multiplayer</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Multiplayer Options -->
+                    <div class="multiplayer-options hidden" id="multiplayer-options">
+                        <p style="color: var(--td-text-muted); margin-bottom: 16px;">Co-op with friends (2-4 players)</p>
+                        <div style="display: flex; gap: 12px; justify-content: center;">
+                            <button class="btn btn-primary" id="create-room-btn">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                <span>Create Room</span>
+                            </button>
+                            <button class="btn btn-secondary" id="join-room-btn">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                                <span>Join Room</span>
+                            </button>
+                        </div>
+                        <button class="btn" id="mp-back-btn" style="margin-top: 12px;">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
+                            <span>Back</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Join Room Input -->
+                    <div class="join-room-modal hidden" id="join-room-modal">
+                        <p style="color: var(--td-text-muted); margin-bottom: 16px;">Enter the 6-character room code</p>
+                        <input type="text" id="room-code-input" placeholder="ABCDEF" maxlength="6" style="
+                            font-family: 'JetBrains Mono', monospace;
+                            font-size: 1.5rem;
+                            text-align: center;
+                            letter-spacing: 0.3em;
+                            padding: 12px 20px;
+                            border-radius: 2px;
+                            border: 2px solid var(--td-primary);
+                            background: #000;
+                            color: var(--td-primary);
+                            width: 180px;
+                            text-transform: uppercase;
+                        ">
+                        <div style="display: flex; gap: 12px; margin-top: 16px;">
+                            <button class="btn btn-primary" id="confirm-join-btn">
+                                <span>Join</span>
+                            </button>
+                            <button class="btn" id="cancel-join-btn">
+                                <span>Cancel</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Map Selector Link -->
+                </div>
+                
+                <!-- Map Selector Modal -->
+                <div class="map-selector-modal hidden" id="map-selector" role="dialog" aria-labelledby="map-selector-title" aria-modal="true">
+                    <div class="map-selector-content">
+                        <h2 id="map-selector-title">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+                            Select Map
+                        </h2>
+                        <button class="close-btn" id="map-selector-close" aria-label="Close map selector">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                        
+                        <div class="map-categories">
+                            <h3>Story Maps</h3>
+                            <div class="map-grid" id="story-maps" role="listbox" aria-label="Story map selection">
+                                <!-- Dynamically populated -->
+                            </div>
+                            
+                            <h3>Advanced Maps</h3>
+                            <div class="map-grid" id="advanced-maps" role="listbox" aria-label="Advanced map selection">
+                                <!-- Dynamically populated -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Victory Screen Overlay -->
+                <div class="result-overlay victory-screen hidden" id="victory-screen" role="dialog" aria-labelledby="victory-title" aria-modal="true">
+                    <div class="result-content">
+                        <div class="result-icon victory-icon">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 22V8a2 2 0 0 1 2-2 2 2 0 0 1 2 2v14"/><path d="M8 6h8"/><path d="M8 9h8"/></svg>
+                        </div>
+                        <h2 id="victory-title" class="result-title victory-title">Victory!</h2>
+                        <p class="result-message" id="victory-message">Level Complete!</p>
+                        
+                        <!-- Stars Display -->
+                        <div class="stars-display" id="victory-stars">
+                            <span class="star earned">
+                                <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                            </span>
+                            <span class="star earned">
+                                <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                            </span>
+                            <span class="star">
+                                <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                            </span>
+                        </div>
+                        
+                        <!-- Stats Grid -->
+                        <div class="result-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Waves</span>
+                                <span class="stat-value" id="victory-waves">10</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Score</span>
+                                <span class="stat-value" id="victory-score">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Lives</span>
+                                <span class="stat-value" id="victory-lives">20</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Gold</span>
+                                <span class="stat-value" id="victory-gold">0</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="result-buttons">
+                            <button class="btn btn-primary" id="victory-continue">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                                <span>Next Level</span>
+                            </button>
+                            <button class="btn btn-secondary" id="victory-retry">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                                <span>Play Again</span>
+                            </button>
+                            <button class="btn btn-secondary" id="victory-menu">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+                                <span>Main Menu</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Defeat Screen Overlay -->
+                <div class="result-overlay defeat-screen hidden" id="defeat-screen" role="dialog" aria-labelledby="defeat-title" aria-modal="true">
+                    <div class="result-content">
+                        <div class="result-icon defeat-icon">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+                        </div>
+                        <h2 id="defeat-title" class="result-title defeat-title">Defeat</h2>
+                        <p class="result-message" id="defeat-message">The enemies broke through!</p>
+                        
+                        <!-- Stats Grid -->
+                        <div class="result-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Wave Reached</span>
+                                <span class="stat-value" id="defeat-waves">1</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Score</span>
+                                <span class="stat-value" id="defeat-score">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Enemies Killed</span>
+                                <span class="stat-value" id="defeat-kills">0</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="result-buttons">
+                            <button class="btn btn-primary" id="defeat-retry">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                                <span>Try Again</span>
+                            </button>
+                            <button class="btn btn-secondary" id="defeat-menu">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+                                <span>Main Menu</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pause Menu Overlay -->
+                <div class="result-overlay pause-screen hidden" id="pause-screen" role="dialog" aria-labelledby="pause-title" aria-modal="true">
+                    <div class="result-content pause-content">
+                        <div class="result-icon pause-icon">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                        </div>
+                        <h2 id="pause-title" class="result-title">Game Paused</h2>
+                        
+                        <!-- Current Stats -->
+                        <div class="result-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Wave</span>
+                                <span class="stat-value" id="pause-wave">1</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Lives</span>
+                                <span class="stat-value" id="pause-lives">20</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Gold</span>
+                                <span class="stat-value" id="pause-gold">100</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="result-buttons">
+                            <button class="btn btn-primary" id="pause-resume">
+                                <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                <span>Resume</span>
+                            </button>
+                            <button class="btn btn-secondary" id="pause-restart">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                                <span>Restart Level</span>
+                            </button>
+                            <button class="btn btn-secondary" id="pause-quit">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                                <span>Quit to Menu</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wave Complete Banner -->
+                <div class="wave-banner hidden" id="wave-banner" role="status" aria-live="polite">
+                    <div class="wave-banner-content">
+                        <span class="wave-banner-title" id="wave-banner-title">Wave 1 Complete!</span>
+                        <span class="wave-banner-bonus" id="wave-banner-bonus">+25</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tower Selection Panel -->
+            <aside class="tower-panel" aria-label="Tower controls">
+                <h3>
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V7l8-4 8 4v14"/><path d="M4 10h16"/><rect x="8" y="14" width="3" height="7"/><rect x="13" y="14" width="3" height="7"/></svg>
+                    Towers
+                </h3>
+                <div class="tower-options" role="listbox" aria-label="Available towers">
+                    <button class="tower-btn" data-tower="arrow" role="option" aria-selected="false" title="Arrow Tower - Fast attacks, low damage">
+                        <span class="tower-icon">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/><path d="M5 3v18"/></svg>
+                        </span>
+                        <span class="tower-name">Arrow</span>
+                        <span class="tower-cost">
+                            <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+                            50
+                        </span>
+                    </button>
+                    <button class="tower-btn" data-tower="cannon" role="option" aria-selected="false" title="Cannon Tower - Slow, splash damage">
+                        <span class="tower-icon">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/></svg>
+                        </span>
+                        <span class="tower-name">Cannon</span>
+                        <span class="tower-cost">
+                            <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+                            100
+                        </span>
+                    </button>
+                    <button class="tower-btn" data-tower="ice" role="option" aria-selected="false" title="Ice Tower - Slows enemies">
+                        <span class="tower-icon">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/><line x1="19.07" y1="4.93" x2="4.93" y2="19.07"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+                        </span>
+                        <span class="tower-name">Ice</span>
+                        <span class="tower-cost">
+                            <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+                            75
+                        </span>
+                    </button>
+                    <button class="tower-btn" data-tower="laser" role="option" aria-selected="false" title="Laser Tower - Continuous beam">
+                        <span class="tower-icon">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                        </span>
+                        <span class="tower-name">Laser</span>
+                        <span class="tower-cost">
+                            <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+                            150
+                        </span>
+                    </button>
+                    <button class="tower-btn" data-tower="sniper" role="option" aria-selected="false" title="Sniper Tower - Long range, high damage">
+                        <span class="tower-icon">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
+                        </span>
+                        <span class="tower-name">Sniper</span>
+                        <span class="tower-cost">
+                            <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+                            200
+                        </span>
+                    </button>
+                    <button class="tower-btn" data-tower="poison" role="option" aria-selected="false" title="Poison Tower - Damage over time">
+                        <span class="tower-icon">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="m8.5 10 7 4"/><path d="m8.5 14 7-4"/></svg>
+                        </span>
+                        <span class="tower-name">Poison</span>
+                        <span class="tower-cost">
+                            <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+                            125
+                        </span>
+                    </button>
+                    <button class="tower-btn" data-tower="tesla" role="option" aria-selected="false" title="Tesla Tower - Chain lightning">
+                        <span class="tower-icon">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>
+                        </span>
+                        <span class="tower-name">Tesla</span>
+                        <span class="tower-cost">
+                            <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+                            175
+                        </span>
+                    </button>
+                </div>
+                
+                <!-- Hero Abilities Section -->
+                <h3 style="margin-top: 16px;">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 12.5-5 5"/><path d="M18 8l3-3"/><path d="M17.5 1.5l5 5"/><path d="m2 21 6.5-6.5"/><path d="m9.5 4.5 5 5"/></svg>
+                    Hero Abilities
+                </h3>
+                <div id="abilities-container" class="abilities-container" aria-label="Hero abilities">
+                    <!-- Dynamically populated by HeroAbilities.js -->
+                </div>
+                
+                <!-- Tower Info Display -->
+                <div class="tower-info" id="tower-info" role="status" aria-live="polite">
+                    <p>Select a tower and click on the map to place it.</p>
+                </div>
+            </aside>
+        </main>
+
+        <!-- Controls Hint Bar -->
+        <footer class="controls-hint" aria-label="Keyboard controls">
+            <div class="controls-row">
+                <div class="control-key">
+                    <kbd class="key">1-7</kbd>
+                    <span>Select Tower</span>
+                </div>
+                <div class="control-key">
+                    <kbd class="key">CLICK</kbd>
+                    <span>Place/Select</span>
+                </div>
+                <div class="control-key">
+                    <kbd class="key">ESC</kbd>
+                    <span>Cancel</span>
+                </div>
+                <div class="control-key">
+                    <kbd class="key">SPACE</kbd>
+                    <span>Start Wave</span>
+                </div>
+            </div>
+            <div class="controls-row">
+                <div class="control-key">
+                    <kbd class="key">U</kbd>
+                    <span>Upgrade</span>
+                </div>
+                <div class="control-key">
+                    <kbd class="key">DEL</kbd>
+                    <span>Sell</span>
+                </div>
+                <div class="control-key">
+                    <kbd class="key">P</kbd>
+                    <span>Pause</span>
+                </div>
+                <div class="control-key">
+                    <kbd class="key">Q/W/E</kbd>
+                    <span>Abilities</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script type="module" src="../../js/utils/GameBridge.js"></script>
+    <script type="module" src="TowerDefense.js"></script>
+</body>
+</html>

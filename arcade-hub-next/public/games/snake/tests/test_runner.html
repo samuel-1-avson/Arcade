@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game Test Runner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        
+        button {
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        
+        #runTests {
+            background: linear-gradient(135deg, #00ff88, #00cc66);
+            color: #000;
+        }
+        
+        #runTests:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        }
+        
+        #clearResults {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        #clearResults:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .summary-box {
+            display: none;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.3em;
+        }
+        
+        .summary-box.pass {
+            background: rgba(0, 255, 136, 0.2);
+            border: 2px solid #00ff88;
+        }
+        
+        .summary-box.fail {
+            background: rgba(255, 68, 68, 0.2);
+            border: 2px solid #ff4444;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .progress-bar .fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00ccff);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .test-output {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            padding: 20px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .test-output::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .test-output::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        
+        .test-output::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 136, 0.5);
+            border-radius: 4px;
+        }
+        
+        .test-group {
+            margin-bottom: 15px;
+        }
+        
+        .test-group h3 {
+            color: #00ccff;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+        
+        .test-item {
+            padding: 8px 15px;
+            margin: 3px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9em;
+        }
+        
+        .test-item.pass {
+            background: rgba(0, 255, 136, 0.15);
+            border-left: 3px solid #00ff88;
+        }
+        
+        .test-item.fail {
+            background: rgba(255, 68, 68, 0.15);
+            border-left: 3px solid #ff4444;
+        }
+        
+        .test-item .status {
+            font-weight: bold;
+        }
+        
+        .test-item.pass .status {
+            color: #00ff88;
+        }
+        
+        .test-item.fail .status {
+            color: #ff4444;
+        }
+        
+        .test-item .details {
+            color: #888;
+            font-size: 0.85em;
+            margin-left: 10px;
+        }
+        
+        .spinner {
+            display: none;
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #00ff88;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        #placeholder {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐍 Snake Game Test Runner</h1>
+        
+        <div class="controls">
+            <button id="runTests">▶ Run All Tests</button>
+            <button id="clearResults">Clear Results</button>
+        </div>
+        
+        <div class="progress-bar" id="progressBar">
+            <div class="fill" id="progressFill"></div>
+        </div>
+        
+        <div class="summary-box" id="summary"></div>
+        
+        <div class="spinner" id="spinner"></div>
+        
+        <div class="test-output" id="output">
+            <div id="placeholder">
+                Click "Run All Tests" to start the test suite.<br><br>
+                This will test all 15+ game modules including:<br>
+                • Particle System<br>
+                • Camera<br>
+                • Physics<br>
+                • Story Mode<br>
+                • Boss Battles<br>
+                • Achievements<br>
+                • Audio<br>
+                • UI<br>
+                • Polish System<br>
+                • Enhanced Effects<br>
+                • Game Modes<br>
+                • Map Generator<br>
+                • Shop & Abilities<br>
+                • Advanced Features<br>
+                • Progression System
+            </div>
+        </div>
+    </div>
+    
+    <script type="module">
+        import { runAllTests, TestRunner } from './test_game.js';
+        
+        const runButton = document.getElementById('runTests');
+        const clearButton = document.getElementById('clearResults');
+        const output = document.getElementById('output');
+        const summary = document.getElementById('summary');
+        const spinner = document.getElementById('spinner');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const placeholder = document.getElementById('placeholder');
+        
+        let isRunning = false;
+        
+        runButton.addEventListener('click', async () => {
+            if (isRunning) return;
+            isRunning = true;
+            
+            // Reset UI
+            output.innerHTML = '';
+            summary.style.display = 'none';
+            spinner.style.display = 'block';
+            progressBar.style.display = 'block';
+            progressFill.style.width = '0%';
+            runButton.disabled = true;
+            runButton.textContent = 'Running...';
+            
+            // Override console.log to capture output
+            const originalLog = console.log;
+            const groups = {};
+            let currentGroup = 'General';
+            
+            console.log = (...args) => {
+                originalLog.apply(console, args);
+                const text = args.join(' ');
+                
+                // Detect group headers
+                if (text.includes('TESTING')) {
+                    const match = text.match(/TESTING (.+?)\.\.\./);
+                    if (match) {
+                        currentGroup = match[1];
+                        groups[currentGroup] = [];
+                    }
+                }
+                // Detect test results
+                else if (text.includes('PASS:') || text.includes('FAIL:')) {
+                    const isPassing = text.includes('PASS:');
+                    const testName = text.replace(/[✅❌] (PASS|FAIL): /, '');
+                    
+                    if (!groups[currentGroup]) groups[currentGroup] = [];
+                    groups[currentGroup].push({
+                        name: testName,
+                        pass: isPassing
+                    });
+                    
+                    // Update progress
+                    const totalTests = Object.values(groups).flat().length;
+                    progressFill.style.width = Math.min(100, (totalTests / 80) * 100) + '%';
+                }
+            };
+            
+            try {
+                const results = await runAllTests();
+                
+                // Run complete
+                console.log = originalLog;
+                spinner.style.display = 'none';
+                progressFill.style.width = '100%';
+                runButton.disabled = false;
+                runButton.textContent = '▶ Run All Tests';
+                isRunning = false;
+                
+                // Display summary
+                summary.textContent = `✅ ${results.passed} Passed | ❌ ${results.failed} Failed | Total: ${results.passed + results.failed}`;
+                summary.className = `summary-box ${results.failed === 0 ? 'pass' : 'fail'}`;
+                summary.style.display = 'block';
+                
+                // Render results
+                output.innerHTML = '';
+                for (const [groupName, tests] of Object.entries(groups)) {
+                    if (tests.length === 0) continue;
+                    
+                    const groupDiv = document.createElement('div');
+                    groupDiv.className = 'test-group';
+                    
+                    const groupTitle = document.createElement('h3');
+                    groupTitle.textContent = groupName;
+                    groupDiv.appendChild(groupTitle);
+                    
+                    for (const test of tests) {
+                        const testDiv = document.createElement('div');
+                        testDiv.className = `test-item ${test.pass ? 'pass' : 'fail'}`;
+                        testDiv.innerHTML = `
+                            <span>${test.name}</span>
+                            <span class="status">${test.pass ? '✓ PASS' : '✗ FAIL'}</span>
+                        `;
+                        groupDiv.appendChild(testDiv);
+                    }
+                    
+                    output.appendChild(groupDiv);
+                }
+                
+            } catch (error) {
+                console.log = originalLog;
+                spinner.style.display = 'none';
+                runButton.disabled = false;
+                runButton.textContent = '▶ Run All Tests';
+                isRunning = false;
+                
+                output.innerHTML = `<div class="test-item fail">
+                    <span>Test runner error: ${error.message}</span>
+                    <span class="status">✗ ERROR</span>
+                </div>`;
+                
+                summary.textContent = `❌ Test runner failed: ${error.message}`;
+                summary.className = 'summary-box fail';
+                summary.style.display = 'block';
+            }
+        });
+        
+        clearButton.addEventListener('click', () => {
+            output.innerHTML = placeholder.outerHTML;
+            summary.style.display = 'none';
+            progressBar.style.display = 'none';
+        });
+    </script>
+</body>
+</html>
