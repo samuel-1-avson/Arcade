@@ -1285,6 +1285,11 @@ class Tetris extends GameEngine {
     }
 
     onGameOver(isWin, isNewHighScore) {
+        // Submit score to Arcade Hub
+        if (window.ArcadeHub && typeof this.score === 'number') {
+            window.ArcadeHub.submitScore(this.score);
+        }
+        
         if (this.dailyChallengeActive) {
             dailyChallengeSystem.submitResult('tetris', this.score, this.dailyTarget);
             this.loadDailyStatus();

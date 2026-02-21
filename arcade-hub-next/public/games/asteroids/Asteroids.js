@@ -1128,6 +1128,10 @@ class Asteroids extends GameEngine {
         this.spawnExplosion(this.ship.x, this.ship.y, '#fff');
 
         if (this.lives <= 0) {
+            // Submit score to Arcade Hub
+            if (window.ArcadeHub && typeof this.score === 'number') {
+                window.ArcadeHub.submitScore(this.score);
+            }
             this.gameOver(false);
         } else {
             this.respawnShip();

@@ -2227,6 +2227,11 @@ class TowerDefense extends GameEngine {
 
     // Override game over to show proper screens
     gameOver(isWin) {
+        // Submit score to Arcade Hub
+        if (window.ArcadeHub && typeof this.score === 'number') {
+            window.ArcadeHub.submitScore(this.score);
+        }
+        
         if (isWin) {
             this.showVictoryScreen('Victory! All waves cleared!');
         } else {

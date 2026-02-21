@@ -92,6 +92,12 @@ class GameManager extends GameEngine {
 
     handleGameOver() {
         this.isPlaying = false;
+        
+        // Submit score to Arcade Hub
+        if (window.ArcadeHub && typeof this.score === 'number') {
+            window.ArcadeHub.submitScore(this.score);
+        }
+        
         this.gameOver(false); // GameEngine method
     }
 

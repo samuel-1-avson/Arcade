@@ -1323,7 +1323,12 @@ class Roguelike extends GameEngine {
         soundEffects.die?.();
         this.achievements.recordDeath();
         const score = this.player.gold + this.floor * 100 + this.player.xp; // Better score calc
-        this.hub.submitScore(score);
+        // Submit via hubSDK if available, otherwise use ArcadeHub
+        if (this.hub) {
+            this.hub.submitScore(score);
+        } else if (window.ArcadeHub) {
+            window.ArcadeHub.submitScore(score);
+        }
         this.addScore(score);
         this.gameOver(false);
     }

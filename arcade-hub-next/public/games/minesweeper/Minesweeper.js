@@ -414,6 +414,11 @@ class Minesweeper {
     
     // Submit score to the Hub via postMessage
     submitScoreToHub(score, completed) {
+        // Submit via Arcade Hub bridge
+        if (window.ArcadeHub && typeof score === 'number') {
+            window.ArcadeHub.submitScore(score);
+        }
+        // Also try direct parent message for backwards compatibility
         if (window.parent && window.parent !== window) {
             window.parent.postMessage({
                 type: 'SUBMIT_SCORE',

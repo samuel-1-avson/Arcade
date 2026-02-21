@@ -839,6 +839,10 @@ class Breakout extends GameEngine {
 
         if (this.lives <= 0) {
             this.achievementSystem.saveBestWave?.();
+            // Submit score to Arcade Hub
+            if (window.ArcadeHub && typeof this.score === 'number') {
+                window.ArcadeHub.submitScore(this.score);
+            }
             this.gameOver(false);
         } else {
             // Reset ball
@@ -879,6 +883,10 @@ class Breakout extends GameEngine {
         } else if (this.gameMode === 'PUZZLE') {
             // Puzzle mode handles its own completion
         } else {
+            // Submit score to Arcade Hub
+            if (window.ArcadeHub && typeof this.score === 'number') {
+                window.ArcadeHub.submitScore(this.score);
+            }
             this.gameOver(true);
         }
     }

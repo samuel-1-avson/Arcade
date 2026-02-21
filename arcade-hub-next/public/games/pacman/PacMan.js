@@ -706,7 +706,13 @@ export class PacManEnhanced extends GameEngine {
         this.deathsThisLevel++;
         this.updateLivesDisplay();
         this.effectsSystem.createPacmanDeath(this.pacman.x, this.pacman.y, CELL_SIZE);
-        if (this.lives <= 0) this.gameOver(false);
+        if (this.lives <= 0) {
+            // Submit score to Arcade Hub
+            if (window.ArcadeHub && typeof this.score === 'number') {
+                window.ArcadeHub.submitScore(this.score);
+            }
+            this.gameOver(false);
+        }
         else {
             this.pacman.x = 14; this.pacman.y = 23; this.pacman.direction = DIRS.LEFT;
             this.createGhosts();

@@ -892,6 +892,10 @@ class Rhythm extends GameEngine {
         };
 
         this.achievementManager.updateStats(results);
+        // Submit score to Arcade Hub
+        if (window.ArcadeHub && typeof this.score === 'number') {
+            window.ArcadeHub.submitScore(this.score);
+        }
         this.gameOver(completed);
         this.showResults(results);
     }
