@@ -7,7 +7,7 @@ import { usePartyStore } from '@/lib/store/party-store';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 
 export function PartyFAB() {
   const { 
@@ -341,7 +341,7 @@ export function PartyFAB() {
                   </span>
                 </div>
                 
-                <ScrollArea className="flex-1 p-4">
+                <div className="flex-1 p-4 overflow-y-auto">
                   <div className="space-y-3">
                     {messages.length === 0 ? (
                       <p className="text-sm text-muted-foreground text-center py-8">
@@ -377,7 +377,7 @@ export function PartyFAB() {
                     )}
                     <div ref={messagesEndRef} />
                   </div>
-                </ScrollArea>
+                </div>
 
                 {/* Message Input */}
                 <form onSubmit={handleSendMessage} className="p-4 border-t border-white/[0.05]">

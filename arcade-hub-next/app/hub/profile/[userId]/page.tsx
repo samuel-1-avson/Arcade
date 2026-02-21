@@ -19,10 +19,6 @@ import { friendsService } from '@/lib/firebase/services/friends';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 
 export default function PublicProfilePage() {
   const params = useParams();
@@ -35,7 +31,7 @@ export default function PublicProfilePage() {
   const [friendStatus, setFriendStatus] = useState<'none' | 'friend' | 'pending_sent' | 'pending_received'>('none');
   const [isAddingFriend, setIsAddingFriend] = useState(false);
 
-  const isOwnProfile = currentUser?.uid === userId;
+  const isOwnProfile = currentUser?.id === userId;
 
   useEffect(() => {
     loadProfile();
@@ -69,7 +65,7 @@ export default function PublicProfilePage() {
     if (!currentUser) return;
     
     try {
-      const friends = await friendsService.getFriends(currentUser.uid);
+      const friends = await friendsService.getFriends(currentUser.id);
       const isFriend = friends.some(f => f.userId === userId);
       
       if (isFriend) {
@@ -77,7 +73,7 @@ export default function PublicProfilePage() {
         return;
       }
       
-      const requests = await friendsService.getFriendRequests(currentUser.uid);
+      const requests = await friendsService.getFriendRequests(currentUser.id);
       const sentRequest = requests.sent.some(r => r.toUserId === userId);
       const receivedRequest = requests.received.some(r => r.fromUserId === userId);
       
@@ -98,7 +94,7 @@ export default function PublicProfilePage() {
     
     setIsAddingFriend(true);
     try {
-      await friendsService.sendFriendRequest(currentUser.uid, userId);
+      await friendsService.sendFriendRequest(currentUser.id, userId);
       setFriendStatus('pending_sent');
     } catch (err) {
       console.error('Failed to send friend request:', err);
@@ -128,15 +124,26 @@ export default function PublicProfilePage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Profile Header */}
-      <Card className="p-6">
+      <div className="bg-elevated border border-white/[0.06] p-6">
         <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
           <div className="relative">
-            <Avatar className="w-24 h-24 border-4 border-background">
-              <AvatarImage src={profile.photoURL || profile.avatar} />
-              <AvatarFallback className="text-3xl bg-accent/10 text-accent">
-                {profile.displayName.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <div className="w-24 h-24 bg-accent/10 rounded-full flex items-center justify-center text-3xl font-bold text-accent border-4 border-background">
+              {profile.photoURL ? (
+                <img 
+                  src={profile.photoURL} 
+                  alt={profile.displayName}
+                  className="w-full h-full rounded-full object-cover"
+                />
+              ) : profile.avatar ? (
+                <img 
+                  src={profile.avatar} 
+                  alt={profile.displayName}
+                  className="w-full h-full rounded-full object-cover"
+                />
+              ) : (
+                profile.displayName.charAt(0).toUpperCase()
+              )}
+            </div>
             <span className={cn(
               'absolute bottom-1 right-1 w-5 h-5 rounded-full border-2 border-background',
               profile.isOnline ? 'bg-green-500' : 'bg-gray-500'
@@ -147,13 +154,12 @@ export default function PublicProfilePage() {
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-3xl font-bold text-primary">{profile.displayName}</h1>
               {profile.title && (
-                <Badge 
-                  variant="outline" 
-                  className="text-xs"
+                <span 
+                  className="px-2 py-0.5 text-xs border rounded-full"
                   style={{ borderColor: profile.titleColor, color: profile.titleColor }}
                 >
                   {profile.title}
-                </Badge>
+                </span>
               )}
             </div>
             
@@ -214,7 +220,7 @@ export default function PublicProfilePage() {
             </Button>
           )}
         </div>
-      </Card>
+      </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -242,7 +248,7 @@ export default function PublicProfilePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Achievements */}
-        <Card className="lg:col-span-2 p-6">
+        <div className="lg:col-span-2 bg-elevated border border-white/[0.06] p-6">
           <h2 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
             <Trophy className="w-5 h-5 text-yellow-400" />
             Recent Achievements
@@ -272,10 +278,10 @@ export default function PublicProfilePage() {
               ))}
             </div>
           )}
-        </Card>
+        </div>
 
         {/* Favorite Game */}
-        <Card className="p-6">
+        <div className="bg-elevated border border-white/[0.06] p-6">
           <h2 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
             <Gamepad2 className="w-5 h-5 text-green-400" />
             Favorite Game
@@ -294,7 +300,7 @@ export default function PublicProfilePage() {
             </p>
           )}
           
-          <Separator className="my-4" />
+          <div className="w-full h-px bg-white/10 my-4" />
           
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
@@ -306,7 +312,7 @@ export default function PublicProfilePage() {
               <span className="text-primary">{formatLastSeen(profile.lastSeen)}</span>
             </div>
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   );
@@ -314,7 +320,7 @@ export default function PublicProfilePage() {
 
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <Card className="p-4">
+    <div className="bg-elevated border border-white/[0.06] p-4">
       <div className="flex items-center gap-3">
         <div className="p-2 bg-white/5 rounded-lg">
           {icon}
@@ -324,7 +330,7 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
           <p className="text-xs text-muted-foreground">{label}</p>
         </div>
       </div>
-    </Card>
+    </div>
   );
 }
 
