@@ -115,7 +115,11 @@ export default function TournamentsPage() {
   };
 
   const handleCreateTournament = async () => {
-    if (!user) return;
+    console.log('[Tournaments] Create tournament clicked, user:', user);
+    if (!user) {
+      console.log('[Tournaments] No user, returning');
+      return;
+    };
     
     // Validate inputs
     if (!newTournament.name.trim()) {
@@ -219,7 +223,10 @@ export default function TournamentsPage() {
         </div>
         <Button 
           disabled={!user}
-          onClick={() => setIsCreateDialogOpen(true)}
+          onClick={() => {
+            console.log('[Tournaments] Opening create dialog');
+            setIsCreateDialogOpen(true);
+          }}
         >
           <Plus className="w-4 h-4 mr-2" />
           Create Tournament
@@ -344,7 +351,10 @@ export default function TournamentsPage() {
             {activeTab === 'upcoming' && (
               <Button 
                 disabled={!user}
-                onClick={() => setIsCreateDialogOpen(true)}
+                onClick={() => {
+                  console.log('[Tournaments] Opening create dialog from empty state');
+                  setIsCreateDialogOpen(true);
+                }}
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Create Tournament
@@ -355,6 +365,7 @@ export default function TournamentsPage() {
       </div>
 
       {/* Create Tournament Dialog */}
+      {console.log('[Tournaments] Rendering dialog, isCreateDialogOpen:', isCreateDialogOpen)}
       {isCreateDialogOpen && (
         <>
           {/* Overlay */}
