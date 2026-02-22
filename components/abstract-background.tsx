@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useTheme } from "next-themes";
 import * as THREE from "three";
@@ -27,8 +27,7 @@ function useMouseNDC() {
 /* ══════════════════════════════════════════════════════════════════════════
    1. CYBERPUNK (dark) — Neural Network
    Glowing nodes scattered in 3D space, connected by edges when close enough.
-   The entire network pulses in size and slowly rotates.
-   Mouse Y brightens/dims the edge web (scan-line effect).
+   The entire network pulses in size. Mouse Y brightens/dims the edge web.
    ══════════════════════════════════════════════════════════════════════════ */
 function CyberpunkScene({ color }: SceneProps) {
   const group      = useRef<THREE.Group>(null);
@@ -72,13 +71,12 @@ function CyberpunkScene({ color }: SceneProps) {
     const t  = state.clock.elapsedTime;
     const mx = mouse.current.x;
     const my = mouse.current.y;
-    group.current.rotation.y += 0.05 * (mx * 0.4 - group.current.rotation.y);
-    group.current.rotation.x += 0.05 * (-my * 0.3 - group.current.rotation.x);
+    group.current.rotation.y += 0.04 * (mx * 0.4 - group.current.rotation.y);
+    group.current.rotation.x += 0.04 * (-my * 0.3 - group.current.rotation.x);
     group.current.rotation.y += 0.002;
     if (matRef.current) {
       matRef.current.size = Math.sin(t * 1.8) * 0.035 + 0.12;
     }
-    // Mouse Y brightens edge web
     if (edgeMatRef.current) {
       edgeMatRef.current.opacity = 0.14 + Math.abs(my) * 0.28;
     }
@@ -120,10 +118,9 @@ function CyberpunkScene({ color }: SceneProps) {
 
 /* ══════════════════════════════════════════════════════════════════════════
    2. NEON PINK — Lissajous Light Sculpture
-   800 particles trace a 3D Lissajous/spirograph parametric curve whose
-   frequency ratios drift continuously, morphing through knots, stars,
-   figure-8s, and pretzel forms. Mouse X/Y modulates the drift rate of
-   two frequency axes, giving direct control over shape evolution speed.
+   800 particles trace a 3D parametric curve whose frequency ratios drift
+   continuously, morphing through knots, stars, figure-8s, and pretzel forms.
+   Mouse X/Y modulates the drift rate of two frequency axes.
    ══════════════════════════════════════════════════════════════════════════ */
 function NeonPinkScene({ color }: SceneProps) {
   const group  = useRef<THREE.Group>(null);
@@ -138,8 +135,8 @@ function NeonPinkScene({ color }: SceneProps) {
     const mx = mouse.current.x;
     const my = mouse.current.y;
 
-    group.current.rotation.y += 0.05 * (mx * 0.4 - group.current.rotation.y);
-    group.current.rotation.x += 0.05 * (-my * 0.3 - group.current.rotation.x);
+    group.current.rotation.y += 0.04 * (mx * 0.4 - group.current.rotation.y);
+    group.current.rotation.x += 0.04 * (-my * 0.3 - group.current.rotation.x);
     group.current.rotation.y += 0.003;
 
     const f = freqs.current;
@@ -183,16 +180,19 @@ function NeonPinkScene({ color }: SceneProps) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   3. RETRO 80S — Synthwave Horizon Grid + Wireframe Pyramids
-   Mouse Y acts as a camera elevator — lifting the view above or below
-   the grid floor. Pyramids also spin faster at high mouse X.
+   3. RETRO 80S — Synthwave Horizon Grid + Mixed Geometric Objects
+   A perspective grid receding to the horizon with background stars, a
+   breathing wireframe sun arc on the horizon, and 8 mixed floating objects
+   (4 pyramids + 2 octahedra + 2 cubes). Mouse Y lifts/lowers the scene
+   like a camera elevator. Calmer motion throughout.
    ══════════════════════════════════════════════════════════════════════════ */
 function Retro80sScene({ color }: SceneProps) {
   const group    = useRef<THREE.Group>(null);
   const coneRefs = useRef<(THREE.Mesh | null)[]>([]);
+  const sunRef   = useRef<THREE.Mesh>(null);
   const mouse    = useMouseNDC();
 
-  const { gridBuf, cones } = useMemo(() => {
+  const { gridBuf, cones, starBuf } = useMemo(() => {
     const verts: number[] = [];
     for (let xi = -10; xi <= 10; xi += 1) {
       verts.push(xi, -3, -1, xi, -3, -32);
@@ -203,34 +203,52 @@ function Retro80sScene({ color }: SceneProps) {
       z -= 0.5 + hi * 0.14;
     }
     const gridBuf = new Float32Array(verts);
-    const seed = [0.13, 0.67, 0.34, 0.82, 0.22, 0.55, 0.91];
+
+    // 8 geometric objects (4 pyramids, 2 octahedra, 2 cubes)
+    const seed = [0.13, 0.67, 0.34, 0.82, 0.22, 0.55, 0.91, 0.44];
     const cones = seed.map((s, i) => ({
       x:      (s * 2 - 1) * 11,
-      y:      -0.5 + seed[(i + 2) % 7] * 3,
-      z:      -4 - seed[(i + 3) % 7] * 16,
-      speedY: 0.005 + seed[(i + 1) % 7] * 0.007,
+      y:      -0.5 + seed[(i + 2) % 8] * 3,
+      z:      -4   - seed[(i + 3) % 8] * 16,
+      speedY: 0.005 + seed[(i + 1) % 8] * 0.007,
     }));
-    return { gridBuf, cones };
+
+    // Background stars — 80 static points in upper half of scene
+    const starCount = 80;
+    const starBuf   = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount; i++) {
+      starBuf[i * 3]     = (Math.random() - 0.5) * 60;
+      starBuf[i * 3 + 1] = Math.random() * 14 + 1;
+      starBuf[i * 3 + 2] = -10 - Math.random() * 20;
+    }
+
+    return { gridBuf, cones, starBuf };
   }, []);
 
-  useFrame((_state) => {
+  useFrame((state) => {
     if (!group.current) return;
+    const t  = state.clock.elapsedTime;
     const mx = mouse.current.x;
     const my = mouse.current.y;
-    group.current.rotation.y += 0.05 * (mx * 0.2 - group.current.rotation.y);
-    group.current.rotation.x += 0.05 * (-my * 0.1 - group.current.rotation.x);
-    // Camera elevator: mouse Y lifts/lowers the scene
-    group.current.position.y += 0.04 * (my * 2.8 - group.current.position.y);
-    // Pyramid rotation — spin faster at high |mouse.x|
+    group.current.rotation.y += 0.04 * (mx * 0.2 - group.current.rotation.y);
+    group.current.rotation.x += 0.04 * (-my * 0.1 - group.current.rotation.x);
+    // Calmer camera elevator
+    group.current.position.y += 0.03 * (my * 1.8 - group.current.position.y);
+    // Spinning boost at high |mouse.x|
     const spinBoost = 1 + Math.abs(mx) * 1.2;
     coneRefs.current.forEach((c, i) => {
       if (!c) return;
       c.rotation.y += cones[i].speedY * spinBoost;
     });
+    // Sun arc breathes gently
+    if (sunRef.current) {
+      sunRef.current.scale.setScalar(0.95 + Math.sin(t * 0.4) * 0.1);
+    }
   });
 
   return (
     <group ref={group}>
+      {/* Horizon grid */}
       <lineSegments>
         <bufferGeometry>
           <bufferAttribute attach="attributes-position" args={[gridBuf, 3]} />
@@ -243,13 +261,46 @@ function Retro80sScene({ color }: SceneProps) {
           depthWrite={false}
         />
       </lineSegments>
+
+      {/* Background stars — static, no per-frame update */}
+      <points>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[starBuf, 3]} />
+        </bufferGeometry>
+        <pointsMaterial
+          size={0.05}
+          color={color}
+          transparent
+          opacity={0.55}
+          sizeAttenuation
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </points>
+
+      {/* Wireframe sun arc at horizon */}
+      <mesh ref={sunRef} position={[0, -3, -8]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[5.5, 0.12, 4, 32, Math.PI]} />
+        <meshBasicMaterial
+          color={color}
+          wireframe
+          transparent
+          opacity={0.55}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </mesh>
+
+      {/* Mixed geometry objects: 4 pyramids (i<4), 2 octahedra (i=4,5), 2 cubes (i=6,7) */}
       {cones.map((c, i) => (
         <mesh
           key={i}
           ref={(el) => { coneRefs.current[i] = el; }}
           position={[c.x, c.y, c.z]}
         >
-          <coneGeometry args={[1.4, 2.6, 4]} />
+          {i < 4           && <coneGeometry args={[1.4, 2.6, 4]} />}
+          {i >= 4 && i < 6 && <octahedronGeometry args={[1.2]} />}
+          {i >= 6          && <boxGeometry args={[1.5, 1.5, 1.5]} />}
           <meshBasicMaterial
             color={color}
             wireframe
@@ -266,8 +317,7 @@ function Retro80sScene({ color }: SceneProps) {
 
 /* ══════════════════════════════════════════════════════════════════════════
    4. MATRIX — Digital Rain
-   Mouse X drifts columns left/right. Mouse Y controls fall speed:
-   top of screen = slow trickle, bottom = blizzard of digits.
+   Mouse X drifts columns. Mouse Y controls fall speed (top=trickle, bot=blizzard).
    ══════════════════════════════════════════════════════════════════════════ */
 function MatrixScene({ color }: SceneProps) {
   const group  = useRef<THREE.Group>(null);
@@ -299,9 +349,7 @@ function MatrixScene({ color }: SceneProps) {
     if (!geoRef.current || !group.current) return;
     const mx = mouse.current.x;
     const my = mouse.current.y;
-    // X drift
     group.current.position.x += 0.04 * (mx * 1.8 - group.current.position.x);
-    // Mouse Y controls speed: top (my=+1) = slow, bottom (my=-1) = fast
     const speedMult = 0.4 + (1 - my) * 0.8;
 
     const pos = geoRef.current.attributes.position as THREE.BufferAttribute;
@@ -334,14 +382,18 @@ function MatrixScene({ color }: SceneProps) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   5. SYNTHWAVE — Concentric Ring Pulses
-   Mouse distance from screen centre controls pulse speed:
-   near centre = calm, corners = fast frantic pulse.
+   5. SYNTHWAVE — Concentric Ring Pulses + Central Orb + VU Waveform Strips
+   14 rings expand outward like a sonar ping. A central wireframe orb pulses
+   in sync. Two neon waveform strips (left & right) animate like VU meters.
+   Mouse distance from centre controls pulse speed.
    ══════════════════════════════════════════════════════════════════════════ */
 function SynthwaveScene({ color }: SceneProps) {
   const group    = useRef<THREE.Group>(null);
   const ringRefs = useRef<(THREE.Mesh | null)[]>([]);
   const matRefs  = useRef<(THREE.MeshBasicMaterial | null)[]>([]);
+  const orbRef   = useRef<THREE.Mesh>(null);
+  const orbMatRef = useRef<THREE.MeshBasicMaterial>(null);
+  const waveRef  = useRef<THREE.BufferGeometry>(null);
   const mouse    = useMouseNDC();
 
   const RINGS  = 14;
@@ -349,19 +401,20 @@ function SynthwaveScene({ color }: SceneProps) {
   const phases = useMemo(() =>
     Array.from({ length: RINGS }, (_, i) => i * (MAX_R / RINGS))
   , []);
+  const wavePositions = useMemo(() => new Float32Array(120 * 3), []);
 
   useFrame((state) => {
     if (!group.current) return;
     const t  = state.clock.elapsedTime;
     const mx = mouse.current.x;
     const my = mouse.current.y;
-    group.current.rotation.y += 0.05 * (mx * 0.3 - group.current.rotation.y);
-    group.current.rotation.x += 0.05 * (-my * 0.3 - group.current.rotation.x);
+    group.current.rotation.y += 0.04 * (mx * 0.3 - group.current.rotation.y);
+    group.current.rotation.x += 0.04 * (-my * 0.3 - group.current.rotation.x);
 
-    // Distance from screen centre controls pulse speed
     const dist      = Math.sqrt(mx * mx + my * my);
     const pulseMult = 1.0 + dist * 1.4;
 
+    // Expanding rings
     for (let i = 0; i < RINGS; i++) {
       const ring = ringRefs.current[i];
       const mat  = matRefs.current[i];
@@ -369,6 +422,24 @@ function SynthwaveScene({ color }: SceneProps) {
       const r = ((t * 3.8 * pulseMult + phases[i]) % MAX_R);
       ring.scale.setScalar(r);
       mat.opacity = (1 - r / MAX_R) * 0.7;
+    }
+
+    // Central anchor orb
+    if (orbRef.current && orbMatRef.current) {
+      orbRef.current.scale.setScalar(0.8 + Math.sin(t * 3.8 * pulseMult * 2) * 0.3);
+      orbMatRef.current.opacity = 0.35 + Math.abs(Math.sin(t * 3.8 * pulseMult * 2)) * 0.1;
+    }
+
+    // VU meter waveform strips: left (x: -14→-2) + right (x: 2→14)
+    if (waveRef.current) {
+      const wp = waveRef.current.attributes.position as THREE.BufferAttribute;
+      for (let i = 0; i < 60; i++) {
+        const xL = -14 + (i / 59) * 12;
+        wp.setXYZ(i,      xL, Math.sin(xL * 0.8 + t * 4.2) * 2.5 * pulseMult, -2);
+        const xR = 2  + (i / 59) * 12;
+        wp.setXYZ(60 + i, xR, Math.sin(xR * 0.8 + t * 4.2) * 2.5 * pulseMult, -2);
+      }
+      wp.needsUpdate = true;
     }
   });
 
@@ -388,14 +459,43 @@ function SynthwaveScene({ color }: SceneProps) {
           />
         </mesh>
       ))}
+
+      {/* Central anchor orb */}
+      <mesh ref={orbRef}>
+        <sphereGeometry args={[1.2, 16, 16]} />
+        <meshBasicMaterial
+          ref={orbMatRef}
+          color={color}
+          wireframe
+          transparent
+          opacity={0.45}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </mesh>
+
+      {/* VU meter waveform strips */}
+      <points>
+        <bufferGeometry ref={waveRef}>
+          <bufferAttribute attach="attributes-position" args={[wavePositions, 3]} />
+        </bufferGeometry>
+        <pointsMaterial
+          size={0.08}
+          color={color}
+          transparent
+          opacity={0.7}
+          sizeAttenuation
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </points>
     </group>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
    6. DRACULA — Spiral Vortex / Tornado
-   Mouse Y stretches/squashes the vortex funnel:
-   mouse up = tall dramatic tornado, mouse down = flattened disk.
+   Mouse Y stretches/squashes the vortex funnel height.
    ══════════════════════════════════════════════════════════════════════════ */
 function DraculaScene({ color }: SceneProps) {
   const group       = useRef<THREE.Group>(null);
@@ -433,10 +533,9 @@ function DraculaScene({ color }: SceneProps) {
     const t  = state.clock.elapsedTime;
     const mx = mouse.current.x;
     const my = mouse.current.y;
-    group.current.rotation.y += 0.05 * (mx * 0.4 - group.current.rotation.y);
-    group.current.rotation.x += 0.05 * (-my * 0.3 - group.current.rotation.x);
+    group.current.rotation.y += 0.04 * (mx * 0.4 - group.current.rotation.y);
+    group.current.rotation.x += 0.04 * (-my * 0.3 - group.current.rotation.x);
 
-    // Mouse Y stretches/squashes vortex
     heightScale.current += 0.05 * ((1.0 + my * 0.55) - heightScale.current);
 
     const pos = geoRef.current.attributes.position as THREE.BufferAttribute;
@@ -475,8 +574,7 @@ function DraculaScene({ color }: SceneProps) {
 
 /* ══════════════════════════════════════════════════════════════════════════
    7. OCEAN DEEP — Wave Particle Grid
-   Mouse position creates a ripple on the surface that emanates outward
-   from wherever the cursor is projected onto the ocean plane.
+   Mouse position creates a ripple emanating from the cursor on the ocean.
    ══════════════════════════════════════════════════════════════════════════ */
 function OceanScene({ color }: SceneProps) {
   const group  = useRef<THREE.Group>(null);
@@ -508,10 +606,9 @@ function OceanScene({ color }: SceneProps) {
     const t  = state.clock.elapsedTime;
     const mx = mouse.current.x;
     const my = mouse.current.y;
-    group.current.rotation.y += 0.05 * (mx * 0.3  - group.current.rotation.y);
-    group.current.rotation.x += 0.05 * (-0.35 - my * 0.12 - group.current.rotation.x);
+    group.current.rotation.y += 0.04 * (mx * 0.3  - group.current.rotation.y);
+    group.current.rotation.x += 0.04 * (-0.35 - my * 0.12 - group.current.rotation.x);
 
-    // Project mouse NDC to approximate world XY (ocean plane)
     const mwx = mx * 14;
     const mwz = -my * 8;
 
@@ -523,7 +620,6 @@ function OceanScene({ color }: SceneProps) {
       const y = Math.sin(x * 0.34 + t * 1.1) * 1.4
               + Math.sin(z * 0.28 + t * 0.85) * 0.95
               + Math.sin(d * 0.38 - t * 1.4) * 0.7;
-      // Mouse ripple
       const d2     = Math.sqrt((x - mwx) ** 2 + (z - mwz) ** 2);
       const ripple = Math.sin(d2 * 0.9 - t * 2.5) * 0.55 * Math.exp(-d2 / 11);
       pos.setY(i, y + ripple);
@@ -552,17 +648,22 @@ function OceanScene({ color }: SceneProps) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   8. BLOOD MOON — Central Sphere + Orbiting Asteroid Belt
-   Mouse distance from screen centre controls heartbeat speed:
-   cursor near centre = frantic fast pulse, edges = slow ominous throb.
+   8. BLOOD MOON — Central Sphere + Outer Corona + Solar Prominence Arcs
+                   + Orbiting Asteroid Belt
+   Inner wireframe sphere pulses like a heartbeat. An outer counter-rotating
+   corona sphere adds depth. 8 solar prominence arcs orbit the sphere surface.
+   Mouse proximity to centre controls heartbeat speed.
    ══════════════════════════════════════════════════════════════════════════ */
 function BloodMoonScene({ color }: SceneProps) {
-  const group   = useRef<THREE.Group>(null);
-  const moonRef = useRef<THREE.Mesh>(null);
-  const moonMat = useRef<THREE.MeshBasicMaterial>(null);
-  const geoRef  = useRef<THREE.BufferGeometry>(null);
-  const mouse   = useMouseNDC();
-  const COUNT   = 500;
+  const group          = useRef<THREE.Group>(null);
+  const moonRef        = useRef<THREE.Mesh>(null);
+  const moonMat        = useRef<THREE.MeshBasicMaterial>(null);
+  const outerSphereRef = useRef<THREE.Mesh>(null);
+  const geoRef         = useRef<THREE.BufferGeometry>(null);
+  const arcGeoRef      = useRef<THREE.BufferGeometry>(null);
+  const mouse          = useMouseNDC();
+  const COUNT          = 500;
+  const arcPositions   = useMemo(() => new Float32Array(8 * 20 * 3), []);
 
   const { posArr, radii, orbitSpeeds, heights } = useMemo(() => {
     const posArr      = new Float32Array(COUNT * 3);
@@ -596,12 +697,12 @@ function BloodMoonScene({ color }: SceneProps) {
     const t  = state.clock.elapsedTime;
     const mx = mouse.current.x;
     const my = mouse.current.y;
-    group.current.rotation.y += 0.05 * (mx * 0.35 - group.current.rotation.y);
-    group.current.rotation.x += 0.05 * (-my * 0.25 - group.current.rotation.x);
+    group.current.rotation.y += 0.04 * (mx * 0.35 - group.current.rotation.y);
+    group.current.rotation.x += 0.04 * (-my * 0.25 - group.current.rotation.x);
 
-    // Mouse proximity to centre → heartbeat speed
+    // Heartbeat speed driven by mouse proximity to centre
     const mouseR     = Math.sqrt(mx * mx + my * my);
-    const pulseSpeed = 1.2 + (1 - mouseR) * 1.8;
+    const pulseSpeed = 1.2 + (1 - mouseR) * 1.4;  // calmer max (2.6 not 3.0)
 
     if (moonRef.current && moonMat.current) {
       const pulse = Math.sin(t * pulseSpeed) * 0.14 + 1;
@@ -609,6 +710,13 @@ function BloodMoonScene({ color }: SceneProps) {
       moonMat.current.opacity = 0.5 + Math.sin(t * pulseSpeed) * 0.2;
     }
 
+    // Outer corona counter-rotates
+    if (outerSphereRef.current) {
+      outerSphereRef.current.rotation.y -= 0.003;
+      outerSphereRef.current.rotation.x -= 0.001;
+    }
+
+    // Asteroid belt orbit
     if (geoRef.current) {
       const pos = geoRef.current.attributes.position as THREE.BufferAttribute;
       for (let i = 0; i < COUNT; i++) {
@@ -622,10 +730,31 @@ function BloodMoonScene({ color }: SceneProps) {
       }
       pos.needsUpdate = true;
     }
+
+    // Solar prominence arcs (8 × 20 = 160 pts)
+    if (arcGeoRef.current) {
+      const arcPos = arcGeoRef.current.attributes.position as THREE.BufferAttribute;
+      for (let arc = 0; arc < 8; arc++) {
+        const angleBase = arc * (Math.PI / 4) + t * 0.06;
+        for (let p = 0; p < 20; p++) {
+          const u     = p / 19;
+          const rArc  = 2.8 + Math.sin(u * Math.PI) * 3.5;
+          const theta = angleBase + Math.sin(u * Math.PI) * 0.4;
+          arcPos.setXYZ(
+            arc * 20 + p,
+            Math.cos(theta) * rArc,
+            Math.sin(u * Math.PI) * 1.2,
+            Math.sin(theta) * rArc,
+          );
+        }
+      }
+      arcPos.needsUpdate = true;
+    }
   });
 
   return (
     <group ref={group}>
+      {/* Inner pulsing moon */}
       <mesh ref={moonRef}>
         <sphereGeometry args={[2.8, 32, 32]} />
         <meshBasicMaterial
@@ -638,6 +767,37 @@ function BloodMoonScene({ color }: SceneProps) {
           depthWrite={false}
         />
       </mesh>
+
+      {/* Outer counter-rotating corona sphere */}
+      <mesh ref={outerSphereRef}>
+        <sphereGeometry args={[4.5, 16, 16]} />
+        <meshBasicMaterial
+          color={color}
+          wireframe
+          transparent
+          opacity={0.18}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </mesh>
+
+      {/* Solar prominence arcs (160 pts, updated per frame) */}
+      <points>
+        <bufferGeometry ref={arcGeoRef}>
+          <bufferAttribute attach="attributes-position" args={[arcPositions, 3]} />
+        </bufferGeometry>
+        <pointsMaterial
+          size={0.12}
+          color={color}
+          transparent
+          opacity={0.65}
+          sizeAttenuation
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </points>
+
+      {/* Asteroid belt in a tilted disk */}
       <group rotation={[0.5, 0, 0]}>
         <points>
           <bufferGeometry ref={geoRef}>
@@ -660,7 +820,7 @@ function BloodMoonScene({ color }: SceneProps) {
 
 /* ══════════════════════════════════════════════════════════════════════════
    9. SOLAR GOLD — Spiral Galaxy
-   Mouse X controls galaxy rotation: left = reverse spin, right = faster.
+   Mouse X controls galaxy rotation direction and rate.
    ══════════════════════════════════════════════════════════════════════════ */
 function SolarGoldScene({ color }: SceneProps) {
   const group = useRef<THREE.Group>(null);
@@ -701,9 +861,8 @@ function SolarGoldScene({ color }: SceneProps) {
     if (!group.current) return;
     const mx = mouse.current.x;
     const my = mouse.current.y;
-    group.current.rotation.y += 0.05 * (mx * 0.35 - group.current.rotation.y);
-    group.current.rotation.x += 0.05 * (-0.22 - my * 0.1 - group.current.rotation.x);
-    // Mouse X controls galaxy spin direction and rate
+    group.current.rotation.y += 0.04 * (mx * 0.35 - group.current.rotation.y);
+    group.current.rotation.x += 0.04 * (-0.22 - my * 0.1 - group.current.rotation.x);
     group.current.rotation.y += 0.0035 + mx * 0.004;
   });
 
@@ -729,8 +888,7 @@ function SolarGoldScene({ color }: SceneProps) {
 
 /* ══════════════════════════════════════════════════════════════════════════
    10. ARCTIC — Snowfall + Hexagonal Snowflakes
-   Mouse X drifts snow like wind. Mouse Y controls fall speed:
-   top of screen = gentle drift, bottom = blizzard.
+   Mouse X = wind drift. Mouse Y controls snowfall speed.
    ══════════════════════════════════════════════════════════════════════════ */
 function ArcticScene({ color }: SceneProps) {
   const group     = useRef<THREE.Group>(null);
@@ -764,9 +922,7 @@ function ArcticScene({ color }: SceneProps) {
     if (!geoRef.current || !group.current) return;
     const mx = mouse.current.x;
     const my = mouse.current.y;
-    // Wind drift
     group.current.position.x += 0.03 * (mx * 2.8 - group.current.position.x);
-    // Mouse Y controls fall speed: top=gentle, bottom=blizzard
     const speedMult = 0.4 + (1 - my) * 1.3;
 
     const pos = geoRef.current.attributes.position as THREE.BufferAttribute;
@@ -824,6 +980,7 @@ function ArcticScene({ color }: SceneProps) {
 
 /* ══════════════════════════════════════════════════════════════════════════
    ROUTER — AbstractBackground (exported, consumed by background-canvas.tsx)
+   Includes a smooth fade-to-black transition between theme switches.
    ══════════════════════════════════════════════════════════════════════════ */
 const COLOR_MAP: Record<string, string> = {
   "dark":        "#00e5ff",
@@ -840,10 +997,50 @@ const COLOR_MAP: Record<string, string> = {
 
 export function AbstractBackground() {
   const { theme } = useTheme();
-  const color = COLOR_MAP[theme ?? "dark"] ?? "#00e5ff";
+
+  // renderedTheme is what's actually drawn — lags behind theme during transitions
+  const [renderedTheme, setRenderedTheme] = useState<string>(theme ?? "dark");
+
+  // Transition state (mutated imperatively in useFrame — no extra re-renders)
+  const transRef      = useRef<{ phase: "idle" | "out" | "in"; opacity: number }>({
+    phase: "idle",
+    opacity: 0,
+  });
+  const overlayMatRef = useRef<THREE.MeshBasicMaterial>(null);
+
+  // Detect when the real theme diverges from the rendered one → kick off fade-out
+  useEffect(() => {
+    if (!theme || theme === renderedTheme) return;
+    if (transRef.current.phase === "idle") {
+      transRef.current.phase = "out";
+    }
+  }, [theme, renderedTheme]);
+
+  // Animate the overlay: fade out → swap scene → fade in
+  useFrame((_state, delta) => {
+    const tr  = transRef.current;
+    const mat = overlayMatRef.current;
+    if (!mat || tr.phase === "idle") return;
+
+    if (tr.phase === "out") {
+      tr.opacity = Math.min(1, tr.opacity + delta * 3);  // ~0.33 s to full black
+      mat.opacity = tr.opacity;
+      if (tr.opacity >= 1) {
+        setRenderedTheme(theme ?? "dark");  // swap scene while fully hidden
+        tr.phase = "in";
+      }
+    } else if (tr.phase === "in") {
+      tr.opacity = Math.max(0, tr.opacity - delta * 2);  // ~0.5 s to clear
+      mat.opacity = tr.opacity;
+      if (tr.opacity <= 0) {
+        tr.phase = "idle";
+      }
+    }
+  });
 
   const renderScene = () => {
-    switch (theme) {
+    const color = COLOR_MAP[renderedTheme] ?? "#00e5ff";
+    switch (renderedTheme) {
       case "neon-pink":   return <NeonPinkScene   color={color} />;
       case "retro-80s":  return <Retro80sScene   color={color} />;
       case "matrix":     return <MatrixScene     color={color} />;
@@ -862,6 +1059,18 @@ export function AbstractBackground() {
     <group>
       <ambientLight intensity={0.2} />
       {renderScene()}
+      {/* Full-screen black overlay for smooth theme transitions.
+          NO AdditiveBlending — black must actually occlude the scene. */}
+      <mesh position={[0, 0, 15]}>
+        <planeGeometry args={[80, 50]} />
+        <meshBasicMaterial
+          ref={overlayMatRef}
+          color="#000000"
+          transparent
+          opacity={0}
+          depthWrite={false}
+        />
+      </mesh>
     </group>
   );
 }
