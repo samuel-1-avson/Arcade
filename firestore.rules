@@ -303,15 +303,36 @@ service cloud.firestore {
     // ============================================
     
     match /parties/{partyId} {
-      allow read: if isSignedIn() && 
-        resource.data.memberIds.hasAny([request.auth.uid]);
+      // Any signed-in user can read — required so a user can query by code to join.
+      // Party codes are shared manually between friends so this is acceptable.
+      allow read: if isSignedIn();
+
       allow create: if isSignedIn()
         && request.resource.data.leaderId == request.auth.uid;
+
       allow update: if isSignedIn() && (
-        resource.data.leaderId == request.auth.uid ||
+        // Party leader can update anything
+        resource.data.leaderId == request.auth.uid
+        ||
+        // Existing members can update (ready status, etc.)
         resource.data.memberIds.hasAny([request.auth.uid])
+        ||
+        // A non-member may join when the party is still open:
+        //  · party must be in 'waiting' status
+        //  · party must have fewer than 8 members
+        //  · caller must not already be in memberIds
+        //  · new memberIds must be a strict superset (no removals allowed)
+        //  · new memberIds must include the caller
+        (
+          resource.data.status == 'waiting'
+          && resource.data.members.size() < 8
+          && !resource.data.memberIds.hasAny([request.auth.uid])
+          && request.resource.data.memberIds.hasAll(resource.data.memberIds)
+          && request.resource.data.memberIds.hasAny([request.auth.uid])
+        )
       );
-      allow delete: if isSignedIn() && 
+
+      allow delete: if isSignedIn() &&
         resource.data.leaderId == request.auth.uid;
     }
     
