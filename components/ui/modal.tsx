@@ -45,7 +45,7 @@ export function Modal({
   // Generate unique IDs for ARIA attributes
   const [titleId, setTitleId] = React.useState<string>('');
   const [descriptionId, setDescriptionId] = React.useState<string>('');
-  
+
   React.useEffect(() => {
     setTitleId(generateId('modal-title'));
     setDescriptionId(generateId('modal-desc'));
@@ -53,7 +53,7 @@ export function Modal({
 
   // Focus trap
   const focusTrapRef = useFocusTrap(isOpen);
-  
+
   // Store previous active element for focus restoration
   const previousActiveElement = React.useRef<HTMLElement | null>(null);
 
@@ -62,30 +62,30 @@ export function Modal({
     if (isOpen) {
       // Store currently focused element
       previousActiveElement.current = document.activeElement as HTMLElement;
-      
+
       // Prevent body scroll
       const scrollY = window.scrollY;
       document.body.style.position = 'fixed';
       document.body.style.top = `-${scrollY}px`;
       document.body.style.width = '100%';
-      
+
       const handleEsc = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
           onClose();
         }
       };
-      
+
       document.addEventListener('keydown', handleEsc);
-      
+
       return () => {
         document.removeEventListener('keydown', handleEsc);
-        
+
         // Restore body scroll
         document.body.style.position = '';
         document.body.style.top = '';
         document.body.style.width = '';
         window.scrollTo(0, scrollY);
-        
+
         // Restore focus
         previousActiveElement.current?.focus();
       };
@@ -107,83 +107,82 @@ export function Modal({
   return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <>
-          {/* Backdrop */}
+        <motion.div
+          key="backdrop"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50"
+          onClick={handleBackdropClick}
+          aria-hidden="true"
+        />
+      )}
+      {isOpen && (
+        <motion.div
+          key="modal-wrapper"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
+          onClick={handleBackdropClick}
+        >
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            ref={focusTrapRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={ariaLabel}
+            aria-labelledby={modalLabelId}
+            aria-describedby={modalDescId}
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50"
-            onClick={handleBackdropClick}
-            aria-hidden="true"
-          />
-          
-          {/* Modal */}
-          <div 
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
-            onClick={handleBackdropClick}
+            className={cn(
+              'relative bg-surface border border-white/[0.08] w-full pointer-events-auto',
+              'shadow-2xl outline-none focus:ring-2 focus:ring-accent/50',
+              sizeClasses[size],
+              className
+            )}
+            onClick={(e) => e.stopPropagation()}
+            tabIndex={-1}
           >
-            <motion.div
-              ref={focusTrapRef}
-              role="dialog"
-              aria-modal="true"
-              aria-label={ariaLabel}
-              aria-labelledby={modalLabelId}
-              aria-describedby={modalDescId}
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ duration: 0.2 }}
-              className={cn(
-                'relative bg-surface border border-white/[0.08] w-full pointer-events-auto',
-                'shadow-2xl outline-none focus:ring-2 focus:ring-accent/50',
-                sizeClasses[size],
-                className
-              )}
-              onClick={(e) => e.stopPropagation()}
-              tabIndex={-1}
-            >
-              {/* Accent line */}
-              <div className="absolute top-0 left-0 right-0 h-0.5 bg-accent" aria-hidden="true" />
-              
-              {/* Header */}
-              {(title || showCloseButton) && (
-                <div className="flex items-center justify-between p-4 border-b border-white/[0.05]">
-                  <div>
-                    {title && (
-                      <h2 
-                        id={titleId}
-                        className="font-display text-sm font-bold uppercase tracking-wider text-primary"
-                      >
-                        {title}
-                      </h2>
-                    )}
-                    {description && (
-                      <p id={descriptionId} className="text-xs text-muted-foreground mt-1">
-                        {description}
-                      </p>
-                    )}
-                  </div>
-                  {showCloseButton && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={onClose}
-                      className="h-8 w-8"
-                      aria-label="Close modal"
+            {/* Accent line */}
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-accent" aria-hidden="true" />
+
+            {/* Header */}
+            {(title || showCloseButton) && (
+              <div className="flex items-center justify-between p-4 border-b border-white/[0.05]">
+                <div>
+                  {title && (
+                    <h2
+                      id={titleId}
+                      className="font-display text-sm font-bold uppercase tracking-wider text-primary"
                     >
-                      <X className="h-4 w-4" aria-hidden="true" />
-                    </Button>
+                      {title}
+                    </h2>
+                  )}
+                  {description && (
+                    <p id={descriptionId} className="text-xs text-muted-foreground mt-1">
+                      {description}
+                    </p>
                   )}
                 </div>
-              )}
-              
-              {/* Content */}
-              <div className="p-4">{children}</div>
-            </motion.div>
-          </div>
-        </>
+                {showCloseButton && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onClose}
+                    className="h-8 w-8"
+                    aria-label="Close modal"
+                  >
+                    <X className="h-4 w-4" aria-hidden="true" />
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {/* Content */}
+            <div className="p-4">{children}</div>
+          </motion.div>
+        </motion.div>
       )}
     </AnimatePresence>,
     document.body
@@ -247,7 +246,7 @@ export function AlertDialog({
         <Button variant="ghost" onClick={onClose}>
           {cancelLabel}
         </Button>
-        <Button 
+        <Button
           variant={variant === 'danger' ? 'danger' : 'default'}
           onClick={handleConfirm}
           className={variantStyles[variant]}
