@@ -6,19 +6,19 @@ import { useEffect, useRef, useCallback } from 'react';
 export function useFocusTrap(isActive: boolean) {
   const containerRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
+  const wasActive = useRef(false);
 
   useEffect(() => {
     if (isActive) {
       // Store the currently focused element
       previousActiveElement.current = document.activeElement as HTMLElement;
 
-      // Focus the first focusable element in the container
-      const container = containerRef.current;
-      if (container) {
-        const focusableElements = getFocusableElements(container);
-        if (focusableElements.length > 0) {
-          // Only focus the first element if focus isn't already inside the container
-          if (!container.contains(document.activeElement)) {
+      if (!wasActive.current) {
+        // Focus the first focusable element in the container
+        const container = containerRef.current;
+        if (container) {
+          const focusableElements = getFocusableElements(container);
+          if (focusableElements.length > 0) {
             focusableElements[0].focus();
           }
         }
@@ -52,7 +52,12 @@ export function useFocusTrap(isActive: boolean) {
         document.removeEventListener('keydown', handleKeyDown);
         // Restore focus when trap is deactivated
         previousActiveElement.current?.focus();
+        wasActive.current = false;
       };
+    }
+
+    if (isActive) {
+      wasActive.current = true;
     }
   }, [isActive]);
 
