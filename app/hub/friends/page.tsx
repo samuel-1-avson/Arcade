@@ -2,14 +2,14 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  Users, 
-  UserPlus, 
-  Search, 
-  MessageSquare, 
-  Gamepad2, 
-  Circle, 
-  X, 
+import {
+  Users,
+  UserPlus,
+  Search,
+  MessageSquare,
+  Gamepad2,
+  Circle,
+  X,
   Check,
   BarChart3,
   Send,
@@ -29,10 +29,10 @@ export default function FriendsPage() {
   const router = useRouter();
   const [friends, setFriends] = useState<Friend[]>([]);
   const [requests, setRequests] = useState<FriendRequest[]>([]);
-  const [onlineUsers, setOnlineUsers] = useState<{userId: string; displayName: string; photoURL?: string; currentGame?: string}[]>([]);
+  const [onlineUsers, setOnlineUsers] = useState<{ userId: string; displayName: string; photoURL?: string; currentGame?: string }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<{id: string; displayName: string; photoURL?: string; level: number}[]>([]);
+  const [searchResults, setSearchResults] = useState<{ id: string; displayName: string; photoURL?: string; level: number }[]>([]);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'friends' | 'online' | 'requests'>('friends');
 
@@ -47,7 +47,7 @@ export default function FriendsPage() {
 
   const loadData = useCallback(async () => {
     if (!user?.id) return;
-    
+
     setIsLoading(true);
     try {
       const [friendsData, requestsData, onlineData, convData] = await Promise.all([
@@ -56,11 +56,11 @@ export default function FriendsPage() {
         friendsService.getOnlineUsers(),
         messagesService.getConversations(user.id),
       ]);
-      
+
       setFriends(friendsData);
       setRequests(requestsData);
       setConversations(convData);
-      
+
       // Filter out current user and friends from online users
       const friendIds = new Set(friendsData.map(f => f.id));
       setOnlineUsers(onlineData.filter(u => u.userId !== user.id && !friendIds.has(u.userId)));
@@ -73,24 +73,24 @@ export default function FriendsPage() {
 
   useEffect(() => {
     loadData();
-    
+
     // Subscribe to friends updates
     if (user?.id) {
       const unsubscribeFriends = friendsService.subscribeToFriends(user.id, (updatedFriends) => {
         setFriends(updatedFriends);
       });
-      
+
       // Subscribe to online users
       const unsubscribeOnline = friendsService.subscribeToOnlineUsers((onlineUsers) => {
         const friendIds = new Set(friends.map(f => f.id));
         setOnlineUsers(onlineUsers.filter(u => u.userId !== user.id && !friendIds.has(u.userId)));
       });
-      
+
       // Subscribe to conversations
       const unsubscribeConv = messagesService.subscribeToConversations(user.id, (convs) => {
         setConversations(convs);
       });
-      
+
       return () => {
         unsubscribeFriends();
         unsubscribeOnline();
@@ -102,14 +102,14 @@ export default function FriendsPage() {
 
   const handleSearch = async () => {
     if (!user?.id || searchQuery.length < 3) return;
-    
+
     const results = await friendsService.searchUsers(searchQuery, user.id);
     setSearchResults(results);
   };
 
   const handleSendRequest = async (targetUserId: string) => {
     if (!user?.id) return;
-    
+
     const result = await friendsService.sendFriendRequest(user.id, targetUserId);
     if (result.success) {
       setSearchResults(prev => prev.filter(u => u.id !== targetUserId));
@@ -121,7 +121,7 @@ export default function FriendsPage() {
 
   const handleAcceptRequest = async (requestId: string) => {
     if (!user?.id) return;
-    
+
     const success = await friendsService.acceptFriendRequest(requestId, user.id);
     if (success) {
       loadData();
@@ -130,7 +130,7 @@ export default function FriendsPage() {
 
   const handleRejectRequest = async (requestId: string) => {
     if (!user?.id) return;
-    
+
     const success = await friendsService.rejectFriendRequest(requestId, user.id);
     if (success) {
       loadData();
@@ -139,7 +139,7 @@ export default function FriendsPage() {
 
   const handleRemoveFriend = async (friendshipId: string) => {
     if (!confirm('Remove this friend?')) return;
-    
+
     const success = await friendsService.removeFriend(friendshipId);
     if (success) {
       loadData();
@@ -152,11 +152,11 @@ export default function FriendsPage() {
 
   const handleOpenMessages = async (friend: Friend) => {
     if (!user?.id) return;
-    
+
     // Get or create conversation
     const conversationId = await messagesService.getOrCreateConversation(user.id, friend.id);
     if (!conversationId) return;
-    
+
     // Find or create conversation object
     const existingConv = conversations.find(c => c.id === conversationId);
     const conv: Conversation = existingConv || {
@@ -168,17 +168,17 @@ export default function FriendsPage() {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    
+
     setSelectedConversation(conv);
     setShowMessageModal(true);
-    
+
     // Load messages
     const msgs = await messagesService.getMessages(conversationId);
     setMessages(msgs);
-    
+
     // Mark as read
     await messagesService.markAsRead(conversationId, user.id);
-    
+
     // Subscribe to new messages
     if (messageUnsubscribe) messageUnsubscribe();
     const unsub = messagesService.subscribeToMessages(conversationId, (newMessages) => {
@@ -189,7 +189,7 @@ export default function FriendsPage() {
 
   const handleSendMessage = async () => {
     if (!user?.id || !selectedConversation || !messageText.trim()) return;
-    
+
     setIsSendingMessage(true);
     try {
       const success = await messagesService.sendMessage(
@@ -197,7 +197,7 @@ export default function FriendsPage() {
         user.id,
         messageText.trim()
       );
-      
+
       if (success) {
         setMessageText('');
       }
@@ -207,7 +207,7 @@ export default function FriendsPage() {
   };
 
   const getUnreadCount = (friendId: string) => {
-    const conv = conversations.find(c => 
+    const conv = conversations.find(c =>
       c.participants.includes(friendId) && c.participants.includes(user?.id || '')
     );
     return conv?.unreadCount?.[user?.id || ''] || 0;
@@ -338,22 +338,22 @@ export default function FriendsPage() {
                             {getUnreadCount(friend.id)}
                           </span>
                         )}
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="secondary"
                           onClick={() => handleOpenMessages(friend)}
                         >
                           <MessageSquare className="w-4 h-4" />
                         </Button>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="ghost"
                           onClick={() => handleViewProfile(friend.id)}
                         >
                           <BarChart3 className="w-4 h-4" />
                         </Button>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="ghost"
                           onClick={() => handleRemoveFriend(friend.friendshipId)}
                         >
@@ -402,16 +402,16 @@ export default function FriendsPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="ghost"
                           onClick={() => handleViewProfile(onlineUser.userId)}
                         >
                           <BarChart3 className="w-4 h-4 mr-1" />
                           View
                         </Button>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           onClick={() => handleSendRequest(onlineUser.userId)}
                         >
                           <UserPlus className="w-4 h-4 mr-1" />
@@ -453,15 +453,15 @@ export default function FriendsPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           onClick={() => handleAcceptRequest(request.id)}
                         >
                           <Check className="w-4 h-4 mr-1" />
                           Accept
                         </Button>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="ghost"
                           onClick={() => handleRejectRequest(request.id)}
                         >
@@ -521,8 +521,8 @@ export default function FriendsPage() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     variant="ghost"
                     onClick={() => handleViewProfile(result.id)}
                   >
@@ -544,7 +544,7 @@ export default function FriendsPage() {
       {/* Message Modal */}
       <Modal
         isOpen={showMessageModal}
-        onClose={() => {
+        onClose={useCallback(() => {
           setShowMessageModal(false);
           setSelectedConversation(null);
           setMessages([]);
@@ -552,7 +552,7 @@ export default function FriendsPage() {
             messageUnsubscribe();
             setMessageUnsubscribe(null);
           }
-        }}
+        }, [messageUnsubscribe])}
         title={selectedConversation?.participantNames.find(n => n !== user?.displayName) || 'Messages'}
         size="md"
       >
@@ -594,7 +594,7 @@ export default function FriendsPage() {
               onChange={(e) => setMessageText(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
             />
-            <Button 
+            <Button
               onClick={handleSendMessage}
               disabled={isSendingMessage || !messageText.trim()}
             >

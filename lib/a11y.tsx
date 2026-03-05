@@ -19,7 +19,10 @@ export function useFocusTrap(isActive: boolean) {
         if (container) {
           const focusableElements = getFocusableElements(container);
           if (focusableElements.length > 0) {
-            focusableElements[0].focus();
+            // Only focus the first element if focus isn't already inside the container
+            if (!container.contains(document.activeElement)) {
+              focusableElements[0].focus();
+            }
           }
         }
       }

@@ -57,39 +57,43 @@ export function Modal({
   // Store previous active element for focus restoration
   const previousActiveElement = React.useRef<HTMLElement | null>(null);
 
-  // Close on ESC key and handle focus
+  // Scroll lock and focus restoration
   React.useEffect(() => {
-    if (isOpen) {
-      // Store currently focused element
-      previousActiveElement.current = document.activeElement as HTMLElement;
+    if (!isOpen) return;
 
-      // Prevent body scroll
-      const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
+    // Store currently focused element
+    previousActiveElement.current = document.activeElement as HTMLElement;
 
-      const handleEsc = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
-          onClose();
-        }
-      };
+    // Prevent body scroll
+    const scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
 
-      document.addEventListener('keydown', handleEsc);
+    return () => {
+      // Restore body scroll
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      window.scrollTo(0, scrollY);
 
-      return () => {
-        document.removeEventListener('keydown', handleEsc);
+      // Restore focus
+      previousActiveElement.current?.focus();
+    };
+  }, [isOpen]);
 
-        // Restore body scroll
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        window.scrollTo(0, scrollY);
+  // Keyboard handlers
+  React.useEffect(() => {
+    if (!isOpen) return;
 
-        // Restore focus
-        previousActiveElement.current?.focus();
-      };
-    }
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
   }, [isOpen, onClose]);
 
   // Handle backdrop click
