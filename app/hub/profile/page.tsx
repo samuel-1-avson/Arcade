@@ -8,7 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { useAuth } from '@/hooks/useAuth';
 import { userStatsService, UserStats } from '@/lib/firebase/services/user-stats';
-import { achievementsService } from '@/lib/firebase/services/achievements';
+import { achievementsService, Achievement, UserAchievement } from '@/lib/firebase/services/achievements';
+import { AchievementsGallery } from '@/components/profile/achievements-gallery';
+import { AnalyticsDashboard } from '@/components/profile/analytics-dashboard';
 
 // Avatar icons for selection
 const AVATAR_ICONS = [
@@ -31,6 +33,8 @@ export default function ProfilePage() {
   const [selectedAvatar, setSelectedAvatar] = useState(user?.avatar || 'User');
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [achievementsCount, setAchievementsCount] = useState(0);
+  const [allAchievements, setAllAchievements] = useState<Achievement[]>([]);
+  const [userAchievements, setUserAchievements] = useState<UserAchievement[]>([]);
   const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
@@ -46,9 +50,12 @@ export default function ProfilePage() {
         const stats = await userStatsService.getUserStats(user.id);
         setUserStats(stats);
 
-        // Load achievements count
-        const achievements = await achievementsService.getUserAchievements(user.id);
-        setAchievementsCount(achievements.filter(a => a.unlocked).length);
+        // Load achievements
+        const userAchs = await achievementsService.getUserAchievements(user.id);
+        const allAchs = await achievementsService.getAllAchievements();
+        setUserAchievements(userAchs);
+        setAllAchievements(allAchs);
+        setAchievementsCount(userAchs.filter(a => a.unlocked).length);
       } catch (error) {
         // Error loading user stats - handled by UI
       } finally {
@@ -144,8 +151,8 @@ export default function ProfilePage() {
           <div className="relative">
             <div className="w-20 h-20 bg-surface border-2 border-accent flex items-center justify-center overflow-hidden">
               {user?.avatar?.startsWith('http') || user?.avatar?.startsWith('//') ? (
-                <img 
-                  src={user.avatar} 
+                <img
+                  src={user.avatar}
                   alt={user.displayName || 'User'}
                   className="w-full h-full object-cover"
                   onError={(e) => {
@@ -237,18 +244,17 @@ export default function ProfilePage() {
         />
       </div>
 
-      {/* Recent Activity */}
-      <section className="bg-elevated border border-white/[0.06]">
-        <div className="px-4 py-3 border-b border-white/[0.05]">
-          <h2 className="font-display text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            Recent Activity
-          </h2>
-        </div>
-        <div className="p-8 text-center text-muted-foreground">
-          <p className="text-sm">No recent activity</p>
-          <p className="text-xs mt-1">Play some games to see your history!</p>
-        </div>
-      </section>
+      {/* Achievement Gallery */}
+      <AchievementsGallery
+        achievements={allAchievements}
+        userProgress={userAchievements}
+        isLoading={statsLoading}
+      />
+
+      {/* Analytics Dashboard */}
+      {user?.id && (
+        <AnalyticsDashboard userId={user.id} />
+      )}
 
       {/* Edit Profile Modal */}
       <Modal

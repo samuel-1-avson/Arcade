@@ -73,12 +73,12 @@ exports.onScoreSubmit = functions.firestore
                 duration: scoreData.duration,
                 checksum: scoreData.checksum
             });
-            
+
             if (!validationResult.valid) {
                 logger.logScoreRejected(
-                    scoreData.userId, 
-                    scoreData.gameId, 
-                    scoreData.score, 
+                    scoreData.userId,
+                    scoreData.gameId,
+                    scoreData.score,
                     validationResult.reason,
                     { severity: validationResult.severity, details: validationResult.details }
                 );
@@ -99,7 +99,7 @@ exports.onScoreSubmit = functions.firestore
                     invalidReason: validationResult.reason,
                     processedAt: admin.firestore.FieldValue.serverTimestamp()
                 });
-                
+
                 return null;
             }
 
@@ -124,13 +124,13 @@ exports.onScoreSubmit = functions.firestore
             });
 
             logger.logScoreSubmission(
-                scoreData.userId, 
-                scoreData.gameId, 
-                scoreData.score, 
+                scoreData.userId,
+                scoreData.gameId,
+                scoreData.score,
                 'verified'
             );
             logger.endTimer(startTime, 'onScoreSubmit', { scoreId });
-            
+
             return null;
 
         } catch (error) {
@@ -143,38 +143,14 @@ exports.onScoreSubmit = functions.firestore
         }
     });
 
-/**
- * Validate score for anti-cheat
- */
-function validateScore(scoreData) {
-    // Required fields
-    if (!scoreData.userId || !scoreData.gameId || scoreData.score === undefined) {
-        return { valid: false, reason: 'Missing required fields' };
-    }
 
-    // Score must be a positive number
-    if (typeof scoreData.score !== 'number' || scoreData.score < 0) {
-        return { valid: false, reason: 'Invalid score value' };
-    }
-
-    // Game-specific validation from shared config (single source of truth)
-    const gameConfig = require('../shared/gameConfig.json');
-    const config = gameConfig[scoreData.gameId];
-    const maxScore = config ? config.maxScore : 1000000;
-    
-    if (scoreData.score > maxScore) {
-        return { valid: false, reason: 'Score exceeds maximum for game' };
-    }
-
-    return { valid: true };
-}
 
 /**
  * Update live leaderboard in RTDB
  */
 async function updateLiveLeaderboard(gameId, scoreId, scoreData) {
     const leaderboardRef = rtdb.ref(`liveLeaderboards/${gameId}/${scoreId}`);
-    
+
     await leaderboardRef.set({
         userId: scoreData.userId,
         userName: scoreData.userName || 'Anonymous',
@@ -187,9 +163,9 @@ async function updateLiveLeaderboard(gameId, scoreId, scoreData) {
         .orderByChild('score')
         .limitToFirst(1)
         .once('value');
-    
+
     const leaderboardSize = await rtdb.ref(`liveLeaderboards/${gameId}`).once('value');
-    
+
     if (leaderboardSize.numChildren() > 100) {
         snapshot.forEach((child) => {
             child.ref.remove();
@@ -212,7 +188,7 @@ async function checkScoreAchievements(scoreData) {
         .where('userId', '==', userId)
         .limit(2)
         .get();
-    
+
     if (userScores.size === 1) {
         achievements.push('first_score');
     }
@@ -228,7 +204,7 @@ async function checkScoreAchievements(scoreData) {
     for (const achievementId of achievements) {
         const achRef = db.collection('users').doc(userId)
             .collection('achievements').doc(`global_${achievementId}`);
-        
+
         const existing = await achRef.get();
         if (!existing.exists) {
             await achRef.set({
@@ -237,7 +213,7 @@ async function checkScoreAchievements(scoreData) {
                 unlockedAt: admin.firestore.FieldValue.serverTimestamp(),
                 triggeredBy: { gameId, score }
             });
-            
+
             // Send notification
             await sendNotification(userId, {
                 type: 'achievement',
@@ -259,8 +235,8 @@ exports.aggregateLeaderboards = functions.pubsub
     .onRun(async (context) => {
         logger.info(LogCategory.SCORE, 'Running leaderboard aggregation');
 
-        const games = ['snake', '2048', 'breakout', 'tetris', 'minesweeper', 
-                       'pacman', 'asteroids', 'tower-defense', 'rhythm', 'roguelike', 'toonshooter'];
+        const games = ['snake', '2048', 'breakout', 'tetris', 'minesweeper',
+            'pacman', 'asteroids', 'tower-defense', 'rhythm', 'roguelike', 'toonshooter'];
 
         for (const gameId of games) {
             try {
@@ -324,7 +300,7 @@ async function aggregateGameLeaderboard(gameId) {
 async function updateGlobalStats() {
     const usersCount = await db.collection('users').count().get();
     const scoresCount = await db.collection('scores').where('verified', '==', true).count().get();
-    
+
     await db.collection('stats').doc('global').set({
         totalUsers: usersCount.data().count,
         totalScores: scoresCount.data().count,
@@ -341,7 +317,7 @@ exports.processAnalytics = functions.firestore
     .document('analytics/{eventId}')
     .onCreate(async (snap, context) => {
         const eventData = snap.data();
-        
+
         logger.info(LogCategory.ANALYTICS, `Processing analytics event: ${eventData.type}`);
 
         try {
@@ -419,7 +395,7 @@ exports.dailyAnalyticsRollup = functions.pubsub
         try {
             // Get daily counters
             const countersDoc = await db.collection('analytics_counters').doc(dateStr).get();
-            
+
             if (countersDoc.exists) {
                 // Store in historical collection
                 await db.collection('analytics_daily').doc(dateStr).set({
@@ -561,7 +537,7 @@ exports.sendTestNotification = functions.https.onCall(async (data, context) => {
     }
 
     const userId = context.auth.uid;
-    
+
     await sendNotification(userId, {
         type: 'test',
         title: data.title || 'Test Notification',
@@ -578,7 +554,7 @@ exports.sendTestNotification = functions.https.onCall(async (data, context) => {
  * Start scheduled tournaments
  */
 exports.startScheduledTournaments = functions.pubsub
-    .schedule('every 1 minutes')
+    .schedule('every 5 minutes')
     .onRun(async (context) => {
         const now = admin.firestore.Timestamp.now();
 
@@ -625,7 +601,7 @@ exports.startScheduledTournaments = functions.pubsub
  */
 async function finalizeTournament(tournamentDoc) {
     const tournament = tournamentDoc.data();
-    
+
     // Get all scores for this tournament
     const scores = await db.collection('tournament_scores')
         .where('tournamentId', '==', tournamentDoc.id)

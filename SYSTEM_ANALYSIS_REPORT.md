@@ -1,388 +1,539 @@
-# Arcade Gaming Hub - System Analysis Report
+# 🕹️ Arcade Gaming Hub — Full System Analysis Report
 
-**Date:** February 21, 2026  
-**Analyst:** AI Code Assistant  
-**Project:** Arcade Hub Next (Next.js + TypeScript Gaming Platform)
-
----
-
-## 📊 Executive Summary
-
-The Arcade Gaming Hub is a modern, feature-rich web-based gaming platform built with Next.js 14, TypeScript, and Firebase. It features a retro arcade aesthetic with a comprehensive social gaming experience including leaderboards, multiplayer parties, friends system, tournaments, and achievements.
-
-### Overall Rating: ⭐ 8.2/10
-
-| Category | Score | Notes |
-|----------|-------|-------|
-| Architecture | 8.5/10 | Clean separation, good patterns |
-| Code Quality | 8/10 | Well-structured, minor inconsistencies |
-| UI/UX Design | 9/10 | Excellent retro aesthetic, responsive |
-| Feature Set | 8.5/10 | Comprehensive social features |
-| Performance | 7.5/10 | Good but room for optimization |
-| Security | 7.5/10 | Good Firestore rules, some gaps |
-| Documentation | 8/10 | Good README, inline comments |
+> **Date:** March 5, 2026  
+> **Project:** `arcade-hub-next` v1.0.0  
+> **Deployment:** Vercel (Frontend) + Firebase (Backend)
 
 ---
 
-## 🏗️ System Architecture Overview
+## Table of Contents
+
+1. [Executive Summary](#1-executive-summary)
+2. [System Rating](#2-system-rating)
+3. [System Architecture](#3-system-architecture)
+4. [Design & Structure](#4-design--structure)
+5. [System Workflow](#5-system-workflow)
+6. [Database System](#6-database-system)
+7. [Identified Issues](#7-identified-issues)
+8. [Pros & Cons](#8-pros--cons)
+9. [Recommendations](#9-recommendations)
+10. [Feature Suggestions](#10-feature-suggestions)
+
+---
+
+## 1. Executive Summary
+
+**Arcade Gaming Hub** is a full-stack multiplayer arcade gaming platform built with **Next.js 14** (App Router) and **Firebase** (Firestore, Auth, RTDB, Cloud Functions). It offers classic browser games (Snake, Pac-Man, Tetris, Breakout, Asteroids, Minesweeper, 2048, Tic-Tac-Toe) wrapped in a social hub with leaderboards, achievements, tournaments, parties, friends, messaging, and an in-game shop.
+
+The system uses a modern tech stack — TypeScript, Zustand for state management, Framer Motion for animations, TailwindCSS for styling, React Three Fiber for 3D elements, and Vitest for testing. The backend leverages Firebase Cloud Functions for server-side score validation, anti-cheat, rate limiting, analytics pipelines, and scheduled tournament management.
+
+---
+
+## 2. System Rating
+
+| Category                  | Rating (out of 10) | Notes |
+|---------------------------|:-------------------:|-------|
+| **Architecture**          | 7.5  | Well-structured App Router pattern with clear separation of concerns |
+| **Code Quality**          | 7.0  | TypeScript used well; some areas mix JS/TS, a few console.logs remain |
+| **Security**              | 8.0  | Comprehensive Firestore rules, anti-cheat, rate limiting, score validation |
+| **Scalability**           | 6.5  | Firebase-dependent; Cloud Functions are monolithic; no caching layer |
+| **UI/UX Design**          | 8.0  | Premium dark theme, Framer Motion animations, responsive layouts |
+| **Testing**               | 5.0  | Test infrastructure exists (Vitest) but test coverage appears limited |
+| **Performance**           | 6.5  | Dynamic imports used; but unoptimized images, large bundle with Three.js |
+| **Database Design**       | 7.5  | Well-indexed Firestore collections; denormalization applied correctly |
+| **Error Handling**        | 8.0  | Centralized error handling with severity levels, retry logic, safe wrappers |
+| **Documentation**         | 4.0  | README exists but `/docs` is empty; inline comments are minimal |
+| **DevOps / CI/CD**        | 5.5  | Deploy scripts exist; no CI/CD pipeline or automated testing on push |
+| **Overall**               | **6.6** | Solid foundation with clear room for improvement |
+
+---
+
+## 3. System Architecture
+
+### High-Level Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                 FRONTEND (Next.js 14 on Vercel)                    │
+│                                                                     │
+│  ┌──────────────┐  ┌──────────────────┐  ┌───────────────────────┐  │
+│  │  App Router   │  │ React Components │  │ Game Engine (JS)      │  │
+│  │  Pages &      │─▶│                  │  │ 15 engine modules     │  │
+│  │  Layouts      │  │                  │  │ (Audio, Particles,    │  │
+│  └──────────────┘  └───────┬──────────┘  │  Input, Sync, etc.)   │  │
+│                            │              └───────────────────────┘  │
+│                    ┌───────▼──────────┐                              │
+│                    │  Zustand Stores  │                              │
+│                    │  auth | game     │                              │
+│                    │  leaderboard     │                              │
+│                    │  party | settings│                              │
+│                    └───────┬──────────┘                              │
+│                            │                                         │
+│                    ┌───────▼──────────┐                              │
+│                    │  Custom Hooks    │                              │
+│                    │  useAuth         │                              │
+│                    │  useGames        │                              │
+│                    │  usePresence     │                              │
+│                    │  useTheme        │                              │
+│                    └───────┬──────────┘                              │
+└────────────────────────────┼────────────────────────────────────────┘
+                             │ API Calls
+                             ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                    FIREBASE SERVICES LAYER                         │
+│                                                                     │
+│  Auth ─── Leaderboard ─── Achievements ─── Friends ─── Shop       │
+│  Party ── Tournaments ─── Messages ─────── Search ── Challenges   │
+│  User Stats ─── Public Profiles                                    │
+└──────────┬─────────────────────┬───────────────────┬───────────────┘
+           │                     │                   │
+           ▼                     ▼                   ▼
+┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
+│  Firebase Auth   │  │ Cloud Firestore  │  │ Realtime Database│
+│  Google +        │  │ 15+ collections  │  │ Presence         │
+│  Anonymous       │  │                  │  │ Notifications    │
+│                  │  │       │          │  │ Live Leaderboards│
+└──────────────────┘  └───────┼──────────┘  └──────────────────┘
+                              │ Triggers             ▲
+                              ▼                      │
+                    ┌──────────────────┐              │
+                    │ Cloud Functions  │──────────────┘
+                    │ Score Validation │
+                    │ Anti-Cheat       │
+                    │ Analytics        │
+                    │ Tournaments      │
+                    └──────────────────┘
+```
 
 ### Technology Stack
 
-| Layer | Technology |
-|-------|------------|
-| Framework | Next.js 14 (App Router) |
-| Language | TypeScript 5.3 |
-| Styling | Tailwind CSS 3.4 |
-| State Management | Zustand 4.5 |
-| Backend | Firebase (Auth, Firestore) |
-| Data Fetching | TanStack Query (React Query) |
-| Animation | Framer Motion |
-| Icons | Lucide React |
+| Layer         | Technology                              | Version |
+|---------------|------------------------------------------|---------|
+| Framework     | Next.js (App Router)                     | 14.1.0  |
+| Language      | TypeScript                               | 5.3+    |
+| Styling       | TailwindCSS + CSS Variables              | 3.4.0   |
+| Animations    | Framer Motion                            | 11.0.0  |
+| 3D Graphics   | React Three Fiber + Drei                 | 8.17.10 |
+| State Mgmt    | Zustand                                  | 4.5.0   |
+| Data Fetching | TanStack React Query                     | 5.24.0  |
+| Forms         | React Hook Form + Zod                    | 7.51.0  |
+| Auth          | Firebase Authentication                  | 10.8.0  |
+| Database      | Cloud Firestore + Realtime Database      | 10.8.0  |
+| Backend       | Firebase Cloud Functions                 | Gen1    |
+| UI Components | Radix UI + Lucide Icons + CVA            | Latest  |
+| Testing       | Vitest + Testing Library                 | 4.0.18  |
+| Deployment    | Vercel (Frontend) + Firebase (Backend)   | —       |
 
-### Project Structure
+---
+
+## 4. Design & Structure
+
+### Project Directory Structure
 
 ```
-app/                    # Next.js App Router
-├── hub/               # Main hub pages (games, leaderboard, etc.)
-├── game/[gameId]/     # Game launcher with iframe integration
-├── layout.tsx         # Root layout with providers
-└── globals.css        # Global styles with CSS variables
-
-components/
-├── ui/                # Reusable UI components (Button, Modal, Input)
-├── layout/            # Layout components (Sidebar, Header)
-├── game/              # Game-related components (GameCard, GameGrid)
-├── features/          # Feature components (AuthModal, CommandPalette)
-├── party/             # Party system UI
-└── providers.tsx      # App providers wrapper
-
-lib/
-├── firebase/          # Firebase configuration & services
-│   ├── auth.ts       # Authentication logic
-│   ├── config.ts     # Firebase initialization (singleton pattern)
-│   └── services/     # Service modules (leaderboard, friends, party, etc.)
-├── store/            # Zustand state stores
-│   ├── auth-store.ts
-│   ├── game-store.ts
-│   ├── party-store.ts
-│   └── leaderboard-store.ts
-└── utils.ts          # Utility functions
-
-hooks/                 # Custom React hooks
-├── useAuth.ts
-├── useGames.ts
-└── usePresence.ts
-
-types/                 # TypeScript type definitions
-├── user.ts
-├── game.ts
-└── party.ts
-
-public/games/          # Game files (HTML/CSS/JS) - iframe-loaded
+arcade-hub-next/
+├── app/                          # Next.js App Router
+│   ├── layout.tsx                # Root layout with Providers + BackgroundCanvas
+│   ├── page.tsx                  # Landing page
+│   ├── globals.css               # Global styles (11KB design system)
+│   ├── game/                     # Game play routes
+│   └── hub/                      # Hub modules
+│       ├── layout.tsx            # Hub layout
+│       ├── page.tsx              # Hub dashboard
+│       ├── achievements/         # Achievements page
+│       ├── challenges/           # Challenges page
+│       ├── friends/              # Friends & social page
+│       ├── games/                # Games catalog page
+│       ├── leaderboard/          # Leaderboard page
+│       ├── profile/              # User profile (with edit)
+│       ├── settings/             # User settings
+│       ├── shop/                 # In-game shop
+│       └── tournaments/          # Tournaments page
+├── components/                   # Shared React components
+│   ├── features/                 # Feature components (auth-modal, search, command-palette)
+│   ├── ui/                       # Base UI components
+│   ├── layout/                   # Layout components
+│   ├── game/                     # Game-specific components
+│   ├── party/                    # Party system components
+│   ├── hero/                     # Landing hero section
+│   ├── dashboard/                # Dashboard components
+│   ├── providers.tsx             # Theme + Query providers
+│   ├── error-boundary.tsx        # Error boundary component
+│   └── abstract-background.tsx   # Animated background (41KB)
+├── lib/                          # Core libraries
+│   ├── firebase/                 # Firebase integration
+│   │   ├── config.ts             # Singleton Firebase init
+│   │   ├── auth.ts               # Auth service (Google + anonymous)
+│   │   └── services/             # 12 Firebase service modules
+│   ├── store/                    # Zustand state stores
+│   │   ├── auth-store.ts         # Authentication state
+│   │   ├── game-store.ts         # Game state
+│   │   ├── leaderboard-store.ts  # Leaderboard state with pagination
+│   │   ├── party-store.ts        # Real-time party state
+│   │   └── settings-store.ts     # User settings state
+│   ├── error-handling.ts         # Centralized error utilities
+│   ├── a11y.tsx                  # Accessibility utilities
+│   └── utils.ts                  # General utilities
+├── hooks/                        # Custom React hooks
+│   ├── useAuth.ts                # Auth hook
+│   ├── useGames.ts               # Games data hook
+│   ├── usePresence.ts            # Online presence tracking
+│   └── useTheme.ts               # Theme management hook
+├── types/                        # TypeScript type definitions
+│   ├── game.ts                   # Game, GameScore, LeaderboardEntry
+│   ├── user.ts                   # User, UserPreferences
+│   └── party.ts                  # Party, PartyMember, PartyMessage
+├── functions/                    # Firebase Cloud Functions (Node.js)
+│   ├── index.js                  # Main functions file (691 lines)
+│   ├── antiCheat.js              # Anti-cheat module
+│   ├── rateLimiter.js            # Rate limiting
+│   ├── logger.js                 # Structured logging
+│   └── migrateProfiles.js        # Data migration scripts
+├── public/                       # Static assets
+│   ├── js/engine/                # Game engine modules (15 files)
+│   └── js/utils/                 # Game utilities (16 files)
+├── scripts/                      # Deployment & maintenance scripts
+├── tests/                        # Test files
+├── firestore.rules               # Firestore security rules (358 lines)
+├── firestore.indexes.json        # Composite indexes (10 indexes)
+└── firebase.json                 # Firebase project config
 ```
 
-### Key Architectural Patterns
+### Design System
 
-1. **Singleton Pattern**: Firebase initialization uses singleton pattern to prevent duplicate instances
-2. **Service Layer**: Business logic separated into service modules (`lib/firebase/services/`)
-3. **Store Pattern**: Zustand for global state management with persistence
-4. **Provider Pattern**: Context providers for Firebase, Theme, React Query, Toast
-5. **Client/Server Separation**: Proper use of `'use client'` directives
-
----
-
-## ✅ Strengths (Pros)
-
-### 1. **Modern Tech Stack**
-- Next.js 14 with App Router for optimal performance
-- TypeScript for type safety
-- Tailwind CSS for maintainable styling
-- Zustand for lightweight state management
-
-### 2. **Excellent UI/UX Design**
-- Consistent retro arcade aesthetic with scanlines and neon accents
-- Smooth animations and transitions
-- Responsive design with mobile-first approach
-- Multiple theme support (Cyberpunk, Neon Pink, Retro 80s, Matrix)
-- Professional color system with CSS variables
-
-### 3. **Comprehensive Feature Set**
-- **Authentication**: Google OAuth + Anonymous sign-in
-- **Games**: 12 classic arcade games (Snake, Pac-Man, Tetris, etc.)
-- **Social Features**:
-  - Friend system with presence tracking
-  - Party system (create/join with codes, chat, ready system)
-  - Real-time messaging
-- **Competitive Features**:
-  - Global and per-game leaderboards
-  - Tournament system
-  - Achievements and challenges
-  - XP/Level progression system
-
-### 4. **Clean Code Organization**
-- Well-structured folder hierarchy
-- Separation of concerns (components, services, stores)
-- Consistent naming conventions
-- TypeScript interfaces for all data models
-
-### 5. **Security Considerations**
-- Comprehensive Firestore security rules (336 lines)
-- Input validation on client and implied on server
-- Protected routes through authentication checks
-- Score validation and rate limiting considerations
-
-### 6. **Performance Optimizations**
-- Dynamic imports for heavy components (BackgroundCanvas)
-- React Query for efficient data fetching with caching
-- Singleton Firebase initialization
-- Lazy loading of game iframes
-- Image optimization settings
-
-### 7. **Developer Experience**
-- Good documentation in README.md
-- Environment variable templates
-- Build scripts and deployment guides
-- Error boundaries for graceful error handling
+- **Theme:** Dark-first design using CSS custom properties (`--background`, `--surface`, `--accent`, etc.)
+- **Typography:** Orbitron (display) + Space Mono (body) — arcade-inspired fonts
+- **Color Palette:** Neon accent colors with dark surfaces, glassmorphic elements
+- **Animations:** Fade-in, slide-in, pulse-glow, float — via TailwindCSS keyframes + Framer Motion
+- **Responsive:** 6 breakpoints (xs:475px → 2xl:1536px)
+- **Components:** Built with CVA (Class Variance Authority) + Radix UI primitives
 
 ---
 
-## ❌ Weaknesses (Cons)
+## 5. System Workflow
 
-### 1. **Incomplete Game Integration**
-- **Critical**: The `useGames.ts` hook has an empty `GAMES` array:
-  ```typescript
-  const GAMES: Game[] = [
-    // Games will be added here
-  ];
-  ```
-  This means no games are currently available in the hub!
+### User Authentication Flow
 
-### 2. **Missing Error Handling**
-- Some services lack comprehensive try-catch blocks
-- Limited error feedback to users
-- No retry mechanisms for failed Firebase operations
+```
+  User                App (Next.js)         Firebase Auth          Firestore
+   │                      │                      │                      │
+   │  Click "Sign In"     │                      │                      │
+   │─────────────────────▶│                      │                      │
+   │                      │  signInWithPopup()   │                      │
+   │                      │─────────────────────▶│                      │
+   │                      │                      │                      │
+   │                      │  [If popup blocked]  │                      │
+   │                      │  signInWithRedirect()│                      │
+   │                      │─────────────────────▶│                      │
+   │                      │                      │                      │
+   │                      │  Firebase User object│                      │
+   │                      │◀─────────────────────│                      │
+   │                      │                      │                      │
+   │                      │─── mapFirebaseUser() │                      │
+   │                      │    → User type       │                      │
+   │                      │                      │                      │
+   │                      │  Create/update user doc                     │
+   │                      │─────────────────────────────────────────────▶│
+   │                      │                      │                      │
+   │                      │─── Update Zustand    │                      │
+   │                      │    auth-store        │                      │
+   │                      │                      │                      │
+   │  Redirect to Hub     │                      │                      │
+   │◀─────────────────────│                      │                      │
+   │                      │                      │                      │
+```
 
-### 3. **Performance Concerns**
-- BackgroundCanvas uses Three.js which may impact performance on low-end devices
-- No virtual scrolling for long leaderboards
-- Leaderboard fetches all user profiles individually (N+1 query pattern)
+### Score Submission & Validation Flow
 
-### 4. **Code Duplication**
-- Similar patterns repeated across service files
-- Date conversion logic duplicated in multiple places
-- User profile fetching logic repeated
+```
+  Game Engine        Next.js App          Firestore         Cloud Functions      Realtime DB
+   │                      │                   │                    │                   │
+   │  Score via HubSDK    │                   │                    │                   │
+   │─────────────────────▶│                   │                    │                   │
+   │                      │  Write score doc  │                    │                   │
+   │                      │──────────────────▶│                    │                   │
+   │                      │                   │  Trigger onCreate  │                   │
+   │                      │                   │───────────────────▶│                   │
+   │                      │                   │                    │                   │
+   │                      │                   │                    │── Check banned    │
+   │                      │                   │                    │── Rate limit      │
+   │                      │                   │                    │── Anti-cheat      │
+   │                      │                   │                    │                   │
+   │                      │                   │                    │                   │
+   │   ┌─── IF VALID ─────────────────────────────────────────────┐│                   │
+   │   │                  │                   │                    ││                   │
+   │   │                  │                   │  verified: true    ││                   │
+   │   │                  │                   │◀───────────────────┤│                   │
+   │   │                  │                   │                    ││ Update leaderboard│
+   │   │                  │                   │                    │├──────────────────▶│
+   │   │                  │                   │                    ││ Check achievements│
+   │   │                  │                   │  Record analytics  ││                   │
+   │   │                  │                   │◀───────────────────┤│                   │
+   │   └──────────────────────────────────────────────────────────┘│                   │
+   │                      │                   │                    │                   │
+   │   ┌─── IF INVALID ───────────────────────────────────────────┐│                   │
+   │   │                  │                   │  verified: false   ││                   │
+   │   │                  │                   │◀───────────────────┤│                   │
+   │   │                  │                   │  Log suspicious    ││                   │
+   │   │                  │                   │◀───────────────────┤│                   │
+   │   └──────────────────────────────────────────────────────────┘│                   │
+   │                      │                   │                    │                   │
+```
 
-### 5. **Type Safety Issues**
-- Some `any` types used (e.g., `NavItemProps.icon: any`)
-- Implicit type conversions in several places
-- Missing strict null checks in some areas
+### Party System Workflow
 
-### 6. **Testing Gap**
-- No test files found (`tests/` directory is empty)
-- No unit tests for services or components
-- No integration tests for Firebase operations
-
-### 7. **Accessibility (a11y) Concerns**
-- Limited ARIA labels
-- Missing focus management in modals
-- Color contrast may not meet WCAG standards in some areas
-- No keyboard navigation support for some interactive elements
-
-### 8. **SEO Limitations**
-- Games loaded in iframes are not SEO-friendly
-- Limited meta tags for individual game pages
-- No structured data/schema markup
-
-### 9. **Mobile Experience**
-- Sidebar hover expansion doesn't work well on touch devices
-- Some game iframes may not be mobile-optimized
-- FAB (Floating Action Button) may obstruct content on mobile
-
-### 10. **Scalability Concerns**
-- Friend search loads all users (Firestore limitation noted but not solved)
-- Leaderboard pagination limited, no cursor-based pagination
-- No caching strategy for frequently accessed data
-
----
-
-## 🔧 Recommended Improvements
-
-### High Priority (Critical)
-
-1. **Fix Game Registration**
-   ```typescript
-   // In hooks/useGames.ts - Populate the GAMES array
-   const GAMES: Game[] = [
-     {
-       id: 'snake',
-       name: 'Snake',
-       description: 'Classic snake game',
-       icon: 'Gamepad2',
-       difficulty: 'easy',
-       category: 'arcade',
-       path: '/games/snake/',
-     },
-     // ... add all 12 games
-   ];
-   ```
-
-2. **Implement Comprehensive Error Handling**
-   - Add error boundaries for each major feature
-   - Implement retry logic for Firebase operations
-   - Add user-friendly error messages
-
-3. **Add Unit & Integration Tests**
-   ```bash
-   npm install --save-dev vitest @testing-library/react @testing-library/jest-dom
-   ```
-   - Test all service functions
-   - Test component rendering and interactions
-   - Mock Firebase for isolated testing
-
-### Medium Priority (Important)
-
-4. **Optimize Leaderboard Queries**
-   - Implement cursor-based pagination
-   - Use Firestore aggregation queries
-   - Cache leaderboard data in React Query
-
-5. **Add Search Functionality**
-   - Integrate Algolia or Elasticsearch for user search
-   - Add game search/filter
-   - Implement debounced search inputs
-
-6. **Improve Mobile Experience**
-   - Replace hover-based sidebar with toggle
-   - Optimize FAB positioning
-   - Add swipe gestures for navigation
-
-7. **Enhance Accessibility**
-   - Add ARIA labels to all interactive elements
-   - Implement focus trapping in modals
-   - Add keyboard shortcuts (already started with CommandPalette)
-   - Test with screen readers
-
-8. **Add Real-time Features**
-   - Live leaderboard updates with Firestore listeners
-   - Real-time notifications for friend requests
-   - Live typing indicators in chat
-
-### Low Priority (Nice to Have)
-
-9. **Advanced Game Features**
-   - Game state saving/loading
-   - Replay system for high scores
-   - In-game purchases with virtual currency
-   - Game-specific achievements
-
-10. **Social Enhancements**
-    - Player profiles with stats
-    - Activity feed
-    - Clan/Guild system
-    - Tournament brackets visualization
-
-11. **Analytics & Monitoring**
-    - Add Sentry for error tracking
-    - Implement Google Analytics events
-    - Add performance monitoring (Web Vitals)
-    - Track user engagement metrics
-
-12. **Developer Experience**
-    - Add Storybook for component documentation
-    - Implement CI/CD pipeline
-    - Add pre-commit hooks (husky + lint-staged)
-    - Set up automated testing in CI
+```
+  Leader               Next.js App           Firestore               Member
+   │                      │                      │                      │
+   │  Create Party        │                      │                      │
+   │─────────────────────▶│                      │                      │
+   │                      │  Create party doc    │                      │
+   │                      │─────────────────────▶│                      │
+   │                      │  Real-time subscribe │                      │
+   │                      │◀─────────────────────│                      │
+   │  Show party code     │                      │                      │
+   │◀─────────────────────│                      │                      │
+   │                      │                      │                      │
+   │  Share code ─────────────────────────────────────────────────────▶│
+   │                      │                      │                      │
+   │                      │                      │       Enter code     │
+   │                      │◀─────────────────────────────────────────────│
+   │                      │ Query + add member   │                      │
+   │                      │─────────────────────▶│                      │
+   │                      │  Updated party doc   │                      │
+   │                      │◀─────────────────────│                      │
+   │                      │                      │   Joined party view  │
+   │                      │──────────────────────────────────────────────▶│
+   │                      │                      │                      │
+   │  Set ready / Start   │                      │                      │
+   │─────────────────────▶│                      │                      │
+   │                      │ Update party status  │                      │
+   │                      │─────────────────────▶│                      │
+   │                      │                      │                      │
+```
 
 ---
 
-## 📈 Feature Recommendations
+## 6. Database System
 
-### New Features to Consider
+### Firestore Collections
 
-| Feature | Priority | Description |
-|---------|----------|-------------|
-| **Daily Challenges** | High | Daily rotating challenges with rewards |
-| **Streak System** | High | Track consecutive days played |
-| **Replay System** | Medium | Save and share game replays |
-| **Spectator Mode** | Medium | Watch friends play in real-time |
-| **Custom Game Rooms** | Medium | Private rooms with custom rules |
-| **Player Stats Dashboard** | Medium | Detailed analytics for players |
-| **Seasonal Events** | Low | Limited-time events with exclusive rewards |
-| **Avatar Customization** | Low | More avatar options and accessories |
-| **Game Ratings/Reviews** | Low | Rate and review games |
-| **Tournament Creation** | Low | User-created tournaments |
+| Collection | Purpose | Access Pattern |
+|------------|---------|----------------|
+| `users` | User profiles (name, level, XP, scores) | Public read, owner write |
+| `userStats` | Per-user per-game stats | Public read, owner write |
+| `scores` | All game score submissions | Public read, auth create, no update/delete |
+| `achievements` | Global achievement definitions | Public read, admin write |
+| `userAchievements` | User achievement progress | Owner read/write |
+| `challenges` | Active challenge definitions | Public read, admin write |
+| `userChallenges` | User challenge progress | Owner read/write |
+| `shopItems` | Virtual shop items | Public read, admin write |
+| `userInventory` | User purchased items | Owner read/write |
+| `tournaments` | Tournament definitions & status | Public read, auth create, flexible update |
+| `tournamentParticipants` | Tournament entries | Public read, participant create/update |
+| `friends` | Friendship records | Auth read/create/delete |
+| `friendRequests` | Pending friend requests | Auth read/create/update/delete |
+| `presence` | Online status tracking | Public read, owner write |
+| `publicProfiles` | Public-facing user profiles | Public read, owner write |
+| `conversations` | Chat conversation metadata | Participant read/create/update |
+| `messages` | Chat messages | Participant read, sender create |
+| `parties` | Party rooms | Auth read, leader/member update |
+| `partyMessages` | Party chat messages | Member read, auth create |
+| `admins` | Admin user list | Owner read, no write |
 
----
+### Realtime Database (RTDB)
 
-## 🛡️ Security Recommendations
+| Path | Purpose |
+|------|---------|
+| `liveLeaderboards/{gameId}` | Real-time leaderboard for each game (top 100) |
+| `notifications/{userId}` | Push notifications per user |
+| `presence/{userId}` | Online/offline presence tracking |
 
-1. **Implement Rate Limiting**
-   - Use Firebase App Check
-   - Add Cloud Functions for rate limiting
-   - Validate scores server-side
+### Composite Indexes (10 defined)
 
-2. **Enhance Firestore Rules**
-   - Add more granular validation
-   - Implement field-level security
-   - Add composite index rules
+| Collection | Fields | Purpose |
+|------------|--------|---------|
+| `scores` | `gameId` + `verified` + `score (desc)` | Leaderboard queries |
+| `scores` | `userId` + `timestamp (desc)` | User score history |
+| `userStats` | `gameId` + `bestScore (desc)` | Best score rankings |
+| `challenges` | `active` + `expiresAt` | Active challenges |
+| `tournaments` | `status` + `startTime` / `endTime` | Scheduled tournaments |
+| `tournamentParticipants` | `tournamentId` + `score (desc)` | Tournament rankings |
+| `analytics` | `type` + `timestamp (desc)` | Analytics queries |
+| `partyMessages` | `partyId` + `timestamp` | Party chat ordering |
+| `friendRequests` | `fromUserId` + `toUserId` + `status` | Friend request lookups |
 
-3. **Data Validation**
-   - Use Zod schemas for all data validation
-   - Sanitize user inputs
-   - Validate game scores for合理性
+### Cloud Functions (7 deployed)
 
-4. **Anti-Cheat Measures**
-   - Score validation algorithms
-   - Session duration checks
-   - Unusual pattern detection
-
----
-
-## 🎯 Action Plan
-
-### Phase 1: Critical Fixes (Week 1)
-- [ ] Fix game registration in `useGames.ts`
-- [ ] Add error handling to all services
-- [ ] Fix any TypeScript errors
-- [ ] Test all authentication flows
-
-### Phase 2: Testing & Quality (Week 2-3)
-- [ ] Set up testing framework
-- [ ] Write tests for critical paths
-- [ ] Add error boundaries
-- [ ] Implement logging
-
-### Phase 3: Performance (Week 4)
-- [ ] Optimize leaderboard queries
-- [ ] Add data caching
-- [ ] Lazy load heavy components
-- [ ] Profile and fix bottlenecks
-
-### Phase 4: Enhancement (Ongoing)
-- [ ] Implement new features from recommendations
-- [ ] Gather user feedback
-- [ ] Iterate on UI/UX
+| Function | Type | Purpose |
+|----------|------|---------|
+| `onScoreSubmit` | Firestore trigger | Validate scores, anti-cheat, update leaderboards |
+| `aggregateLeaderboards` | Scheduled (15 min) | Aggregate top 50 per game |
+| `processAnalytics` | Firestore trigger | Enrich and partition analytics events |
+| `dailyAnalyticsRollup` | Scheduled (daily) | Historical analytics aggregation |
+| `cleanupPresence` | Scheduled (10 min) | Remove stale online presence |
+| `startScheduledTournaments` | Scheduled (1 min) | Start/end tournaments |
+| `cleanupRateLimits` | Scheduled (hourly) | Clean stale rate limit docs |
 
 ---
 
-## 📊 Conclusion
+## 7. Identified Issues
 
-The Arcade Gaming Hub is a well-architected, modern web application with a strong foundation. The retro arcade aesthetic is consistently implemented, and the social features (parties, friends, leaderboards) create an engaging gaming experience.
+### 🔴 Critical Issues
 
-**Key Strengths:**
-- Excellent design and user experience
-- Comprehensive feature set
-- Clean code architecture
-- Good use of modern technologies
+| # | Issue | Location | Impact |
+|---|-------|----------|--------|
+| 1 | **Cloud Functions use Gen1 API** — deprecated `functions.firestore.document()` syntax | `functions/index.js` | Will break on migration to Gen2; deprecated API |
+| 2 | **Cloud Functions are pure JavaScript** — no TypeScript, no type safety | `functions/*.js` | Runtime errors, harder to maintain |
+| 3 | **Monolithic Cloud Functions file** — 691 lines in single `index.js` | `functions/index.js` | Hard to maintain, test, and scale |
+| 4 | **Dead code**: `validateScore()` function at line 149 is defined but never called (the `antiCheat.validateScore` is used instead) | `functions/index.js` | Confusion, security risk if wrong validator is used |
+| 5 | **Missing `shared/gameConfig.json`** — referenced in `validateScore()` but doesn't exist in the project | `functions/index.js:161` | Import would crash at runtime |
 
-**Areas for Improvement:**
-- Critical game registration issue needs immediate attention
-- Testing coverage needs significant improvement
-- Performance optimizations for scale
-- Mobile experience refinements
+### 🟠 High-Priority Issues
 
-**Bottom Line:** With the critical fixes implemented and the recommended improvements applied, this system has the potential to be a production-ready, scalable gaming platform that could serve thousands of concurrent users.
+| # | Issue | Location | Impact |
+|---|-------|----------|--------|
+| 6 | **User profiles are publicly readable** (`allow read: if true`) | `firestore.rules:61` | Any user can read all profile data without auth |
+| 7 | **No image optimization** — `images.unoptimized: true` in Next.js config | `next.config.mjs:4` | Larger payloads, worse Core Web Vitals |
+| 8 | **Tournament check runs every 1 minute** — extremely frequent for a scheduled function | `functions/index.js:581` | High Firebase billing, unnecessary function invocations |
+| 9 | **No CI/CD pipeline** — deploy scripts are .bat files; no GitHub Actions or automated tests | `scripts/` | No automated quality gates, risk of broken deployments |
+| 10 | **`console.log` / `console.error` calls remain in production code** | `lib/store/party-store.ts:182,195,207` | Leaks info in browser console, unprofessional |
+
+### 🟡 Medium-Priority Issues
+
+| # | Issue | Location | Impact |
+|---|-------|----------|--------|
+| 11 | **ETags disabled** (`generateEtags: false`) with no alternative caching strategy | `next.config.mjs:11` | No browser-level caching, more data transfer |
+| 12 | **`docs/` directory is empty** | `docs/` | No API documentation or developer guides |
+| 13 | **Duplicate `providers.tsx`** — exists both as `components/providers.tsx` and `components/providers/` directory | `components/` | Ambiguity, potential import conflicts |
+| 14 | **Large `abstract-background.tsx`** at 41KB — single component file | `components/` | Hard to maintain, likely contains inlined data |
+| 15 | **Mixed auth flow** — popup as primary with redirect fallback, but `handleRedirectResult` silent failure | `lib/firebase/auth.ts` | Auth errors silently swallowed |
+| 16 | **No server-side rendering for authenticated pages** — Firebase is client-only (`typeof window === 'undefined'` returns null) | `lib/firebase/config.ts:24-26` | No SSR benefits for authenticated content |
+| 17 | **Test coverage appears limited** — test infrastructure set up but `/tests` only has setup files and utilities | `tests/` | Low confidence in code correctness |
 
 ---
 
-*Report generated by AI Code Assistant on February 21, 2026*
+## 8. Pros & Cons
+
+### ✅ Pros
+
+| # | Strength | Details |
+|---|----------|---------|
+| 1 | **Comprehensive feature set** | Achievements, challenges, tournaments, parties, friends, messaging, shop — all implemented |
+| 2 | **Strong security rules** | 358 lines of Firestore rules with field-level validation, ownership checks, and admin separation |
+| 3 | **Anti-cheat system** | Dedicated anti-cheat module with ban checking, rate limiting, score validation, and suspicious activity logging |
+| 4 | **Centralized error handling** | `error-handling.ts` provides severity classification, retry logic, Firebase error mapping, and safe wrappers |
+| 5 | **Real-time features** | Party chat, live leaderboards, presence tracking, and notifications via RTDB subscriptions |
+| 6 | **Modern state management** | Zustand with `subscribeWithSelector` middleware; clean separation of concerns across 5 stores |
+| 7 | **Premium UI/UX** | Dark theme with neon accents, smooth Framer Motion animations, glassmorphism, responsive design |
+| 8 | **Game engine architecture** | 15-module engine (AudioManager, ComboSystem, ParticleSystem, etc.) with clean separation |
+| 9 | **Singleton Firebase initialization** | Thread-safe async initialization with race condition handling (initPromise pattern) |
+| 10 | **Accessibility utilities** | Dedicated `a11y.tsx` module for accessibility support |
+| 11 | **Composite Firestore indexes** | 10 optimized indexes for efficient queries across collections |
+| 12 | **Achievement system** | Automated achievement checking on score submission via Cloud Functions |
+| 13 | **Analytics pipeline** | Full pipeline: event → processing → daily rollup → historical storage |
+| 14 | **Form validation** | Zod + React Hook Form for robust client-side form handling |
+| 15 | **Search & command palette** | Power-user features with search modal and command palette |
+
+### ❌ Cons
+
+| # | Weakness | Details |
+|---|----------|---------|
+| 1 | **No CI/CD pipeline** | Deployments rely on manual `.bat` scripts; no automated testing or quality gates |
+| 2 | **Limited test coverage** | Vitest is configured but actual test files are minimal (only setup and utilities) |
+| 3 | **Cloud Functions are JavaScript** | Frontend is TypeScript but Cloud Functions are plain JS — no type safety on the backend |
+| 4 | **Gen1 Cloud Functions** | Using deprecated Firebase Functions Gen1 API; needs migration to Gen2 |
+| 5 | **Monolithic backend** | All Cloud Functions in a single 691-line file; hard to test and maintain independently |
+| 6 | **No caching layer** | No Redis, no CDN caching headers, no service worker caching strategy |
+| 7 | **Firebase vendor lock-in** | Entire backend (auth, DB, functions, hosting, analytics) depends on Firebase |
+| 8 | **No API rate limiting on client** | Rate limiting exists server-side but no client-side throttling or debouncing |
+| 9 | **Unoptimized images** | Next.js image optimization disabled; large images served uncompressed |
+| 10 | **Missing documentation** | Empty `docs/` directory; limited inline code comments; no API documentation |
+| 11 | **No i18n support** | English only; no internationalization framework |
+| 12 | **No PWA support** | No service worker, no offline capability, no installable app manifest |
+| 13 | **Large bundle size** | Three.js (3D library) loaded for a primarily 2D gaming platform |
+| 14 | **No monitoring/alerting** | No Sentry, LogRocket, or equivalent error tracking in production |
+| 15 | **No data backup strategy** | No automated Firestore backup or disaster recovery plan |
+
+---
+
+## 9. Recommendations
+
+### 🔧 Technical Improvements
+
+| Priority | Recommendation | Effort | Impact |
+|----------|---------------|--------|--------|
+| 🔴 High | **Migrate Cloud Functions to Gen2 + TypeScript** — rewrite `functions/index.js` in TypeScript using the modular Gen2 API | Medium | Future-proofing, type safety, better performance |
+| 🔴 High | **Split Cloud Functions into modules** — separate files for scores, tournaments, analytics, presence, notifications | Low | Maintainability, testability, independent deployment |
+| 🔴 High | **Set up CI/CD pipeline** — GitHub Actions with lint, type-check, test, and deploy stages | Medium | Automated quality gates, consistent deployments |
+| 🟠 Med | **Enable Next.js image optimization** — remove `unoptimized: true` and use `next/image` properly | Low | Better Core Web Vitals, faster page loads |
+| 🟠 Med | **Add comprehensive tests** — unit tests for services, integration tests for Cloud Functions | High | Confidence in deployments, catch regressions early |
+| 🟠 Med | **Implement error tracking** — integrate Sentry or similar for production error monitoring | Low | Faster bug detection, better user experience |
+| 🟠 Med | **Remove dead code** — delete unused `validateScore()` in `functions/index.js` and fix the `shared/gameConfig.json` reference | Low | Cleaner codebase, prevent potential bugs |
+| 🟡 Low | **Add Firestore backups** — scheduled exports to Cloud Storage | Low | Disaster recovery, data safety |
+| 🟡 Low | **Reduce tournament check frequency** — change from every 1 minute to every 5 minutes | Low | Reduced billing, similar functionality |
+| 🟡 Low | **Lazy load Three.js** — only import React Three Fiber when 3D content is actually needed | Medium | Smaller initial bundle, faster page loads |
+
+### 📝 Documentation Improvements
+
+| Recommendation | Details |
+|---------------|---------|
+| Write API documentation | Document all 12 Firebase service modules with usage examples |
+| Create developer onboarding guide | Setup instructions, environment variables, local development workflow |
+| Document Firestore schema | Entity-relationship diagrams, field descriptions, access patterns |
+| Add inline code comments | Especially in complex areas like anti-cheat, party system, and leaderboard aggregation |
+| Create architecture decision records (ADRs) | Document why specific technologies and patterns were chosen |
+
+---
+
+## 10. Feature Suggestions
+
+### 🌟 High-Impact Features
+
+| Feature | Description | Complexity |
+|---------|-------------|------------|
+| **Spectator Mode** | Allow users to watch friends play games in real-time via RTDB state sync | Medium |
+| **Live Multiplayer** | Real-time head-to-head gameplay using WebSocket or RTDB | High |
+| **Season Pass / Battle Pass** | Tiered reward system with free/premium tracks resetting each season | Medium |
+| **Game Replays** | Record and replay game sessions; share replays with friends | Medium |
+| **Custom Avatars & Profiles** | Upload profile pictures, custom borders and badges from shop purchases | Low |
+| **Push Notifications** | Firebase Cloud Messaging for tournament starts, friend requests, achievements | Medium |
+
+### 🎮 Game & Engagement Features
+
+| Feature | Description | Complexity |
+|---------|-------------|------------|
+| **Daily Login Rewards** | Streak-based rewards (XP, coins, items) to encourage daily engagement | Low |
+| **Mini-Games Rotation** | Featured "game of the day" with boosted XP or rewards | Low |
+| **Clan/Guild System** | Groups of players that compete together in clan leaderboards and clan wars | High |
+| **Custom Game Modes** | Player-defined rules (e.g., speed-mode Snake, no-rotate Tetris) | Medium |
+| **In-Game Power-Ups** | Purchasable/earnable power-ups that modify gameplay (e.g., slow time, extra lives) | Medium |
+| **Achievement Badges Gallery** | A visual showcase wall for collected badges and achievements | Low |
+
+### 📊 Analytics & Admin Features
+
+| Feature | Description | Complexity |
+|---------|-------------|------------|
+| **Admin Dashboard** | Real-time analytics, user management, ban management, content moderation | High |
+| **Player Analytics** | Personal stats dashboard with graphs (score trends, play time, favorite games) | Medium |
+| **A/B Testing Framework** | Test different game mechanics, UI layouts, or reward structures | High |
+| **Heatmaps** | Visualize popular games, peak play times, and user flow through the hub | Medium |
+
+### 🛡️ Quality & Infrastructure Features
+
+| Feature | Description | Complexity |
+|---------|-------------|------------|
+| **PWA Support** | Service worker, offline capability, installable app experience | Medium |
+| **Internationalization (i18n)** | Multi-language support starting with Spanish, French, Portuguese | Medium |
+| **Dark/Light/System Theme** | Full theme system (currently dark-only despite having a theme preference) | Low |
+| **Accessibility Audit (WCAG 2.1)** | Full audit and remediation for screen readers, keyboard nav, color contrast | Medium |
+| **Rate Limiting UI Feedback** | Show users when they're being rate-limited with countdown timers | Low |
+| **Data Export (GDPR)** | Allow users to download their data (scores, achievements, profile) | Medium |
+
+---
+
+## Summary
+
+The Arcade Gaming Hub is a **well-architected, feature-rich gaming platform** with a solid security foundation and modern UI. Its primary weaknesses are in **testing, documentation, backend code quality (JS instead of TS)** and **DevOps maturity**. Addressing the critical issues (Cloud Functions migration, CI/CD, test coverage) and implementing the high-impact feature suggestions (spectator mode, battle pass, live multiplayer) would significantly elevate the platform from a promising project to a production-grade gaming hub.
+
+> **Overall Rating: 6.6 / 10** — Strong foundation with clear growth potential.

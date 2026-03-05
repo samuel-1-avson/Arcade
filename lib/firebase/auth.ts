@@ -1,8 +1,8 @@
-import { 
+import {
   signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
-  GoogleAuthProvider, 
+  GoogleAuthProvider,
   signInAnonymously,
   signOut as firebaseSignOut,
   onAuthStateChanged,
@@ -23,47 +23,48 @@ export const authService = {
     if (!auth) {
       throw new Error('Firebase Auth not initialized');
     }
-    
+
     try {
       const result = await signInWithPopup(auth, googleProvider);
       // Popup sign-in successful
       return mapFirebaseUser(result.user);
     } catch (error: any) {
       // Error handled by caller
-      
+
       // If popup is blocked, fall back to redirect
       if (error?.code === 'auth/popup-blocked') {
         // Popup blocked, falling back to redirect
         await signInWithRedirect(auth, googleProvider);
         return null;
       }
-      
+
       throw error;
     }
   },
 
   handleRedirectResult: async (): Promise<User | null> => {
     try {
-      // Checking for redirect result
       const auth = await getFirebaseAuth();
       if (!auth) {
-        // Auth not initialized
         return null;
       }
-      
+
       const result = await getRedirectResult(auth);
       if (result && result.user) {
-      // Redirect result found
         return mapFirebaseUser(result.user);
       }
-      // No redirect result found
       return null;
     } catch (error: any) {
-      // Error handled by caller
+      // Surface auth errors instead of silently swallowing them
+      const code = error?.code || 'unknown';
+      // Re-throw meaningful errors so callers can handle them
+      if (code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request') {
+        throw error;
+      }
       return null;
     }
   },
-  
+
   signInAsGuest: async (): Promise<User> => {
     const auth = await getFirebaseAuth();
     if (!auth) {
@@ -72,7 +73,7 @@ export const authService = {
     const result = await signInAnonymously(auth);
     return mapFirebaseUser(result.user);
   },
-  
+
   signOut: async () => {
     const auth = await getFirebaseAuth();
     if (!auth) {
@@ -80,30 +81,30 @@ export const authService = {
     }
     return firebaseSignOut(auth);
   },
-  
+
   onAuthChange: (callback: (user: User | null) => void) => {
     let unsubscribe: (() => void) | null = null;
-    
+
     getFirebaseAuth().then((auth) => {
       if (!auth) {
         // Cannot listen to auth changes - Firebase not initialized
         callback(null);
         return;
       }
-      
+
       unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      // Auth state changed
+        // Auth state changed
         callback(firebaseUser ? mapFirebaseUser(firebaseUser) : null);
       });
     });
-    
+
     return () => {
       if (unsubscribe) {
         unsubscribe();
       }
     };
   },
-  
+
   updateUserProfile: async (displayName: string, photoURL?: string) => {
     const auth = await getFirebaseAuth();
     if (auth && auth.currentUser) {

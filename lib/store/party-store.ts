@@ -179,7 +179,7 @@ export const usePartyStore = create<PartyState>()(
           user.avatar || undefined
         );
       } catch (error) {
-        console.error('Failed to send message:', error);
+        set({ error: 'Failed to send message' });
       }
     },
     
@@ -192,7 +192,7 @@ export const usePartyStore = create<PartyState>()(
       try {
         await partyService.setReady(currentParty.id, user.id, ready);
       } catch (error) {
-        console.error('Failed to set ready status:', error);
+        set({ error: 'Failed to update ready status' });
       }
     },
     
@@ -204,7 +204,7 @@ export const usePartyStore = create<PartyState>()(
       try {
         await partyService.kickMember(currentParty.id, userId, user.id);
       } catch (error) {
-        console.error('Failed to kick member:', error);
+        set({ error: 'Failed to remove member' });
       }
     },
     

@@ -57,8 +57,8 @@ service cloud.firestore {
     // ============================================
     
     match /users/{userId} {
-      // Allow anyone to read user profiles
-      allow read: if true;
+      // Only authenticated users can read profiles
+      allow read: if isSignedIn();
       allow create: if isSignedIn() && isOwner(userId)
         && isValidDisplayName(request.resource.data.displayName);
       allow update: if isOwner(userId)
