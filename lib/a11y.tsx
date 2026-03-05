@@ -11,13 +11,16 @@ export function useFocusTrap(isActive: boolean) {
     if (isActive) {
       // Store the currently focused element
       previousActiveElement.current = document.activeElement as HTMLElement;
-      
+
       // Focus the first focusable element in the container
       const container = containerRef.current;
       if (container) {
         const focusableElements = getFocusableElements(container);
         if (focusableElements.length > 0) {
-          focusableElements[0].focus();
+          // Only focus the first element if focus isn't already inside the container
+          if (!container.contains(document.activeElement)) {
+            focusableElements[0].focus();
+          }
         }
       }
 
@@ -44,7 +47,7 @@ export function useFocusTrap(isActive: boolean) {
       };
 
       document.addEventListener('keydown', handleKeyDown);
-      
+
       return () => {
         document.removeEventListener('keydown', handleKeyDown);
         // Restore focus when trap is deactivated
@@ -93,9 +96,9 @@ export function useAnnouncer() {
     announcement.setAttribute('aria-atomic', 'true');
     announcement.className = 'sr-only';
     announcement.textContent = message;
-    
+
     document.body.appendChild(announcement);
-    
+
     // Remove after announcement
     setTimeout(() => {
       document.body.removeChild(announcement);
@@ -114,8 +117,8 @@ export function useKeyboardShortcut(
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const keyMatches = e.key.toLowerCase() === key.toLowerCase();
-      
-      const modifiersMatch = 
+
+      const modifiersMatch =
         (!modifiers?.ctrl || e.ctrlKey) &&
         (!modifiers?.alt || e.altKey) &&
         (!modifiers?.shift || e.shiftKey) &&
@@ -162,11 +165,11 @@ export const visuallyHiddenStyle: React.CSSProperties = {
 };
 
 // ARIA live region for dynamic content
-export function LiveRegion({ 
-  id, 
-  'aria-live': ariaLive = 'polite' 
-}: { 
-  id: string; 
+export function LiveRegion({
+  id,
+  'aria-live': ariaLive = 'polite'
+}: {
+  id: string;
   'aria-live'?: 'polite' | 'assertive' | 'off';
 }) {
   return (

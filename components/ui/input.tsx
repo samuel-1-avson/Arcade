@@ -11,29 +11,26 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ 
-    className, 
-    type, 
-    label, 
-    error, 
-    helperText, 
+  ({
+    className,
+    type,
+    label,
+    error,
+    helperText,
     id: providedId,
     'aria-label': ariaLabel,
     'aria-describedby': ariaDescribedBy,
     disabled,
     required,
-    ...props 
+    ...props
   }, ref) => {
     // Generate unique ID for accessibility
-    const [uniqueId, setUniqueId] = React.useState<string>('');
-    React.useEffect(() => {
-      setUniqueId(generateId('input'));
-    }, []);
-    
+    const [uniqueId] = React.useState(() => generateId('input'));
+
     const id = providedId || uniqueId;
     const errorId = `${id}-error`;
     const helperId = `${id}-helper`;
-    
+
     // Build aria-describedby
     const describedByIds = [
       error ? errorId : null,
@@ -46,7 +43,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label 
+          <label
             htmlFor={id}
             className="block text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2"
           >
@@ -82,8 +79,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           {...props}
         />
         {error && (
-          <p 
-            id={errorId} 
+          <p
+            id={errorId}
             className="mt-1.5 text-xs text-danger flex items-center gap-1"
             role="alert"
             aria-live="polite"
@@ -114,15 +111,12 @@ export interface TextAreaProps extends React.TextareaHTMLAttributes<HTMLTextArea
 
 export const TextArea = React.forwardRef<HTMLTextAreaElement, TextAreaProps>(
   ({ className, label, error, helperText, id: providedId, disabled, required, ...props }, ref) => {
-    const [uniqueId, setUniqueId] = React.useState<string>('');
-    React.useEffect(() => {
-      setUniqueId(generateId('textarea'));
-    }, []);
-    
+    const [uniqueId] = React.useState(() => generateId('textarea'));
+
     const id = providedId || uniqueId;
     const errorId = `${id}-error`;
     const helperId = `${id}-helper`;
-    
+
     const describedByIds = [
       error ? errorId : null,
       helperText && !error ? helperId : null,
@@ -131,7 +125,7 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, TextAreaProps>(
     return (
       <div className="w-full">
         {label && (
-          <label 
+          <label
             htmlFor={id}
             className="block text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2"
           >
