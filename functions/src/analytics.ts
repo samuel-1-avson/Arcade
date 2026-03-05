@@ -11,7 +11,7 @@ const { logger, LogCategory } = require('../logger');
  */
 export const processAnalytics = functions.firestore
     .document('analytics/{eventId}')
-    .onCreate(async (snap) => {
+    .onCreate(async (snap: any) => {
         const eventData = snap.data();
 
         logger.info(LogCategory.ANALYTICS, `Processing analytics event: ${eventData.type}`);

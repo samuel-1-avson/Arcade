@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { getFirebaseDb } from '@/lib/firebase/config';
-import { Activity, TrendingUp, Target, Ghost, Gamepad2 } from 'lucide-react';
+import { Activity, TrendingUp, Target, Gamepad2 } from 'lucide-react';
 
 interface ScoreDoc {
     gameId: string;

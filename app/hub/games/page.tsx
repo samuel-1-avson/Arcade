@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+// import { useState } from 'react';
 import { GameCard } from '@/components/game/game-card';
 import { useGames } from '@/hooks/useGames';
 import { Search } from 'lucide-react';
@@ -12,10 +12,10 @@ export default function GamesPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredGames = searchQuery
-    ? games.filter(g => 
-        g.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        g.description.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+    ? games.filter(g =>
+      g.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      g.description.toLowerCase().includes(searchQuery.toLowerCase())
+    )
     : games;
 
   return (
@@ -65,7 +65,7 @@ export default function GamesPage() {
       {filteredGames.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredGames.map((game, idx) => (
-            <div 
+            <div
               key={game.id}
               style={{ animationDelay: `${idx * 50}ms` }}
               className="animate-fade-in"
@@ -77,7 +77,7 @@ export default function GamesPage() {
       ) : (
         <div className="bg-elevated border border-white/[0.06] p-12 text-center">
           <p className="text-muted-foreground">No games found matching your search.</p>
-          <button 
+          <button
             onClick={() => { setSearchQuery(''); setFilter('all'); }}
             className="text-accent hover:underline mt-2 text-sm"
           >
