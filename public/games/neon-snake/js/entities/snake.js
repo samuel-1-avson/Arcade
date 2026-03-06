@@ -1,388 +1,286 @@
 /**
- * Neon Snake Arena - Snake Entity
- * Handles snake movement, collision, and rendering
+ * Neon Snake Arena v2.0 - Snake Entity
+ * Rendering assumes ctx origin is at grid (0,0) — renderer handles offset.
  */
 
 class Snake {
   constructor(state) {
     this.state = state;
-    this.glowIntensity = 0;
-    this.glowDirection = 1;
+    this.glowPhase = 0;
+    this.deathAnim = 0;     // 0 = alive, 1 = fully dead (fading)
+    this.deathTimer = 0;
+    this.DEATH_DURATION = 600;
   }
-  
-  /**
-   * Initialize snake at position
-   */
+
+  // ── Initialise ───────────────────────────────────────────
+
   init(startX, startY, length = 3) {
-    this.state.initSnake({ x: startX, y: startY }, length);
+    this.state.initSnake(startX, startY, length);
+    this.deathAnim  = 0;
+    this.deathTimer = 0;
   }
-  
+
+  // ── Direction ────────────────────────────────────────────
+
   /**
-   * Change direction (with 180-degree prevention)
+   * Queue a direction change.  We buffer at most one future direction so
+   * fast key-presses are not swallowed.
    */
-  setDirection(dx, dy) {
-    const current = this.state.snake.direction;
-    
-    // Prevent 180-degree turns
-    if (current.x === -dx && current.y === -dy) {
-      return false;
+  queueDirection(dx, dy) {
+    const sn   = this.state.snake;
+    const last = sn.dirQueue.length > 0
+      ? sn.dirQueue[sn.dirQueue.length - 1]
+      : sn.nextDirection;
+
+    // Ignore 180° reversals relative to the last queued direction
+    if (last.x === -dx && last.y === -dy) return false;
+    // Ignore identical to last queued
+    if (last.x === dx  && last.y === dy)  return false;
+
+    if (sn.dirQueue.length < 1) {
+      sn.dirQueue.push({ x: dx, y: dy });
+    } else {
+      sn.dirQueue[0] = { x: dx, y: dy };
     }
-    
-    // Prevent rapid direction changes that could cause self-collision
-    if (this.state.snake.nextDirection.x !== current.x || 
-        this.state.snake.nextDirection.y !== current.y) {
-      return false;
-    }
-    
-    this.state.snake.nextDirection = { x: dx, y: dy };
     return true;
   }
-  
+
+  // ── Move ─────────────────────────────────────────────────
+
   /**
-   * Move the snake one step
+   * Move the snake one step.
+   * Returns null (no collision) or 'wall' | 'self'.
+   * A 'shield' collision returns 'shielded' — the caller handles it.
    */
   move() {
-    const snake = this.state.snake;
-    
-    // Apply queued direction change
-    snake.direction = { ...snake.nextDirection };
-    
-    // Calculate new head position
-    const head = { ...snake.segments[0] };
-    head.x += snake.direction.x;
-    head.y += snake.direction.y;
-    
-    // Handle endless mode wrapping
-    if (this.state.mode === 'endless') {
-      const gridW = GameConfig.CANVAS.GRID_WIDTH;
-      const gridH = GameConfig.CANVAS.GRID_HEIGHT;
-      
-      if (head.x < 0) {
-        head.x = gridW - 1;
-        this.state.recordWallPass();
-      } else if (head.x >= gridW) {
-        head.x = 0;
-        this.state.recordWallPass();
-      }
-      
-      if (head.y < 0) {
-        head.y = gridH - 1;
-        this.state.recordWallPass();
-      } else if (head.y >= gridH) {
-        head.y = 0;
-        this.state.recordWallPass();
+    const sn = this.state.snake;
+
+    // Consume next queued direction
+    if (sn.dirQueue.length > 0) {
+      const queued = sn.dirQueue.shift();
+      const cur    = sn.direction;
+      if (!(queued.x === -cur.x && queued.y === -cur.y)) {
+        sn.nextDirection = queued;
       }
     }
-    
-    // Check wall collision (unless ghost mode)
-    if (this.state.mode !== 'endless' && !this.state.hasPowerUp('ghostMode')) {
-      if (this.checkWallCollision(head)) {
-        return 'wall';
-      }
-    }
-    
-    // Check self collision
-    if (this.checkSelfCollision(head)) {
-      return 'self';
-    }
-    
-    // Move snake
-    snake.segments.unshift(head);
-    
-    // Handle growth
-    if (snake.growing > 0) {
-      snake.growing--;
-      this.state.updateMaxSegments();
+
+    sn.direction = { ...sn.nextDirection };
+
+    const head = { ...sn.segments[0] };
+    head.x += sn.direction.x;
+    head.y += sn.direction.y;
+
+    const gw = GameConfig.CANVAS.GRID_WIDTH;
+    const gh = GameConfig.CANVAS.GRID_HEIGHT;
+
+    // Endless / ghost mode wrapping
+    const wrapMode = this.state.mode === 'endless' || this.state.hasPowerUp('ghostMode');
+    if (wrapMode) {
+      if (head.x < 0)   { head.x = gw - 1; this.state.recordWallPass(); }
+      else if (head.x >= gw) { head.x = 0; this.state.recordWallPass(); }
+      if (head.y < 0)   { head.y = gh - 1; this.state.recordWallPass(); }
+      else if (head.y >= gh) { head.y = 0; this.state.recordWallPass(); }
     } else {
-      snake.segments.pop();
+      // Wall collision
+      if (head.x < 0 || head.x >= gw || head.y < 0 || head.y >= gh) {
+        return this._handleFatalCollision('wall');
+      }
     }
-    
+
+    // Self collision
+    for (let i = 1; i < sn.segments.length; i++) {
+      const seg = sn.segments[i];
+      if (seg.x === head.x && seg.y === head.y) {
+        return this._handleFatalCollision('self');
+      }
+    }
+
+    // Move
+    sn.segments.unshift(head);
+    if (sn.growing > 0) {
+      sn.growing--;
+      this.state._updateMaxSegments();
+    } else {
+      sn.segments.pop();
+    }
+
     this.state.recordMove();
-    
-    // Update glow animation
-    this.updateGlow();
-    
-    return null; // No collision
+    this.glowPhase += 0.12;
+    return null;
   }
-  
-  /**
-   * Check if position collides with wall
-   */
-  checkWallCollision(pos) {
-    return pos.x < 0 || 
-           pos.x >= GameConfig.CANVAS.GRID_WIDTH ||
-           pos.y < 0 || 
-           pos.y >= GameConfig.CANVAS.GRID_HEIGHT;
-  }
-  
-  /**
-   * Check if position collides with snake body
-   */
-  checkSelfCollision(pos) {
-    // Skip head (index 0)
-    for (let i = 1; i < this.state.snake.segments.length; i++) {
-      const segment = this.state.snake.segments[i];
-      if (segment.x === pos.x && segment.y === pos.y) {
-        return true;
-      }
+
+  _handleFatalCollision(type) {
+    if (this.state.hasPowerUp('shield')) {
+      this.state.removePowerUp('shield');
+      this.state.triggerFlash();
+      this.state.triggerScreenShake(8, 200);
+      return 'shielded';
     }
-    return false;
+    return type;
   }
-  
-  /**
-   * Grow the snake
-   */
-  grow(amount = 1) {
-    this.state.growSnake(amount);
+
+  // ── Death animation ──────────────────────────────────────
+
+  startDeathAnim() {
+    this.deathAnim  = 0;
+    this.deathTimer = this.DEATH_DURATION;
   }
-  
-  /**
-   * Shrink the snake
-   */
-  shrink(amount = 1) {
-    this.state.shrinkSnake(amount);
-  }
-  
-  /**
-   * Get head position
-   */
-  getHead() {
-    return this.state.snake.segments[0];
-  }
-  
-  /**
-   * Check if snake head is at position
-   */
-  isHeadAt(x, y) {
-    const head = this.getHead();
-    return head.x === x && head.y === y;
-  }
-  
-  /**
-   * Check if snake occupies position
-   */
-  occupies(x, y, includeHead = true) {
-    const startIndex = includeHead ? 0 : 1;
-    for (let i = startIndex; i < this.state.snake.segments.length; i++) {
-      const seg = this.state.snake.segments[i];
-      if (seg.x === x && seg.y === y) {
-        return true;
-      }
-    }
-    return false;
-  }
-  
-  /**
-   * Update glow animation
-   */
-  updateGlow() {
-    this.glowIntensity += 0.05 * this.glowDirection;
-    if (this.glowIntensity >= 1) {
-      this.glowIntensity = 1;
-      this.glowDirection = -1;
-    } else if (this.glowIntensity <= 0.5) {
-      this.glowIntensity = 0.5;
-      this.glowDirection = 1;
+
+  updateDeathAnim(dt) {
+    if (this.deathTimer > 0) {
+      this.deathTimer -= dt;
+      this.deathAnim = 1 - Math.max(0, this.deathTimer / this.DEATH_DURATION);
     }
   }
-  
-  /**
-   * Render the snake
-   */
+
+  isDying() { return this.deathTimer > 0; }
+
+  // ── Helpers ──────────────────────────────────────────────
+
+  getHead() { return this.state.snake.segments[0]; }
+
+  occupies(x, y) {
+    return this.state.snake.segments.some(s => s.x === x && s.y === y);
+  }
+
+  // ── Render ───────────────────────────────────────────────
+
   render(ctx) {
-    const segments = this.state.snake.segments;
-    const cellSize = GameConfig.CANVAS.CELL_SIZE;
-    
-    if (segments.length === 0) return;
-    
-    // Get active power-up colors
-    const ghostMode = this.state.hasPowerUp('ghostMode');
-    const speedBoost = this.state.hasPowerUp('speedBoost');
-    
-    // Render body segments (in reverse for proper layering)
-    for (let i = segments.length - 1; i >= 0; i--) {
-      const seg = segments[i];
-      const x = seg.x * cellSize;
-      const y = seg.y * cellSize;
-      
-      // Determine segment type and color
-      let color, glowColor, glowSize;
-      
+    const segs     = this.state.snake.segments;
+    if (segs.length === 0) return;
+
+    const cell     = GameConfig.CANVAS.CELL_SIZE;
+    const ghost    = this.state.hasPowerUp('ghostMode');
+    const shield   = this.state.hasPowerUp('shield');
+    const turbo    = this.state.hasPowerUp('speedBoost');
+    const slowmo   = this.state.hasPowerUp('slow');
+    const glow     = 0.65 + Math.sin(this.glowPhase) * 0.35;
+
+    const deathAlpha = this.deathAnim > 0 ? Math.max(0, 1 - this.deathAnim * 1.5) : 1;
+
+    ctx.save();
+    ctx.globalAlpha = deathAlpha;
+
+    // Draw body in reverse so head is on top
+    for (let i = segs.length - 1; i >= 0; i--) {
+      const seg = segs[i];
+      const px  = seg.x * cell;
+      const py  = seg.y * cell;
+
       if (i === 0) {
-        // Head
-        color = GameConfig.COLORS.SNAKE_HEAD;
-        glowColor = GameConfig.COLORS.SNAKE_GLOW;
-        glowSize = GameConfig.EFFECTS.GLOW_BLUR * this.glowIntensity;
-        
-        if (ghostMode) {
-          color = GameConfig.POWERUPS.GHOST_MODE.color;
-          glowColor = color;
-        } else if (speedBoost) {
-          color = GameConfig.POWERUPS.SPEED_BOOST.color;
+        // ── Head ──────────────────────────────────────────
+        let headColor = GameConfig.COLORS.SNAKE_HEAD;
+        if (ghost)  headColor = GameConfig.POWERUPS.GHOST_MODE.color;
+        else if (turbo)  headColor = '#ffee00';
+        else if (slowmo) headColor = '#88ffdd';
+        else if (shield) headColor = '#ff8800';
+
+        ctx.shadowBlur  = GameConfig.EFFECTS.GLOW_BLUR * glow;
+        ctx.shadowColor = headColor;
+        ctx.globalAlpha = deathAlpha * (ghost ? 0.7 : 1);
+
+        ctx.fillStyle = headColor;
+        this._roundRect(ctx, px + 1, py + 1, cell - 2, cell - 2, 5);
+
+        // Shield ring
+        if (shield) {
+          ctx.strokeStyle = '#ff8800';
+          ctx.lineWidth   = 2;
+          ctx.shadowBlur  = 12;
+          ctx.shadowColor = '#ff8800';
+          ctx.strokeRect(px + 2, py + 2, cell - 4, cell - 4);
         }
-      } else if (i === segments.length - 1) {
-        // Tail
-        color = GameConfig.COLORS.SNAKE_TAIL;
-        glowColor = 'transparent';
-        glowSize = 0;
+
+        // Eyes
+        this._drawEyes(ctx, px, py, cell, ghost);
+
+        ctx.shadowBlur  = 0;
+
       } else {
-        // Body
-        const progress = i / segments.length;
-        color = this.interpolateColor(
-          GameConfig.COLORS.SNAKE_BODY,
-          GameConfig.COLORS.SNAKE_TAIL,
-          progress
+        // ── Body ──────────────────────────────────────────
+        const t     = i / (segs.length - 1);
+        const color = this._lerpColor(
+          GameConfig.COLORS.SNAKE_BODY_START,
+          GameConfig.COLORS.SNAKE_BODY_END,
+          t
         );
-        glowColor = GameConfig.COLORS.SNAKE_GLOW;
-        glowSize = GameConfig.EFFECTS.GLOW_BLUR * 0.5 * (1 - progress);
+
+        const pad    = i === segs.length - 1 ? 4 : 2;
+        const glowA  = Math.max(0, (1 - t) * glow * 0.5);
+
+        ctx.shadowBlur  = glowA > 0.05 ? 8 * glowA : 0;
+        ctx.shadowColor = GameConfig.COLORS.SNAKE_GLOW;
+        ctx.globalAlpha = deathAlpha * (ghost ? 0.5 : 1);
+        ctx.fillStyle   = color;
+        ctx.fillRect(px + pad, py + pad, cell - pad * 2, cell - pad * 2);
+        ctx.shadowBlur  = 0;
       }
-      
-      // Apply ghost mode transparency
-      ctx.globalAlpha = ghostMode ? 0.6 : 1;
-      
-      // Draw glow
-      if (glowSize > 0) {
-        ctx.shadowBlur = glowSize;
-        ctx.shadowColor = glowColor;
-      }
-      
-      // Draw segment
-      ctx.fillStyle = color;
-      
-      if (i === 0) {
-        // Draw head as rounded rectangle
-        this.roundRect(ctx, x + 1, y + 1, cellSize - 2, cellSize - 2, 4);
-        
-        // Draw eyes
-        this.drawEyes(ctx, x, y, cellSize);
-      } else {
-        // Draw body
-        const padding = i === segments.length - 1 ? 3 : 2;
-        ctx.fillRect(
-          x + padding,
-          y + padding,
-          cellSize - padding * 2,
-          cellSize - padding * 2
-        );
-      }
-      
-      // Reset shadow
-      ctx.shadowBlur = 0;
-      ctx.globalAlpha = 1;
     }
-    
-    // Draw direction indicator (subtle arrow on head)
-    this.drawDirectionIndicator(ctx);
+
+    ctx.restore();
   }
-  
-  /**
-   * Draw rounded rectangle
-   */
-  roundRect(ctx, x, y, width, height, radius) {
+
+  // ── Drawing helpers ──────────────────────────────────────
+
+  _roundRect(ctx, x, y, w, h, r) {
     ctx.beginPath();
-    ctx.moveTo(x + radius, y);
-    ctx.lineTo(x + width - radius, y);
-    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-    ctx.lineTo(x + width, y + height - radius);
-    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-    ctx.lineTo(x + radius, y + height);
-    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-    ctx.lineTo(x, y + radius);
-    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y,     x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x,     y + h, x,     y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x,     y,     x + r, y);
     ctx.closePath();
     ctx.fill();
   }
-  
-  /**
-   * Draw snake eyes
-   */
-  drawEyes(ctx, x, y, size) {
-    const dir = this.state.snake.direction;
-    const eyeSize = size / 5;
-    const offset = size / 3;
-    
-    let eye1X = x + offset;
-    let eye1Y = y + offset;
-    let eye2X = x + size - offset - eyeSize;
-    let eye2Y = y + offset;
-    
-    // Adjust based on direction
-    if (dir.x === 1) { // Right
-      eye1Y = y + offset;
-      eye2Y = y + size - offset - eyeSize;
-    } else if (dir.x === -1) { // Left
-      eye1X = x + size - offset - eyeSize;
-      eye2X = x + offset;
-      eye1Y = y + offset;
-      eye2Y = y + size - offset - eyeSize;
-    } else if (dir.y === -1) { // Up
-      eye1X = x + offset;
-      eye2X = x + size - offset - eyeSize;
-      eye1Y = y + size - offset - eyeSize;
-      eye2Y = y + size - offset - eyeSize;
+
+  _drawEyes(ctx, px, py, size, ghost) {
+    const dir    = this.state.snake.direction;
+    const eyeSz  = Math.max(2, size / 5.5);
+    const margin = size * 0.22;
+
+    // Position both eyes based on movement direction
+    let e1, e2;
+    if (dir.x === 1) {        // right → eyes top-right and bottom-right
+      e1 = { x: px + size - margin - eyeSz, y: py + margin };
+      e2 = { x: px + size - margin - eyeSz, y: py + size - margin - eyeSz };
+    } else if (dir.x === -1) { // left  → eyes top-left and bottom-left
+      e1 = { x: px + margin, y: py + margin };
+      e2 = { x: px + margin, y: py + size - margin - eyeSz };
+    } else if (dir.y === -1) { // up    → eyes top-left and top-right
+      e1 = { x: px + margin, y: py + margin };
+      e2 = { x: px + size - margin - eyeSz, y: py + margin };
+    } else {                    // down  → eyes bottom-left and bottom-right
+      e1 = { x: px + margin, y: py + size - margin - eyeSz };
+      e2 = { x: px + size - margin - eyeSz, y: py + size - margin - eyeSz };
     }
-    
-    ctx.fillStyle = '#ffffff';
-    ctx.shadowBlur = 5;
+
+    const eyeColor = ghost ? 'rgba(255,255,255,0.4)' : '#ffffff';
+    ctx.fillStyle  = eyeColor;
+    ctx.shadowBlur = 4;
     ctx.shadowColor = '#ffffff';
-    
-    ctx.fillRect(eye1X, eye1Y, eyeSize, eyeSize);
-    ctx.fillRect(eye2X, eye2Y, eyeSize, eyeSize);
-    
+    ctx.fillRect(e1.x, e1.y, eyeSz, eyeSz);
+    ctx.fillRect(e2.x, e2.y, eyeSz, eyeSz);
     ctx.shadowBlur = 0;
   }
-  
-  /**
-   * Draw direction indicator
-   */
-  drawDirectionIndicator(ctx) {
-    const head = this.getHead();
-    const dir = this.state.snake.direction;
-    const cellSize = GameConfig.CANVAS.CELL_SIZE;
-    
-    const centerX = head.x * cellSize + cellSize / 2;
-    const centerY = head.y * cellSize + cellSize / 2;
-    
-    const length = cellSize * 0.8;
-    const endX = centerX + dir.x * length;
-    const endY = centerY + dir.y * length;
-    
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([4, 4]);
-    
-    ctx.beginPath();
-    ctx.moveTo(centerX, centerY);
-    ctx.lineTo(endX, endY);
-    ctx.stroke();
-    
-    ctx.setLineDash([]);
+
+  _lerpColor(hex1, hex2, t) {
+    const c1 = this._hex2rgb(hex1);
+    const c2 = this._hex2rgb(hex2);
+    const r  = Math.round(c1.r + (c2.r - c1.r) * t);
+    const g  = Math.round(c1.g + (c2.g - c1.g) * t);
+    const b  = Math.round(c1.b + (c2.b - c1.b) * t);
+    return `rgb(${r},${g},${b})`;
   }
-  
-  /**
-   * Interpolate between two colors
-   */
-  interpolateColor(color1, color2, factor) {
-    const c1 = this.hexToRgb(color1);
-    const c2 = this.hexToRgb(color2);
-    
-    const r = Math.round(c1.r + (c2.r - c1.r) * factor);
-    const g = Math.round(c1.g + (c2.g - c1.g) * factor);
-    const b = Math.round(c1.b + (c2.b - c1.b) * factor);
-    
-    return `rgb(${r}, ${g}, ${b})`;
-  }
-  
-  /**
-   * Convert hex to rgb
-   */
-  hexToRgb(hex) {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? {
-      r: parseInt(result[1], 16),
-      g: parseInt(result[2], 16),
-      b: parseInt(result[3], 16)
-    } : { r: 0, g: 0, b: 0 };
+
+  _hex2rgb(hex) {
+    const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return m
+      ? { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) }
+      : { r: 0, g: 0, b: 0 };
   }
 }
 

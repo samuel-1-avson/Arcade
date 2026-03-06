@@ -1,303 +1,261 @@
 /**
- * Neon Snake Arena - Food System
- * Handles food spawning, types, and collection
+ * Neon Snake Arena v2.0 - Food System
+ * ctx origin is at grid (0,0) when render() is called.
  */
 
 class FoodSystem {
   constructor(state) {
-    this.state = state;
-    this.lastSpawnTime = 0;
+    this.state      = state;
+    this.lastSpawn  = 0;
     this.pulsePhase = 0;
   }
-  
-  /**
-   * Update food system
-   */
-  update(currentTime) {
-    // Spawn new food if needed
-    if (currentTime - this.lastSpawnTime > GameConfig.FOOD.SPAWN_INTERVAL) {
+
+  // ── Update ───────────────────────────────────────────────
+
+  update(nowMs, deltaMs) {
+    // Pulse animation
+    this.pulsePhase += GameConfig.EFFECTS.PULSE_SPEED * deltaMs;
+    if (this.pulsePhase > Math.PI * 2) this.pulsePhase -= Math.PI * 2;
+
+    // Spawn if needed
+    if (nowMs - this.lastSpawn > GameConfig.FOOD.SPAWN_INTERVAL) {
       if (this.state.food.length < GameConfig.FOOD.MAX_ITEMS) {
         this.spawn();
       }
-      this.lastSpawnTime = currentTime;
+      this.lastSpawn = nowMs;
     }
-    
-    // Update pulse animation
-    this.pulsePhase += GameConfig.EFFECTS.PULSE_SPEED * 16;
-    if (this.pulsePhase > Math.PI * 2) {
-      this.pulsePhase = 0;
-    }
-    
-    // Remove expired food
-    const now = Date.now();
-    this.state.food = this.state.food.filter(food => {
-      if (food.despawnAt && now > food.despawnAt) {
-        this.state.emit('foodDespawn', { food });
+
+    // Expire old food
+    this.state.food = this.state.food.filter(f => {
+      if (f.despawnAt && nowMs > f.despawnAt) {
+        this.state.emit('foodDespawn', { food: f });
         return false;
       }
       return true;
     });
+
+    // Magnet pull
+    if (this.state.hasPowerUp('magnet')) {
+      this._applyMagnet();
+    }
   }
-  
-  /**
-   * Spawn a new food item
-   */
+
+  // ── Spawn ────────────────────────────────────────────────
+
   spawn() {
-    const position = this.findValidPosition();
-    if (!position) return null;
-    
-    const isGolden = Math.random() < GameConfig.FOOD.GOLDEN_CHANCE;
+    const pos = this._findFreeCell();
+    if (!pos) return null;
+
+    const rng  = Math.random();
+    let type, value, despawn;
+
+    if (rng < GameConfig.FOOD.BONUS_CHANCE) {
+      type    = 'bonus';
+      value   = GameConfig.SCORING.BONUS_FOOD;
+      despawn = Date.now() + GameConfig.FOOD.BONUS_DESPAWN_TIME;
+    } else if (rng < GameConfig.FOOD.BONUS_CHANCE + GameConfig.FOOD.GOLDEN_CHANCE) {
+      type    = 'golden';
+      value   = GameConfig.SCORING.GOLDEN_FOOD;
+      despawn = GameConfig.FOOD.DESPAWN_TIME > 0 ? Date.now() + GameConfig.FOOD.DESPAWN_TIME : null;
+    } else {
+      type    = 'normal';
+      value   = GameConfig.SCORING.BASE_FOOD;
+      despawn = GameConfig.FOOD.DESPAWN_TIME > 0 ? Date.now() + GameConfig.FOOD.DESPAWN_TIME : null;
+    }
+
     const food = {
-      id: this.generateId(),
-      x: position.x,
-      y: position.y,
-      type: isGolden ? 'golden' : 'normal',
-      value: isGolden ? GameConfig.SCORING.GOLDEN_FOOD : GameConfig.SCORING.BASE_FOOD,
+      id:        `f-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      x:         pos.x,
+      y:         pos.y,
+      type,
+      value,
       spawnedAt: Date.now(),
-      despawnAt: GameConfig.FOOD.DESPAWN_TIME > 0 ? 
-        Date.now() + GameConfig.FOOD.DESPAWN_TIME : null,
+      despawnAt: despawn,
+      phase:     Math.random() * Math.PI * 2,  // individual pulse offset
     };
-    
+
     this.state.addFood(food);
     return food;
   }
-  
-  /**
-   * Find a valid spawn position
-   */
-  findValidPosition() {
-    const maxAttempts = 100;
-    const gridW = GameConfig.CANVAS.GRID_WIDTH;
-    const gridH = GameConfig.CANVAS.GRID_HEIGHT;
-    
-    for (let i = 0; i < maxAttempts; i++) {
-      const x = Math.floor(Math.random() * gridW);
-      const y = Math.floor(Math.random() * gridH);
-      
-      // Check collision with snake
-      if (this.state.snake.segments.some(seg => seg.x === x && seg.y === y)) {
-        continue;
-      }
-      
-      // Check collision with existing food
-      if (this.state.food.some(f => f.x === x && f.y === y)) {
-        continue;
-      }
-      
-      // Check collision with power-ups
-      // (Power-ups would be stored separately)
-      
-      return { x, y };
-    }
-    
-    return null; // No valid position found
-  }
-  
-  /**
-   * Check if snake head is on food
-   */
+
+  // ── Collision ────────────────────────────────────────────
+
   checkCollision() {
     const head = this.state.snake.segments[0];
     if (!head) return null;
-    
-    for (const food of this.state.food) {
-      if (food.x === head.x && food.y === head.y) {
-        return food;
-      }
-    }
-    
-    return null;
+    // Use rounded position for magnet-moved food
+    return this.state.food.find(
+      f => Math.round(f.x) === head.x && Math.round(f.y) === head.y
+    ) || null;
   }
-  
-  /**
-   * Eat food
-   */
+
   eat(food) {
-    // Remove food
     this.state.removeFood(food.id);
-    
-    // Add score
-    this.state.addScore(food.value);
-    
-    // Track stats
-    if (food.type === 'golden') {
-      this.state.goldenFoodEaten++;
-    } else {
-      this.state.foodEaten++;
-    }
-    
+
+    if (food.type === 'golden') this.state.goldenFoodEaten++;
+    else this.state.foodEaten++;
+
+    // Update combo before scoring
+    this.state.extendCombo();
+
+    const pts = this.state.addScore(food.value);
+
     // Grow snake
-    this.state.growSnake(1);
-    
-    // Update speed
+    const grow = food.type === 'golden' ? 2 : 1;
+    this.state.growSnake(grow);
+
+    // Speed & level
     this.state.updateSpeed();
-    
-    // Emit event
-    this.state.emit('foodEaten', { food });
-    
-    return food.value;
+    this.state.checkLevelUp();
+
+    return pts;
   }
-  
-  /**
-   * Check if there's food within magnet range
-   */
-  getMagnetTarget() {
-    if (!this.state.hasPowerUp('magnet')) return null;
-    
-    const head = this.state.snake.segments[0];
-    const magnetRadius = GameConfig.POWERUPS.MAGNET.radius;
-    let closest = null;
-    let closestDist = Infinity;
-    
-    for (const food of this.state.food) {
-      const dx = food.x - head.x;
-      const dy = food.y - head.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      
-      if (dist <= magnetRadius && dist < closestDist) {
-        closestDist = dist;
-        closest = food;
-      }
-    }
-    
-    return closest;
-  }
-  
-  /**
-   * Apply magnet effect - move food towards snake
-   */
-  applyMagnet() {
-    const head = this.state.snake.segments[0];
-    const magnetRadius = GameConfig.POWERUPS.MAGNET.radius;
-    
-    for (const food of this.state.food) {
-      const dx = head.x - food.x;
-      const dy = head.y - food.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      
-      if (dist <= magnetRadius && dist > 0.5) {
-        // Move food towards snake (subtle pull)
-        const pullStrength = 0.1;
-        food.x += (dx / dist) * pullStrength;
-        food.y += (dy / dist) * pullStrength;
-      }
-    }
-  }
-  
-  /**
-   * Render all food items
-   */
-  render(ctx) {
-    const cellSize = GameConfig.CANVAS.CELL_SIZE;
-    const pulseScale = 1 + Math.sin(this.pulsePhase) * 0.1;
-    
-    for (const food of this.state.food) {
-      const centerX = food.x * cellSize + cellSize / 2;
-      const centerY = food.y * cellSize + cellSize / 2;
-      
-      if (food.type === 'golden') {
-        this.renderGoldenFood(ctx, centerX, centerY, cellSize, pulseScale);
-      } else {
-        this.renderNormalFood(ctx, centerX, centerY, cellSize, pulseScale);
-      }
-    }
-  }
-  
-  /**
-   * Render normal food
-   */
-  renderNormalFood(ctx, x, y, cellSize, pulseScale) {
-    const size = (cellSize * 0.6) * pulseScale;
-    const color = GameConfig.COLORS.FOOD_NORMAL;
-    
-    // Glow
-    ctx.shadowBlur = 15;
-    ctx.shadowColor = GameConfig.COLORS.FOOD_GLOW;
-    
-    // Main orb
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(x, y, size / 2, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Inner highlight
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.beginPath();
-    ctx.arc(x - size * 0.15, y - size * 0.15, size * 0.2, 0, Math.PI * 2);
-    ctx.fill();
-    
-    ctx.shadowBlur = 0;
-  }
-  
-  /**
-   * Render golden food
-   */
-  renderGoldenFood(ctx, x, y, cellSize, pulseScale) {
-    const size = (cellSize * 0.7) * pulseScale;
-    const color = GameConfig.COLORS.FOOD_GOLDEN;
-    
-    // Outer glow ring
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.shadowBlur = 20;
-    ctx.shadowColor = color;
-    
-    ctx.beginPath();
-    ctx.arc(x, y, size * 0.7, 0, Math.PI * 2);
-    ctx.stroke();
-    
-    // Main orb
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(x, y, size / 2, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Star shape inside
-    ctx.fillStyle = '#ffffff';
-    this.drawStar(ctx, x, y, 5, size * 0.35, size * 0.15);
-    
-    ctx.shadowBlur = 0;
-  }
-  
-  /**
-   * Draw a star shape
-   */
-  drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
-    let rot = Math.PI / 2 * 3;
-    let x = cx;
-    let y = cy;
-    const step = Math.PI / spikes;
-    
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - outerRadius);
-    for (let i = 0; i < spikes; i++) {
-      x = cx + Math.cos(rot) * outerRadius;
-      y = cy + Math.sin(rot) * outerRadius;
-      ctx.lineTo(x, y);
-      rot += step;
-      
-      x = cx + Math.cos(rot) * innerRadius;
-      y = cy + Math.sin(rot) * innerRadius;
-      ctx.lineTo(x, y);
-      rot += step;
-    }
-    ctx.lineTo(cx, cy - outerRadius);
-    ctx.closePath();
-    ctx.fill();
-  }
-  
-  /**
-   * Clear all food
-   */
+
   clear() {
     this.state.food = [];
+    this.lastSpawn  = 0;
   }
-  
-  /**
-   * Generate unique ID
-   */
-  generateId() {
-    return `food-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+  // ── Magnet ───────────────────────────────────────────────
+
+  _applyMagnet() {
+    const head   = this.state.snake.segments[0];
+    const radius = GameConfig.POWERUPS.MAGNET.radius;
+
+    for (const f of this.state.food) {
+      const dx   = head.x - f.x;
+      const dy   = head.y - f.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > 0.5 && dist <= radius) {
+        const pull = 0.12;
+        f.x += (dx / dist) * pull;
+        f.y += (dy / dist) * pull;
+      }
+    }
+  }
+
+  // ── Position ─────────────────────────────────────────────
+
+  _findFreeCell() {
+    const gw = GameConfig.CANVAS.GRID_WIDTH;
+    const gh = GameConfig.CANVAS.GRID_HEIGHT;
+    for (let i = 0; i < 120; i++) {
+      const x = Math.floor(Math.random() * gw);
+      const y = Math.floor(Math.random() * gh);
+      if (this.state.snake.segments.some(s => s.x === x && s.y === y)) continue;
+      if (this.state.food.some(f => Math.round(f.x) === x && Math.round(f.y) === y)) continue;
+      return { x, y };
+    }
+    return null;
+  }
+
+  // ── Render ───────────────────────────────────────────────
+
+  render(ctx, nowMs) {
+    const cell  = GameConfig.CANVAS.CELL_SIZE;
+    const pulse = 1 + Math.sin(this.pulsePhase) * 0.12;
+
+    for (const f of this.state.food) {
+      const cx = f.x * cell + cell / 2;
+      const cy = f.y * cell + cell / 2;
+
+      // Individual pulse (each food has slight phase offset)
+      const fp   = 1 + Math.sin(this.pulsePhase + f.phase) * 0.1;
+      const size = cell * 0.58 * fp;
+
+      switch (f.type) {
+        case 'golden': this._drawGolden(ctx, cx, cy, size, pulse); break;
+        case 'bonus':  this._drawBonus(ctx, cx, cy, size, f, nowMs); break;
+        default:       this._drawNormal(ctx, cx, cy, size); break;
+      }
+    }
+  }
+
+  _drawNormal(ctx, cx, cy, size) {
+    const r = size / 2;
+    ctx.save();
+    ctx.shadowBlur  = 14;
+    ctx.shadowColor = GameConfig.COLORS.FOOD_NORMAL;
+    ctx.fillStyle   = GameConfig.COLORS.FOOD_NORMAL;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+    // Highlight
+    ctx.shadowBlur  = 0;
+    ctx.fillStyle   = 'rgba(255,255,255,0.55)';
+    ctx.beginPath();
+    ctx.arc(cx - r * 0.28, cy - r * 0.28, r * 0.32, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  _drawGolden(ctx, cx, cy, size, pulse) {
+    const r = size / 2;
+    ctx.save();
+    // Outer ring
+    ctx.shadowBlur  = 20;
+    ctx.shadowColor = GameConfig.COLORS.FOOD_GOLDEN;
+    ctx.strokeStyle = GameConfig.COLORS.FOOD_GOLDEN;
+    ctx.lineWidth   = 2;
+    ctx.globalAlpha = 0.7;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 1.4 * pulse, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    // Main orb
+    ctx.fillStyle = GameConfig.COLORS.FOOD_GOLDEN;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+    // Star
+    ctx.shadowBlur = 0;
+    ctx.fillStyle  = '#ffffff';
+    this._drawStar(ctx, cx, cy, 5, r * 0.55, r * 0.25);
+    ctx.restore();
+  }
+
+  _drawBonus(ctx, cx, cy, size, food, nowMs) {
+    const r = size / 2;
+    // Urgency flicker when close to despawn
+    let alpha = 1;
+    if (food.despawnAt) {
+      const remaining = food.despawnAt - nowMs;
+      if (remaining < 2000) {
+        alpha = 0.5 + 0.5 * Math.sin(nowMs * 0.01);
+      }
+    }
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.shadowBlur  = 18;
+    ctx.shadowColor = GameConfig.COLORS.FOOD_BONUS;
+    ctx.fillStyle   = GameConfig.COLORS.FOOD_BONUS;
+    // Diamond shape
+    ctx.beginPath();
+    ctx.moveTo(cx,     cy - r);
+    ctx.lineTo(cx + r, cy    );
+    ctx.lineTo(cx,     cy + r);
+    ctx.lineTo(cx - r, cy    );
+    ctx.closePath();
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle  = 'rgba(255,255,255,0.5)';
+    ctx.beginPath();
+    ctx.arc(cx - r * 0.2, cy - r * 0.2, r * 0.25, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  _drawStar(ctx, cx, cy, spikes, outerR, innerR) {
+    let rot  = -Math.PI / 2;
+    const step = Math.PI / spikes;
+    ctx.beginPath();
+    for (let i = 0; i < spikes * 2; i++) {
+      const r = i % 2 === 0 ? outerR : innerR;
+      ctx.lineTo(cx + Math.cos(rot) * r, cy + Math.sin(rot) * r);
+      rot += step;
+    }
+    ctx.closePath();
+    ctx.fill();
   }
 }
 

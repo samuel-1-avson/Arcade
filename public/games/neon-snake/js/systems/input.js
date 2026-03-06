@@ -1,215 +1,194 @@
 /**
- * Neon Snake Arena - Input System
- * Handles keyboard and touch input
+ * Neon Snake Arena v2.0 - Input System
+ * Direction changes are queued (one buffered ahead) so fast presses are not lost.
  */
 
 class InputSystem {
-  constructor(state) {
-    this.state = state;
-    this.keys = new Map();
-    this.touchStartPos = null;
-    this.touchStartTime = 0;
-    this.swipeThreshold = 50;
-    this.tapThreshold = 200;
-    
-    this.boundKeyDown = this.handleKeyDown.bind(this);
-    this.boundKeyUp = this.handleKeyUp.bind(this);
-    this.boundTouchStart = this.handleTouchStart.bind(this);
-    this.boundTouchMove = this.handleTouchMove.bind(this);
-    this.boundTouchEnd = this.handleTouchEnd.bind(this);
-    
-    this.setupEventListeners();
+  constructor(state, game) {
+    this.state  = state;
+    this.game   = game;   // reference to main NeonSnakeGame instance
+    this.keys   = new Map();
+
+    // Touch tracking
+    this.touchStart = null;
+    this.touchTime  = 0;
+    this.SWIPE_THRESHOLD = 40;
+    this.TAP_THRESHOLD   = 180;
+
+    this._onKeyDown    = this._onKeyDown.bind(this);
+    this._onKeyUp      = this._onKeyUp.bind(this);
+    this._onTouchStart = this._onTouchStart.bind(this);
+    this._onTouchMove  = this._onTouchMove.bind(this);
+    this._onTouchEnd   = this._onTouchEnd.bind(this);
+
+    this._listen();
   }
-  
-  setupEventListeners() {
-    window.addEventListener('keydown', this.boundKeyDown);
-    window.addEventListener('keyup', this.boundKeyUp);
-    
-    // Touch events
+
+  _listen() {
+    window.addEventListener('keydown', this._onKeyDown);
+    window.addEventListener('keyup',   this._onKeyUp);
+
     const canvas = document.getElementById('gameCanvas');
     if (canvas) {
-      canvas.addEventListener('touchstart', this.boundTouchStart, { passive: false });
-      canvas.addEventListener('touchmove', this.boundTouchMove, { passive: false });
-      canvas.addEventListener('touchend', this.boundTouchEnd, { passive: false });
+      canvas.addEventListener('touchstart', this._onTouchStart, { passive: false });
+      canvas.addEventListener('touchmove',  this._onTouchMove,  { passive: false });
+      canvas.addEventListener('touchend',   this._onTouchEnd,   { passive: false });
+    }
+
+    // D-pad mobile buttons
+    document.querySelectorAll('[data-dir]').forEach(btn => {
+      btn.addEventListener('touchstart', e => {
+        e.preventDefault();
+        const dir = btn.dataset.dir;
+        this._applyDirection(dir);
+      }, { passive: false });
+      btn.addEventListener('click', () => {
+        this._applyDirection(btn.dataset.dir);
+      });
+    });
+
+    // Mobile pause button
+    const pauseBtn = document.querySelector('.mobile-pause-btn');
+    if (pauseBtn) {
+      pauseBtn.addEventListener('click', () => this._togglePause());
     }
   }
-  
+
   removeEventListeners() {
-    window.removeEventListener('keydown', this.boundKeyDown);
-    window.removeEventListener('keyup', this.boundKeyUp);
-    
+    window.removeEventListener('keydown', this._onKeyDown);
+    window.removeEventListener('keyup',   this._onKeyUp);
+
     const canvas = document.getElementById('gameCanvas');
     if (canvas) {
-      canvas.removeEventListener('touchstart', this.boundTouchStart);
-      canvas.removeEventListener('touchmove', this.boundTouchMove);
-      canvas.removeEventListener('touchend', this.boundTouchEnd);
+      canvas.removeEventListener('touchstart', this._onTouchStart);
+      canvas.removeEventListener('touchmove',  this._onTouchMove);
+      canvas.removeEventListener('touchend',   this._onTouchEnd);
     }
   }
-  
-  handleKeyDown(e) {
-    const key = e.key;
-    this.keys.set(key, true);
-    
-    // Prevent default for game keys to stop scrolling
-    if (this.isGameKey(key)) {
-      e.preventDefault();
-    }
-    
-    // Emit event for other systems
-    this.state.emit('inputKeyDown', { key, event: e });
-    
-    // Handle direction input (only when playing)
+
+  // ── Keyboard ─────────────────────────────────────────────
+
+  _onKeyDown(e) {
+    this.keys.set(e.key, true);
+
+    if (this._isGameKey(e.key)) e.preventDefault();
+
+    // Direction when playing
     if (this.state.status === 'playing') {
-      this.handleDirectionInput(key);
+      const dir = this._keyToDir(e.key);
+      if (dir) this._queueDirection(dir.x, dir.y);
     }
-    
-    // Handle game control keys
-    this.handleControlKeys(key);
+
+    // Menu navigation
+    if (this.state.status === 'menu') {
+      this.game.handleMenuKey(e.key);
+      return;
+    }
+
+    // Pause toggle
+    if (GameConfig.INPUT.PAUSE.includes(e.key)) {
+      this._togglePause();
+      return;
+    }
+
+    // Restart from game over
+    if (GameConfig.INPUT.RESTART.includes(e.key)) {
+      if (this.state.status === 'gameOver') {
+        this.game.restart();
+      }
+      return;
+    }
+
+    // Mute toggle
+    if (GameConfig.INPUT.MUTE.includes(e.key)) {
+      this.game.toggleMute();
+    }
   }
-  
-  handleKeyUp(e) {
+
+  _onKeyUp(e) {
     this.keys.set(e.key, false);
-    this.state.emit('inputKeyUp', { key: e.key });
   }
-  
-  isGameKey(key) {
+
+  // ── Touch ────────────────────────────────────────────────
+
+  _onTouchStart(e) {
+    e.preventDefault();
+    const t = e.touches[0];
+    this.touchStart = { x: t.clientX, y: t.clientY };
+    this.touchTime  = Date.now();
+  }
+
+  _onTouchMove(e) {
+    e.preventDefault();
+  }
+
+  _onTouchEnd(e) {
+    e.preventDefault();
+    if (!this.touchStart) return;
+
+    const t  = e.changedTouches[0];
+    const dx = t.clientX - this.touchStart.x;
+    const dy = t.clientY - this.touchStart.y;
+    const dt = Date.now() - this.touchTime;
+    this.touchStart = null;
+
+    // Tap -> pause/resume
+    if (Math.abs(dx) < this.SWIPE_THRESHOLD && Math.abs(dy) < this.SWIPE_THRESHOLD && dt < this.TAP_THRESHOLD) {
+      this._togglePause();
+      return;
+    }
+
+    // Swipe direction
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > this.SWIPE_THRESHOLD) {
+      this._queueDirection(dx > 0 ? 1 : -1, 0);
+    } else if (Math.abs(dy) > this.SWIPE_THRESHOLD) {
+      this._queueDirection(0, dy > 0 ? 1 : -1);
+    }
+  }
+
+  // ── Helpers ──────────────────────────────────────────────
+
+  _keyToDir(key) {
+    if (GameConfig.INPUT.UP.includes(key))    return { x: 0,  y: -1 };
+    if (GameConfig.INPUT.DOWN.includes(key))  return { x: 0,  y:  1 };
+    if (GameConfig.INPUT.LEFT.includes(key))  return { x: -1, y:  0 };
+    if (GameConfig.INPUT.RIGHT.includes(key)) return { x:  1, y:  0 };
+    return null;
+  }
+
+  _applyDirection(name) {
+    const map = { up: { x:0,y:-1 }, down: { x:0,y:1 }, left: { x:-1,y:0 }, right: { x:1,y:0 } };
+    const d   = map[name];
+    if (d) this._queueDirection(d.x, d.y);
+  }
+
+  _queueDirection(dx, dy) {
+    if (this.state.status !== 'playing') return;
+    this.game.snake.queueDirection(dx, dy);
+    this.state.emit('inputDirection', { dx, dy });
+  }
+
+  _togglePause() {
+    if (this.state.status === 'playing') {
+      this.game.pause();
+    } else if (this.state.status === 'paused') {
+      this.game.resume();
+    }
+  }
+
+  _isGameKey(key) {
     return [
       ...GameConfig.INPUT.UP,
       ...GameConfig.INPUT.DOWN,
       ...GameConfig.INPUT.LEFT,
       ...GameConfig.INPUT.RIGHT,
       ...GameConfig.INPUT.PAUSE,
+      ' ',
     ].includes(key);
   }
-  
-  handleDirectionInput(key) {
-    const snake = this.state.snake;
-    let dx = 0;
-    let dy = 0;
-    
-    if (GameConfig.INPUT.UP.includes(key)) {
-      dy = -1;
-    } else if (GameConfig.INPUT.DOWN.includes(key)) {
-      dy = 1;
-    } else if (GameConfig.INPUT.LEFT.includes(key)) {
-      dx = -1;
-    } else if (GameConfig.INPUT.RIGHT.includes(key)) {
-      dx = 1;
-    }
-    
-    if (dx !== 0 || dy !== 0) {
-      // Queue direction change
-      if (snake.nextDirection.x === snake.direction.x && 
-          snake.nextDirection.y === snake.direction.y) {
-        
-        // Prevent 180-degree turn
-        if (!(dx === -snake.direction.x && dy === -snake.direction.y)) {
-          snake.nextDirection = { x: dx, y: dy };
-          this.state.emit('inputDirection', { direction: { x: dx, y: dy } });
-        }
-      }
-    }
-  }
-  
-  handleControlKeys(key) {
-    // Pause
-    if (GameConfig.INPUT.PAUSE.includes(key)) {
-      if (this.state.status === 'playing') {
-        this.state.setStatus('paused');
-      } else if (this.state.status === 'paused') {
-        this.state.setStatus('playing');
-      }
-      return;
-    }
-    
-    // Restart
-    if (GameConfig.INPUT.RESTART.includes(key)) {
-      if (this.state.status === 'gameOver') {
-        this.state.emit('gameRestart', {});
-      }
-    }
-  }
-  
-  // Touch Handling
-  handleTouchStart(e) {
-    e.preventDefault();
-    const touch = e.touches[0];
-    this.touchStartPos = { x: touch.clientX, y: touch.clientY };
-    this.touchStartTime = Date.now();
-  }
-  
-  handleTouchMove(e) {
-    e.preventDefault();
-    // Could add continuous touch tracking here
-  }
-  
-  handleTouchEnd(e) {
-    e.preventDefault();
-    
-    if (!this.touchStartPos) return;
-    
-    const touch = e.changedTouches[0];
-    const endX = touch.clientX;
-    const endY = touch.clientY;
-    
-    const dx = endX - this.touchStartPos.x;
-    const dy = endY - this.touchStartPos.y;
-    const dt = Date.now() - this.touchStartTime;
-    
-    // Check for tap (pause)
-    if (Math.abs(dx) < this.swipeThreshold && 
-        Math.abs(dy) < this.swipeThreshold &&
-        dt < this.tapThreshold) {
-      if (this.state.status === 'playing') {
-        this.state.setStatus('paused');
-      } else if (this.state.status === 'paused') {
-        this.state.setStatus('playing');
-      }
-      return;
-    }
-    
-    // Check for swipe
-    if (Math.abs(dx) > Math.abs(dy)) {
-      // Horizontal swipe
-      if (Math.abs(dx) > this.swipeThreshold) {
-        const key = dx > 0 ? 'ArrowRight' : 'ArrowLeft';
-        this.handleDirectionInput(key);
-      }
-    } else {
-      // Vertical swipe
-      if (Math.abs(dy) > this.swipeThreshold) {
-        const key = dy > 0 ? 'ArrowDown' : 'ArrowUp';
-        this.handleDirectionInput(key);
-      }
-    }
-    
-    this.touchStartPos = null;
-  }
-  
-  /**
-   * Check if a key is currently pressed
-   */
+
   isPressed(key) {
     return this.keys.get(key) || false;
-  }
-  
-  /**
-   * Get all currently pressed keys
-   */
-  getPressedKeys() {
-    const pressed = [];
-    for (const [key, value] of this.keys) {
-      if (value) pressed.push(key);
-    }
-    return pressed;
-  }
-  
-  /**
-   * Reset all key states
-   */
-  reset() {
-    this.keys.clear();
-    this.touchStartPos = null;
   }
 }
 

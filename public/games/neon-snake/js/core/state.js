@@ -1,366 +1,397 @@
 /**
- * Neon Snake Arena - State Management
- * Centralized game state with event emission
+ * Neon Snake Arena v2.0 - Game State
+ * Clean state machine — does NOT auto-emit gameStart on setStatus.
+ * Game flow is driven explicitly from main.js.
  */
 
 class GameState {
   constructor() {
+    // ── Status ────────────────────────────────────────────
+    // Values: 'menu' | 'countdown' | 'playing' | 'paused' | 'gameOver'
     this.status = 'menu';
-    this.mode = 'classic';
-    this.score = 0;
-    this.highScore = 0;
-    this.sessionHighScore = 0;
-    this.level = 1;
-    this.speed = GameConfig.TIMING.BASE_SPEED;
-    this.baseSpeed = GameConfig.TIMING.BASE_SPEED;
-    
+    this.mode   = 'classic';
+
+    // ── Score ─────────────────────────────────────────────
+    this.score      = 0;
+    this.highScores = { classic: 0, timeAttack: 0, endless: 0 };
+
+    // ── Snake ─────────────────────────────────────────────
     this.snake = {
-      segments: [],
-      direction: { x: 1, y: 0 },
+      segments:      [],
+      direction:     { x: 1, y: 0 },
       nextDirection: { x: 1, y: 0 },
-      growing: 0,
+      dirQueue:      [],   // up to 1 buffered future direction
+      growing:       0,
     };
-    
-    this.food = [];
-    this.foodEaten = 0;
+
+    // ── Entities ──────────────────────────────────────────
+    this.food       = [];
+    this.foodEaten  = 0;
     this.goldenFoodEaten = 0;
-    
-    this.activePowerUps = new Map();
+
+    // ── Power-ups ─────────────────────────────────────────
+    this.activePowerUps    = new Map();
     this.powerUpsCollected = 0;
-    
-    this.startTime = 0;
-    this.elapsedTime = 0;
+
+    // ── Timing ────────────────────────────────────────────
+    this.speed         = GameConfig.TIMING.BASE_SPEED;
+    this.startTime     = 0;
+    this.elapsedTime   = 0;
     this.timeRemaining = 0;
-    this.lastMoveTime = 0;
-    
+
+    // ── Combo ─────────────────────────────────────────────
+    this.combo          = 1;
+    this.lastEatTime    = 0;
+    this.comboExpireTimer = 0;
+
+    // ── Level ─────────────────────────────────────────────
+    this.level     = 1;
+    this.levelFood = 0;   // food eaten this level
+
+    // ── Stats ─────────────────────────────────────────────
     this.stats = {
-      totalMoves: 0,
+      totalMoves:      0,
       distanceTraveled: 0,
-      wallsPassed: 0,
-      nearMisses: 0,
-      maxSegments: 0,
+      wallsPassed:     0,
+      maxSegments:     0,
+      powerUpsCollected: 0,
     };
-    
+
+    // ── Effects ───────────────────────────────────────────
     this.effects = {
       screenShake: 0,
-      flash: 0,
-      pulse: 0,
+      flash:       0,
     };
-    
-    this.listeners = new Map();
-    this.loadHighScore();
+
+    // ── Events ────────────────────────────────────────────
+    this._listeners = new Map();
+
+    this._loadHighScores();
   }
-  
-  on(event, callback) {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, []);
+
+  // ── Event bus ───────────────────────────────────────────
+
+  on(event, cb) {
+    if (!this._listeners.has(event)) this._listeners.set(event, []);
+    this._listeners.get(event).push(cb);
+  }
+
+  off(event, cb) {
+    const list = this._listeners.get(event);
+    if (list) {
+      const i = list.indexOf(cb);
+      if (i > -1) list.splice(i, 1);
     }
-    this.listeners.get(event).push(callback);
   }
-  
-  off(event, callback) {
-    if (this.listeners.has(event)) {
-      const callbacks = this.listeners.get(event);
-      const index = callbacks.indexOf(callback);
-      if (index > -1) {
-        callbacks.splice(index, 1);
-      }
-    }
-  }
-  
+
   emit(event, data) {
-    if (this.listeners.has(event)) {
-      this.listeners.get(event).forEach(callback => {
-        try {
-          callback(data);
-        } catch (error) {
-          console.error(`Error in event listener for ${event}:`, error);
-        }
-      });
-    }
+    const list = this._listeners.get(event);
+    if (!list) return;
+    list.forEach(cb => {
+      try { cb(data); } catch (e) { console.error('[State] Event error:', event, e); }
+    });
   }
-  
-  setStatus(status) {
-    const oldStatus = this.status;
-    this.status = status;
-    this.emit('statusChange', { oldStatus, newStatus: status });
-    
-    if (status === 'playing') {
-      this.emit('gameStart', { mode: this.mode });
-    } else if (status === 'gameOver') {
-      this.emit('gameOver', {
-        score: this.score,
-        stats: { ...this.stats },
-        isHighScore: this.score > this.sessionHighScore && this.score > 0,
-      });
-    } else if (status === 'paused') {
-      this.emit('gamePause', {});
-    }
+
+  // ── Status ───────────────────────────────────────────────
+
+  setStatus(newStatus) {
+    const prev = this.status;
+    if (prev === newStatus) return;
+    this.status = newStatus;
+    this.emit('statusChange', { prev, next: newStatus });
   }
-  
-  setMode(mode) {
-    if (GameConfig.MODES[mode.toUpperCase()]) {
-      this.mode = mode;
-      const modeConfig = GameConfig.MODES[mode.toUpperCase()];
-      this.timeRemaining = modeConfig.timeLimit;
-      this.emit('modeChange', { mode, config: modeConfig });
-    }
+
+  // ── Mode ─────────────────────────────────────────────────
+
+  setMode(modeId) {
+    const cfg = GameConfig.MODES[modeId.toUpperCase()];
+    if (!cfg) return;
+    this.mode = modeId;
+    this.timeRemaining = cfg.timeLimit || 0;
+    this.emit('modeChange', { mode: modeId });
   }
-  
-  addScore(points) {
-    if (this.hasPowerUp('scoreMultiplier')) {
-      points *= GameConfig.POWERUPS.SCORE_MULTIPLIER.multiplier;
-    }
-    
-    this.score += Math.floor(points);
-    
-    if (this.score > this.sessionHighScore) {
-      this.sessionHighScore = this.score;
-    }
-    
-    if (this.score > this.highScore) {
-      this.highScore = this.score;
-      this.saveHighScore();
-      this.emit('newHighScore', { score: this.highScore });
-    }
-    
-    this.emit('scoreChange', { score: this.score, added: points });
-  }
-  
+
+  // ── Reset ────────────────────────────────────────────────
+
   reset() {
-    this.status = 'menu';
-    this.score = 0;
-    this.level = 1;
-    this.speed = this.baseSpeed;
+    this.score      = 0;
+    this.speed      = GameConfig.TIMING.BASE_SPEED;
+    this.elapsedTime = 0;
+    this.combo       = 1;
+    this.lastEatTime = 0;
+    this.comboExpireTimer = 0;
+    this.level       = 1;
+    this.levelFood   = 0;
+    this.foodEaten   = 0;
+    this.goldenFoodEaten = 0;
+
+    const modeCfg = GameConfig.MODES[this.mode.toUpperCase()];
+    this.timeRemaining = modeCfg ? (modeCfg.timeLimit || 0) : 0;
+
     this.snake = {
-      segments: [],
-      direction: { x: 1, y: 0 },
+      segments:      [],
+      direction:     { x: 1, y: 0 },
       nextDirection: { x: 1, y: 0 },
-      growing: 0,
+      dirQueue:      [],
+      growing:       0,
     };
     this.food = [];
-    this.foodEaten = 0;
-    this.goldenFoodEaten = 0;
     this.activePowerUps.clear();
     this.powerUpsCollected = 0;
-    this.elapsedTime = 0;
-    this.timeRemaining = GameConfig.MODES[this.mode.toUpperCase()]?.timeLimit || 0;
-    this.lastMoveTime = 0;
+
     this.stats = {
-      totalMoves: 0,
-      distanceTraveled: 0,
-      wallsPassed: 0,
-      nearMisses: 0,
-      maxSegments: 0,
+      totalMoves:        0,
+      distanceTraveled:  0,
+      wallsPassed:       0,
+      maxSegments:       0,
+      powerUpsCollected: 0,
     };
-    this.effects = {
-      screenShake: 0,
-      flash: 0,
-      pulse: 0,
-    };
+
+    this.effects = { screenShake: 0, flash: 0 };
   }
-  
-  initSnake(startPos, length = 3) {
+
+  // ── Snake initialisation ─────────────────────────────────
+
+  initSnake(startX, startY, length = 3) {
     this.snake.segments = [];
     for (let i = 0; i < length; i++) {
-      this.snake.segments.push({
-        x: startPos.x - i,
-        y: startPos.y,
-      });
+      this.snake.segments.push({ x: startX - i, y: startY });
     }
-    this.snake.direction = { x: 1, y: 0 };
+    this.snake.direction     = { x: 1, y: 0 };
     this.snake.nextDirection = { x: 1, y: 0 };
-    this.updateMaxSegments();
+    this.snake.dirQueue      = [];
+    this.snake.growing       = 0;
+    this._updateMaxSegments();
   }
-  
+
   growSnake(amount = 1) {
     this.snake.growing += amount;
   }
-  
+
   shrinkSnake(amount = 1) {
-    const removeCount = Math.min(amount, this.snake.segments.length - 3);
-    for (let i = 0; i < removeCount; i++) {
-      this.snake.segments.pop();
-    }
-    this.updateMaxSegments();
+    const remove = Math.min(amount, this.snake.segments.length - 3);
+    for (let i = 0; i < remove; i++) this.snake.segments.pop();
+    this._updateMaxSegments();
   }
-  
-  updateMaxSegments() {
+
+  _updateMaxSegments() {
     if (this.snake.segments.length > this.stats.maxSegments) {
       this.stats.maxSegments = this.snake.segments.length;
     }
   }
-  
-  addPowerUp(powerUpId) {
-    const config = Object.values(GameConfig.POWERUPS).find(p => p.id === powerUpId);
-    if (!config) return;
-    
+
+  // ── Scoring ──────────────────────────────────────────────
+
+  addScore(base) {
+    let pts = base;
+
+    // Score multiplier power-up
+    if (this.hasPowerUp('scoreMultiplier')) {
+      pts *= GameConfig.POWERUPS.SCORE_MULTIPLIER.multiplier;
+    }
+
+    // Combo bonus: each extra combo level adds 50% of base
+    if (this.combo > 1) {
+      pts = Math.round(pts * (1 + (this.combo - 1) * 0.5));
+    }
+
+    pts = Math.floor(pts);
+    this.score += pts;
+
+    if (this.score > (this.highScores[this.mode] || 0)) {
+      this.highScores[this.mode] = this.score;
+      this._saveHighScores();
+      this.emit('newHighScore', { score: this.score });
+    }
+
+    this.emit('scoreChange', { score: this.score, added: pts });
+    return pts;
+  }
+
+  // ── Combo ────────────────────────────────────────────────
+
+  extendCombo() {
     const now = Date.now();
-    const expiresAt = config.duration ? now + config.duration : null;
-    
-    this.activePowerUps.set(powerUpId, {
-      id: powerUpId,
+    if (now - this.lastEatTime < GameConfig.SCORING.COMBO_WINDOW) {
+      this.combo = Math.min(this.combo + 1, GameConfig.SCORING.COMBO_MAX);
+    } else {
+      this.combo = 1;
+    }
+    this.lastEatTime = now;
+    this.emit('comboChange', { combo: this.combo });
+  }
+
+  resetCombo() {
+    if (this.combo > 1) {
+      this.combo = 1;
+      this.emit('comboChange', { combo: 1 });
+    }
+  }
+
+  // ── Speed ────────────────────────────────────────────────
+
+  updateSpeed() {
+    const modeCfg = GameConfig.MODES[this.mode.toUpperCase()];
+    if (modeCfg && !modeCfg.speedAcceleration) {
+      this.speed = GameConfig.TIMING.BASE_SPEED;
+      return;
+    }
+
+    let base = Math.max(
+      GameConfig.TIMING.MIN_SPEED,
+      GameConfig.TIMING.BASE_SPEED - this.foodEaten * GameConfig.TIMING.SPEED_INCREMENT
+    );
+
+    if (this.hasPowerUp('speedBoost')) {
+      base = base / GameConfig.TIMING.SPEED_BOOST_MULT;
+    } else if (this.hasPowerUp('slow')) {
+      base = base * GameConfig.TIMING.SLOW_DIVISOR;
+    }
+
+    this.speed = Math.max(GameConfig.TIMING.MIN_SPEED, base);
+  }
+
+  // ── Level ────────────────────────────────────────────────
+
+  checkLevelUp() {
+    this.levelFood++;
+    if (this.levelFood >= GameConfig.LEVELS.FOOD_PER_LEVEL) {
+      this.levelFood = 0;
+      if (this.level < GameConfig.LEVELS.MAX_LEVEL) {
+        this.level++;
+        this.emit('levelUp', { level: this.level });
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // ── Power-ups ────────────────────────────────────────────
+
+  addPowerUp(id) {
+    const cfg = Object.values(GameConfig.POWERUPS).find(p => p.id === id);
+    if (!cfg) return;
+
+    const now = Date.now();
+    const expiresAt = cfg.duration ? now + cfg.duration : null;
+
+    if (id === 'shrink') {
+      this.shrinkSnake(cfg.segmentsRemoved);
+      this.emit('powerUpActivated', { id, name: cfg.name });
+      return;
+    }
+
+    this.activePowerUps.set(id, {
+      id,
+      cfg,
       startedAt: now,
-      expiresAt: expiresAt,
-      config: config,
+      expiresAt,
     });
-    
+
     this.powerUpsCollected++;
-    
-    if (powerUpId === 'shrink') {
-      this.shrinkSnake(config.segmentsRemoved);
-      this.activePowerUps.delete(powerUpId);
-    }
-    
-    this.emit('powerUpActivated', { powerUp: config });
-    
-    if (config.duration && powerUpId !== 'shrink') {
-      setTimeout(() => {
-        this.removePowerUp(powerUpId);
-      }, config.duration);
+    this.stats.powerUpsCollected++;
+    this.updateSpeed();
+    this.emit('powerUpActivated', { id, name: cfg.name });
+
+    if (expiresAt) {
+      setTimeout(() => this.removePowerUp(id), cfg.duration);
     }
   }
-  
-  removePowerUp(powerUpId) {
-    if (this.activePowerUps.has(powerUpId)) {
-      const powerUp = this.activePowerUps.get(powerUpId);
-      this.activePowerUps.delete(powerUpId);
-      this.emit('powerUpExpired', { powerUp: powerUp.config });
+
+  removePowerUp(id) {
+    if (this.activePowerUps.has(id)) {
+      const pu = this.activePowerUps.get(id);
+      this.activePowerUps.delete(id);
+      this.updateSpeed();
+      this.emit('powerUpExpired', { id, name: pu.cfg.name });
     }
   }
-  
-  hasPowerUp(powerUpId) {
-    return this.activePowerUps.has(powerUpId);
+
+  hasPowerUp(id) {
+    return this.activePowerUps.has(id);
   }
-  
+
   getActivePowerUps() {
     return Array.from(this.activePowerUps.values());
   }
-  
-  updateSpeed() {
-    const newSpeed = Math.max(
-      GameConfig.TIMING.MIN_SPEED,
-      this.baseSpeed - (this.foodEaten * GameConfig.TIMING.SPEED_INCREMENT)
-    );
-    
-    if (this.hasPowerUp('speedBoost')) {
-      this.speed = newSpeed / GameConfig.TIMING.SPEED_BOOST_MULTIPLIER;
-    } else {
-      this.speed = newSpeed;
+
+  // ── Food ─────────────────────────────────────────────────
+
+  addFood(food) {
+    this.food.push(food);
+  }
+
+  removeFood(id) {
+    const i = this.food.findIndex(f => f.id === id);
+    if (i > -1) { this.food.splice(i, 1); return true; }
+    return false;
+  }
+
+  // ── Time ─────────────────────────────────────────────────
+
+  updateTime(deltaMs) {
+    this.elapsedTime += deltaMs;
+
+    // Decay combo if window expired
+    if (this.combo > 1 && Date.now() - this.lastEatTime > GameConfig.SCORING.COMBO_WINDOW) {
+      this.resetCombo();
     }
-  }
-  
-  addFood(foodItem) {
-    this.food.push(foodItem);
-    this.emit('foodSpawned', { food: foodItem });
-  }
-  
-  removeFood(foodId) {
-    const index = this.food.findIndex(f => f.id === foodId);
-    if (index > -1) {
-      const food = this.food[index];
-      this.food.splice(index, 1);
-      return food;
-    }
-    return null;
-  }
-  
-  loadHighScore() {
-    try {
-      const stored = localStorage.getItem(`neon-snake-highscore-${this.mode}`);
-      if (stored) {
-        this.highScore = parseInt(stored, 10);
-      }
-    } catch (e) {
-      console.warn('Could not load high score:', e);
-    }
-  }
-  
-  saveHighScore() {
-    try {
-      localStorage.setItem(`neon-snake-highscore-${this.mode}`, this.highScore.toString());
-    } catch (e) {
-      console.warn('Could not save high score:', e);
-    }
-  }
-  
-  updateTime(deltaTime) {
-    this.elapsedTime += deltaTime;
-    
+
     if (this.timeRemaining > 0) {
-      this.timeRemaining -= deltaTime / 1000;
+      this.timeRemaining -= deltaMs / 1000;
       if (this.timeRemaining <= 0) {
         this.timeRemaining = 0;
         this.emit('timeUp', {});
       }
     }
   }
-  
+
+  // ── Effects ──────────────────────────────────────────────
+
   triggerScreenShake(intensity, duration) {
     intensity = intensity || GameConfig.EFFECTS.SCREEN_SHAKE_INTENSITY;
-    duration = duration || GameConfig.EFFECTS.SCREEN_SHAKE_DURATION;
+    duration  = duration  || GameConfig.EFFECTS.SCREEN_SHAKE_DURATION;
     this.effects.screenShake = intensity;
-    setTimeout(() => {
-      this.effects.screenShake = 0;
-    }, duration);
+    setTimeout(() => { this.effects.screenShake = 0; }, duration);
   }
-  
-  triggerFlash(duration) {
-    duration = duration || 200;
+
+  triggerFlash() {
     this.effects.flash = 1;
     const fade = () => {
       this.effects.flash -= 0.1;
-      if (this.effects.flash > 0) {
-        requestAnimationFrame(fade);
-      } else {
-        this.effects.flash = 0;
-      }
+      if (this.effects.flash > 0) requestAnimationFrame(fade);
+      else this.effects.flash = 0;
     };
-    fade();
+    requestAnimationFrame(fade);
   }
-  
+
+  // ── Stats ────────────────────────────────────────────────
+
   recordMove() {
     this.stats.totalMoves++;
     this.stats.distanceTraveled++;
   }
-  
+
   recordWallPass() {
     this.stats.wallsPassed++;
   }
-  
-  serialize() {
-    return {
-      status: this.status,
-      mode: this.mode,
-      score: this.score,
-      level: this.level,
-      speed: this.speed,
-      snake: {
-        segments: [...this.snake.segments],
-        direction: { ...this.snake.direction },
-        nextDirection: { ...this.snake.nextDirection },
-        growing: this.snake.growing,
-      },
-      food: [...this.food],
-      activePowerUps: Array.from(this.activePowerUps.entries()),
-      elapsedTime: this.elapsedTime,
-      timeRemaining: this.timeRemaining,
-      stats: { ...this.stats },
-    };
+
+  // ── Persistence ──────────────────────────────────────────
+
+  _loadHighScores() {
+    try {
+      const raw = localStorage.getItem('neon-snake-v2-highscores');
+      if (raw) {
+        const data = JSON.parse(raw);
+        Object.assign(this.highScores, data);
+      }
+    } catch (e) { /* ignore */ }
   }
-  
-  deserialize(data) {
-    this.status = data.status;
-    this.mode = data.mode;
-    this.score = data.score;
-    this.level = data.level;
-    this.speed = data.speed;
-    this.snake = { ...data.snake };
-    this.food = [...data.food];
-    this.activePowerUps = new Map(data.activePowerUps);
-    this.elapsedTime = data.elapsedTime;
-    this.timeRemaining = data.timeRemaining;
-    this.stats = { ...data.stats };
+
+  _saveHighScores() {
+    try {
+      localStorage.setItem('neon-snake-v2-highscores', JSON.stringify(this.highScores));
+    } catch (e) { /* ignore */ }
   }
 }
 

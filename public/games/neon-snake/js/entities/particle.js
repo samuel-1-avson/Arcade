@@ -1,265 +1,196 @@
 /**
- * Neon Snake Arena - Particle System
- * Visual effects and particle management
+ * Neon Snake Arena v2.0 - Particle System
+ * Pooled, high-performance particle effects.
+ * ctx should be in grid coordinate space when render() is called.
  */
 
 class ParticleSystem {
   constructor() {
-    this.particles = [];
-    this.pool = []; // Object pool for performance
-    this.maxParticles = 200;
+    this.particles   = [];
+    this.pool        = [];
+    this.MAX         = 300;
   }
-  
-  /**
-   * Create explosion effect
-   */
-  explode(x, y, color, count = 15, options = {}) {
-    const defaults = {
-      speed: 3,
-      life: 1000,
-      size: 4,
-      gravity: 0,
-      fade: true,
-    };
-    const config = { ...defaults, ...options };
-    
+
+  // ── Public effects ───────────────────────────────────────
+
+  /** Radial burst at (x,y) in canvas pixels. */
+  explode(x, y, color, count = 18, opts = {}) {
+    const speed = opts.speed || 4;
+    const life  = opts.life  || 900;
+    const size  = opts.size  || 4;
+
     for (let i = 0; i < count; i++) {
-      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
-      const speed = config.speed * (0.5 + Math.random() * 0.5);
-      
-      this.spawn({
-        x: x + (Math.random() - 0.5) * 10,
-        y: y + (Math.random() - 0.5) * 10,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        life: config.life * (0.8 + Math.random() * 0.4),
-        maxLife: config.life,
-        size: config.size * (0.5 + Math.random() * 0.5),
-        color: color,
-        gravity: config.gravity,
-        fade: config.fade,
-        type: 'explosion',
+      const angle = (Math.PI * 2 * i / count) + (Math.random() - 0.5) * 0.6;
+      const spd   = speed * (0.4 + Math.random() * 0.8);
+      this._spawn({
+        x: x + (Math.random() - 0.5) * 8,
+        y: y + (Math.random() - 0.5) * 8,
+        vx: Math.cos(angle) * spd,
+        vy: Math.sin(angle) * spd,
+        life: life * (0.7 + Math.random() * 0.5),
+        maxLife: life,
+        size: size * (0.5 + Math.random() * 0.8),
+        color,
+        gravity: 0.05,
+        type: 'dot',
       });
     }
   }
-  
-  /**
-   * Create trail effect
-   */
-  trail(x, y, color, options = {}) {
-    const defaults = {
-      count: 3,
-      speed: 0.5,
-      life: 400,
-      size: 3,
-    };
-    const config = { ...defaults, ...options };
-    
-    for (let i = 0; i < config.count; i++) {
-      this.spawn({
-        x: x + (Math.random() - 0.5) * 5,
-        y: y + (Math.random() - 0.5) * 5,
-        vx: (Math.random() - 0.5) * config.speed,
-        vy: (Math.random() - 0.5) * config.speed,
-        life: config.life,
-        maxLife: config.life,
-        size: config.size,
-        color: color,
-        fade: true,
-        type: 'trail',
+
+  /** Ring of particles expanding outward. */
+  ring(x, y, color, opts = {}) {
+    const count  = opts.count  || 24;
+    const radius = opts.radius || 10;
+    const life   = opts.life   || 600;
+
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.PI * 2 * i / count);
+      this._spawn({
+        x: x + Math.cos(angle) * radius * 0.3,
+        y: y + Math.sin(angle) * radius * 0.3,
+        vx: Math.cos(angle) * 2.5,
+        vy: Math.sin(angle) * 2.5,
+        life,
+        maxLife: life,
+        size: 2.5,
+        color,
+        type: 'dot',
       });
     }
   }
-  
-  /**
-   * Create sparkle effect
-   */
-  sparkle(x, y, color, options = {}) {
-    const defaults = {
-      count: 5,
-      speed: 1,
-      life: 600,
-      size: 2,
-    };
-    const config = { ...defaults, ...options };
-    
-    for (let i = 0; i < config.count; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = Math.random() * config.speed;
-      
-      this.spawn({
-        x: x,
-        y: y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        life: config.life * (0.5 + Math.random()),
-        maxLife: config.life,
-        size: config.size,
-        color: color,
-        fade: true,
-        type: 'sparkle',
-        blink: true,
-      });
-    }
-  }
-  
-  /**
-   * Create text particle
-   */
-  text(x, y, text, color, options = {}) {
-    const defaults = {
-      speed: 1,
-      life: 1000,
-      size: 16,
-    };
-    const config = { ...defaults, ...options };
-    
-    this.spawn({
-      x: x,
-      y: y,
-      vx: 0,
-      vy: -config.speed,
-      life: config.life,
-      maxLife: config.life,
-      size: config.size,
-      color: color,
-      fade: true,
+
+  /** Floating score text. */
+  scoreText(x, y, text, color, opts = {}) {
+    this._spawn({
+      x,
+      y,
+      vx: (Math.random() - 0.5) * 0.5,
+      vy: -(opts.speed || 1.2),
+      life: opts.life || 1100,
+      maxLife: opts.life || 1100,
+      size: opts.size || 18,
+      color,
       type: 'text',
-      text: text,
+      text,
     });
   }
-  
-  /**
-   * Spawn a particle (from pool or new)
-   */
-  spawn(config) {
-    // Use pooled particle or create new
-    let particle = this.pool.pop() || {};
-    
-    particle.x = config.x;
-    particle.y = config.y;
-    particle.vx = config.vx || 0;
-    particle.vy = config.vy || 0;
-    particle.life = config.life || 1000;
-    particle.maxLife = config.maxLife || particle.life;
-    particle.size = config.size || 4;
-    particle.color = config.color || '#ffffff';
-    particle.gravity = config.gravity || 0;
-    particle.fade = config.fade !== false;
-    particle.type = config.type || 'default';
-    particle.text = config.text || null;
-    particle.blink = config.blink || false;
-    
-    this.particles.push(particle);
-    
-    // Limit max particles
-    if (this.particles.length > this.maxParticles) {
-      const old = this.particles.shift();
-      this.pool.push(old);
+
+  /** Large announcement text (level up, combo, etc.) */
+  bigText(x, y, text, color) {
+    this._spawn({
+      x,
+      y,
+      vx: 0,
+      vy: -0.6,
+      life: 1400,
+      maxLife: 1400,
+      size: 28,
+      color,
+      type: 'text',
+      text,
+    });
+  }
+
+  /** Sparkle trail (e.g., speed-boost). */
+  sparkle(x, y, color, count = 4) {
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const spd   = Math.random() * 1.5;
+      this._spawn({
+        x: x + (Math.random() - 0.5) * 6,
+        y: y + (Math.random() - 0.5) * 6,
+        vx: Math.cos(angle) * spd,
+        vy: Math.sin(angle) * spd,
+        life: 300 + Math.random() * 200,
+        maxLife: 500,
+        size: 2,
+        color,
+        type: 'dot',
+      });
     }
   }
-  
-  /**
-   * Update all particles
-   */
-  update(deltaTime) {
-    const dt = deltaTime / 16; // Normalize to ~60fps
-    
+
+  // ── Update / render ──────────────────────────────────────
+
+  update(deltaMs) {
+    const dt = deltaMs / 16;  // normalise to ~60 fps
+
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i];
-      
-      // Update position
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-      
-      // Apply gravity
-      if (p.gravity !== 0) {
-        p.vy += p.gravity * dt;
-      }
-      
-      // Update life
-      p.life -= deltaTime;
-      
-      // Remove dead particles
+      p.x    += p.vx * dt;
+      p.y    += p.vy * dt;
+      p.vy   += p.gravity * dt;
+      p.life -= deltaMs;
+
       if (p.life <= 0) {
-        const dead = this.particles.splice(i, 1)[0];
-        this.pool.push(dead);
+        this.pool.push(this.particles.splice(i, 1)[0]);
       }
     }
   }
-  
-  /**
-   * Render all particles
-   */
+
   render(ctx) {
     for (const p of this.particles) {
-      const alpha = p.fade ? (p.life / p.maxLife) : 1;
-      
+      const alpha = p.life / p.maxLife;
       if (p.type === 'text') {
-        this.renderTextParticle(ctx, p, alpha);
+        this._renderText(ctx, p, alpha);
       } else {
-        this.renderDefaultParticle(ctx, p, alpha);
+        this._renderDot(ctx, p, alpha);
       }
     }
   }
-  
-  /**
-   * Render default particle
-   */
-  renderDefaultParticle(ctx, p, alpha) {
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    
-    if (p.blink && Math.floor(Date.now() / 100) % 2 === 0) {
-      ctx.globalAlpha = alpha * 0.5;
-    }
-    
-    // Glow
-    ctx.shadowBlur = p.size;
-    ctx.shadowColor = p.color;
-    
-    // Draw particle
-    ctx.fillStyle = p.color;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-    ctx.fill();
-    
-    ctx.restore();
-  }
-  
-  /**
-   * Render text particle
-   */
-  renderTextParticle(ctx, p, alpha) {
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle = p.color;
-    ctx.font = `bold ${p.size}px "Orbitron", sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = p.color;
-    
-    ctx.fillText(p.text, p.x, p.y);
-    ctx.restore();
-  }
-  
-  /**
-   * Clear all particles
-   */
+
   clear() {
-    // Return all to pool
-    for (const p of this.particles) {
-      this.pool.push(p);
-    }
+    for (const p of this.particles) this.pool.push(p);
     this.particles = [];
   }
-  
-  /**
-   * Get active particle count
-   */
-  getCount() {
-    return this.particles.length;
+
+  // ── Private ──────────────────────────────────────────────
+
+  _spawn(cfg) {
+    const p = this.pool.pop() || {};
+    p.x        = cfg.x;
+    p.y        = cfg.y;
+    p.vx       = cfg.vx       || 0;
+    p.vy       = cfg.vy       || 0;
+    p.life     = cfg.life     || 800;
+    p.maxLife  = cfg.maxLife  || p.life;
+    p.size     = cfg.size     || 4;
+    p.color    = cfg.color    || '#ffffff';
+    p.gravity  = cfg.gravity  || 0;
+    p.type     = cfg.type     || 'dot';
+    p.text     = cfg.text     || null;
+
+    this.particles.push(p);
+
+    // Evict oldest if over limit
+    if (this.particles.length > this.MAX) {
+      this.pool.push(this.particles.shift());
+    }
+  }
+
+  _renderDot(ctx, p, alpha) {
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, alpha);
+    ctx.shadowBlur  = p.size * 1.5;
+    ctx.shadowColor = p.color;
+    ctx.fillStyle   = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, Math.max(0.5, p.size * alpha), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  _renderText(ctx, p, alpha) {
+    ctx.save();
+    ctx.globalAlpha  = Math.max(0, alpha);
+    ctx.font         = `bold ${p.size}px "Orbitron", monospace`;
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowBlur   = 12;
+    ctx.shadowColor  = p.color;
+    ctx.fillStyle    = p.color;
+    ctx.fillText(p.text, p.x, p.y);
+    ctx.restore();
   }
 }
 

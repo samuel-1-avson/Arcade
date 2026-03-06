@@ -1,499 +1,432 @@
 /**
- * Neon Snake Arena - Main Game Controller
- * Orchestrates all game systems and manages game loop
+ * Neon Snake Arena v2.0 - Main Game Controller
+ *
+ * FIXES:
+ * - No more event-loop: selectMode -> setStatus -> gameStart -> startGame -> setStatus (infinite)
+ * - Restart works correctly
+ * - Countdown state before play
+ * - Proper ESC-to-menu flow
+ * - PowerUpSystem.time initialised in its constructor
  */
 
 class NeonSnakeGame {
   constructor() {
-    // State
-    this.state = gameState;
-    
-    // Systems
-    this.snake = null;
-    this.food = null;
-    this.powerUps = null;
+    this.state     = gameState;
+
+    // Systems (assigned in init())
+    this.snake     = null;
+    this.food      = null;
+    this.powerUps  = null;
     this.particles = null;
-    this.input = null;
-    this.renderer = null;
-    this.audio = null;
-    
+    this.input     = null;
+    this.renderer  = null;
+    this.audio     = null;
+
     // Game loop
-    this.lastTime = 0;
-    this.accumulator = 0;
-    this.isRunning = false;
+    this.isRunning   = false;
     this.animationId = null;
-    
-    // Auto-save
-    this.lastSaveTime = 0;
-    
-    // Bind methods
+    this.lastTime    = 0;
+    this.accumulator = 0;
+
+    // Menu state
+    this.menuOptions  = ['Classic', 'Time Attack', 'Endless'];
+    this.selectedMenu = 0;
+
+    // Countdown state
+    this.countdownValue  = 3;
+    this.countdownTimer  = 0;
+
+    // Game over stats snapshot
+    this._gameOverStats = null;
+
+    // Escape key pressed once while paused -> exit to menu
+    this._escapePressCount = 0;
+
     this.gameLoop = this.gameLoop.bind(this);
-    this.handleGameOver = this.handleGameOver.bind(this);
-    this.handleFoodEaten = this.handleFoodEaten.bind(this);
-    this.handlePowerUpCollect = this.handlePowerUpCollect.bind(this);
-    
-    // Menu
-    this.menuOptions = ['Classic', 'Time Attack', 'Endless'];
-    this.selectedOption = 0;
-    this.inMenu = true;
   }
-  
-  /**
-   * Initialize game
-   */
+
+  // ── Initialise ───────────────────────────────────────────
+
   init() {
-    console.log('[NeonSnake] Initializing...');
-    
-    // Get canvas
     const canvas = document.getElementById('gameCanvas');
-    if (!canvas) {
-      console.error('[NeonSnake] Canvas not found!');
-      return;
-    }
-    
-    // Initialize systems
-    this.snake = new Snake(this.state);
-    this.food = new FoodSystem(this.state);
-    this.powerUps = new PowerUpSystem(this.state);
+    if (!canvas) { console.error('[Game] Canvas not found'); return; }
+
+    this.snake     = new Snake(this.state);
+    this.food      = new FoodSystem(this.state);
+    this.powerUps  = new PowerUpSystem(this.state);
     this.particles = new ParticleSystem();
-    this.input = new InputSystem(this.state);
-    this.renderer = new Renderer(canvas, this.state);
-    this.audio = new AudioSystem();
-    
-    // Set up event listeners
-    this.setupEventListeners();
-    
-    // Initialize audio on first interaction
-    const initAudio = () => {
-      this.audio.init();
-      document.removeEventListener('click', initAudio);
-      document.removeEventListener('keydown', initAudio);
-    };
-    document.addEventListener('click', initAudio);
-    document.addEventListener('keydown', initAudio);
-    
-    // Notify hub
-    if (window.ArcadeHub) {
-      ArcadeHub.notifyReady();
-    }
-    
-    // Start loop
+    this.renderer  = new Renderer(canvas, this.state);
+    this.audio     = new AudioSystem();
+    this.input     = new InputSystem(this.state, this);
+
+    this._setupStateEvents();
+    this._setupAudioInit();
+
+    this.state.setStatus('menu');
+
+    if (window.ArcadeHub) ArcadeHub.notifyReady();
+
     this.isRunning = true;
-    this.lastTime = performance.now();
-    this.gameLoop(this.lastTime);
-    
-    console.log('[NeonSnake] Initialized successfully');
+    this.lastTime  = performance.now();
+    requestAnimationFrame(this.gameLoop);
+    console.log('[Game] Neon Snake Arena v2.0 ready');
   }
-  
-  setupEventListeners() {
-    // Game state events
-    this.state.on('gameStart', () => {
-      this.startGame();
-    });
-    
-    this.state.on('gameOver', (data) => {
-      this.handleGameOver(data);
-    });
-    
-    this.state.on('foodEaten', (data) => {
-      this.handleFoodEaten(data);
-    });
-    
-    this.state.on('powerUpCollect', (data) => {
-      this.handlePowerUpCollect(data);
-    });
-    
+
+  // ── State events ─────────────────────────────────────────
+
+  _setupStateEvents() {
     this.state.on('newHighScore', () => {
       this.audio.play('highscore');
     });
-    
-    this.state.on('timeUp', () => {
-      this.state.setStatus('gameOver');
-    });
-    
-    // Input events
-    this.state.on('inputDirection', () => {
-      this.audio.play('move');
-    });
-    
-    // Menu navigation
-    window.addEventListener('keydown', (e) => {
-      if (!this.inMenu) return;
-      
-      if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
-        this.selectedOption = (this.selectedOption - 1 + this.menuOptions.length) % this.menuOptions.length;
-        e.preventDefault();
-      } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
-        this.selectedOption = (this.selectedOption + 1) % this.menuOptions.length;
-        e.preventDefault();
-      } else if (e.key === 'Enter' || e.key === ' ') {
-        this.selectMode(this.menuOptions[this.selectedOption]);
-        e.preventDefault();
+
+    this.state.on('levelUp', ({ level }) => {
+      this.audio.play('levelup');
+      this.renderer.showLevelUp(level);
+      const head = this.snake.getHead();
+      if (head) {
+        const cx = head.x * GameConfig.CANVAS.CELL_SIZE + GameConfig.CANVAS.CELL_SIZE / 2;
+        const cy = head.y * GameConfig.CANVAS.CELL_SIZE + GameConfig.CANVAS.CELL_SIZE / 2;
+        this.particles.ring(cx, cy, '#00ff88', { count: 30, radius: 30 });
       }
     });
+
+    this.state.on('powerUpExpired', ({ name }) => {
+      // Nothing needed — state.updateSpeed() already called
+    });
+
+    this.state.on('timeUp', () => {
+      this._triggerGameOver();
+    });
   }
-  
-  /**
-   * Start a new game
-   */
-  startGame() {
-    console.log('[NeonSnake] Starting game:', this.state.mode);
-    
-    // Reset state
-    this.state.reset();
-    
-    // Initialize snake in center
-    const centerX = Math.floor(GameConfig.CANVAS.GRID_WIDTH / 2);
-    const centerY = Math.floor(GameConfig.CANVAS.GRID_HEIGHT / 2);
-    this.snake.init(centerX, centerY, 3);
-    
-    // Clear entities
-    this.food.clear();
-    this.powerUps.clear();
-    this.particles.clear();
-    
-    // Spawn initial food
-    this.food.spawn();
-    
-    // Set status
-    this.state.setStatus('playing');
-    this.inMenu = false;
-    
-    // Start timers
-    this.state.startTime = Date.now();
-    this.lastSaveTime = Date.now();
-  }
-  
-  /**
-   * Select game mode from menu
-   */
-  selectMode(modeName) {
-    const modeMap = {
-      'Classic': 'classic',
-      'Time Attack': 'timeAttack',
-      'Endless': 'endless',
+
+  _setupAudioInit() {
+    const init = () => {
+      this.audio.init();
+      document.removeEventListener('click',   init);
+      document.removeEventListener('keydown', init);
+      document.removeEventListener('touchstart', init);
     };
-    
-    const mode = modeMap[modeName];
-    if (mode) {
-      this.state.setMode(mode);
-      this.state.setStatus('playing');
-      this.startGame();
-    }
+    document.addEventListener('click',      init);
+    document.addEventListener('keydown',    init);
+    document.addEventListener('touchstart', init);
   }
-  
-  /**
-   * Main game loop
-   */
-  gameLoop(currentTime) {
+
+  // ── Game loop ────────────────────────────────────────────
+
+  gameLoop(timestamp) {
     if (!this.isRunning) return;
-    
-    const deltaTime = currentTime - this.lastTime;
-    this.lastTime = currentTime;
-    
-    // Update
-    this.update(deltaTime);
-    
-    // Render
-    this.render();
-    
-    // Continue loop
+
+    const dt = Math.min(timestamp - this.lastTime, 100); // cap at 100ms
+    this.lastTime = timestamp;
+
+    this._update(dt);
+    this._render();
+
     this.animationId = requestAnimationFrame(this.gameLoop);
   }
-  
-  /**
-   * Update game logic
-   */
-  update(deltaTime) {
-    // Skip updates if in menu
-    if (this.inMenu) return;
-    
-    // Update particles
-    this.particles.update(deltaTime);
-    
-    // Update based on game status
+
+  // ── Update ───────────────────────────────────────────────
+
+  _update(dt) {
     switch (this.state.status) {
-      case 'playing':
-        this.updatePlaying(deltaTime);
-        break;
-      case 'paused':
-        // Don't update game logic when paused
-        break;
-      case 'gameOver':
-        // Just update particles for visual effects
+      case 'menu':     /* menu is purely visual */           break;
+      case 'countdown': this._updateCountdown(dt);           break;
+      case 'playing':   this._updatePlaying(dt);             break;
+      case 'paused':    /* nothing */                        break;
+      case 'gameOver':  /* particles only */
+        this.particles.update(dt);
         break;
     }
   }
-  
-  /**
-   * Update playing state
-   */
-  updatePlaying(deltaTime) {
-    // Update timer
-    this.state.updateTime(deltaTime);
-    
-    // Accumulate time for snake movement
-    this.accumulator += deltaTime;
-    
-    // Move snake based on speed
+
+  _updateCountdown(dt) {
+    this.countdownTimer -= dt;
+    if (this.countdownTimer <= 0) {
+      this.countdownValue--;
+      this.countdownTimer = GameConfig.TIMING.COUNTDOWN_MS;
+
+      if (this.countdownValue < 0) {
+        // Countdown finished — start playing
+        this.state.setStatus('playing');
+        this.state.startTime = Date.now();
+      }
+    }
+  }
+
+  _updatePlaying(dt) {
+    this.state.updateTime(dt);
+    this.particles.update(dt);
+
+    // Power-ups update
+    this.powerUps.update(dt);
+
+    // Food update
+    this.food.update(Date.now(), dt);
+
+    // Snake step (fixed-timestep)
+    this.accumulator += dt;
     while (this.accumulator >= this.state.speed) {
       this.accumulator -= this.state.speed;
-      
-      // Move snake
-      const collision = this.snake.move();
-      
-      if (collision) {
-        this.handleCollision(collision);
-        return;
-      }
-      
-      // Check food collision
-      const food = this.food.checkCollision();
-      if (food) {
-        this.eatFood(food);
-      }
-      
-      // Check power-up collision
-      const powerUp = this.powerUps.checkCollision();
-      if (powerUp) {
-        this.collectPowerUp(powerUp);
-      }
-    }
-    
-    // Update food system
-    this.food.update(Date.now());
-    
-    // Update power-ups
-    this.powerUps.update(deltaTime);
-    
-    // Apply magnet effect
-    if (this.state.hasPowerUp('magnet')) {
-      this.food.applyMagnet();
-    }
-    
-    // Auto-save (every 10 seconds)
-    if (Date.now() - this.lastSaveTime > GameConfig.API.AUTO_SAVE_INTERVAL) {
-      this.saveSession();
-      this.lastSaveTime = Date.now();
+      this._step();
     }
   }
-  
-  /**
-   * Handle collision
-   */
-  handleCollision(type) {
-    console.log('[NeonSnake] Collision:', type);
-    
-    // Visual feedback
-    const head = this.state.snake.segments[0];
-    const canvasPos = this.renderer.gridToCanvas(head.x, head.y);
-    
-    this.particles.explode(
-      canvasPos.x + GameConfig.CANVAS.CELL_SIZE / 2,
-      canvasPos.y + GameConfig.CANVAS.CELL_SIZE / 2,
-      type === 'wall' ? '#ff0055' : '#ff8800',
-      30
-    );
-    
-    this.state.triggerScreenShake();
-    this.state.triggerFlash();
-    
-    // Audio
-    this.audio.play('gameover');
-    
-    // Game over
-    this.state.setStatus('gameOver');
+
+  _step() {
+    // Move snake
+    const result = this.snake.move();
+
+    if (result === 'wall' || result === 'self') {
+      this._triggerGameOver();
+      return;
+    }
+
+    if (result === 'shielded') {
+      this.audio.play('shield');
+      return;
+    }
+
+    // Food check
+    const food = this.food.checkCollision();
+    if (food) {
+      this._eatFood(food);
+    }
+
+    // Power-up check
+    const pu = this.powerUps.checkCollision();
+    if (pu) {
+      this._collectPowerUp(pu);
+    }
+
+    // Move sound
+    this.audio.play('move');
+
+    // Turbo trail particles
+    if (this.state.hasPowerUp('speedBoost')) {
+      const head = this.snake.getHead();
+      const cx   = head.x * GameConfig.CANVAS.CELL_SIZE + GameConfig.CANVAS.CELL_SIZE / 2;
+      const cy   = head.y * GameConfig.CANVAS.CELL_SIZE + GameConfig.CANVAS.CELL_SIZE / 2;
+      this.particles.sparkle(cx, cy, '#ffee00', 3);
+    }
   }
-  
-  /**
-   * Eat food
-   */
-  eatFood(food) {
-    const value = this.food.eat(food);
-    
-    // Visual effects
-    const canvasPos = this.renderer.gridToCanvas(food.x, food.y);
-    const centerX = canvasPos.x + GameConfig.CANVAS.CELL_SIZE / 2;
-    const centerY = canvasPos.y + GameConfig.CANVAS.CELL_SIZE / 2;
-    
-    this.particles.explode(centerX, centerY, food.type === 'golden' ? '#ffee00' : '#00ff88', 15);
-    this.particles.text(centerX, centerY - 20, `+${value}`, '#ffffff');
-    
-    // Audio
-    this.audio.play('eat', { isGolden: food.type === 'golden' });
-    
-    // Trigger food eaten event effects
-    this.state.emit('foodEaten', { food });
-  }
-  
-  /**
-   * Collect power-up
-   */
-  collectPowerUp(powerUp) {
-    const config = this.powerUps.collect(powerUp);
-    
-    // Visual effects
-    const canvasPos = this.renderer.gridToCanvas(powerUp.x, powerUp.y);
-    const centerX = canvasPos.x + GameConfig.CANVAS.CELL_SIZE / 2;
-    const centerY = canvasPos.y + GameConfig.CANVAS.CELL_SIZE / 2;
-    
-    this.particles.explode(centerX, centerY, config.color, 20);
-    this.particles.text(centerX, centerY - 30, config.name, config.color);
-    
-    // Audio
-    this.audio.play('powerup', { powerUpType: powerUp.type });
-    
-    // Flash effect
-    this.state.triggerFlash(300);
-  }
-  
-  /**
-   * Render game
-   */
-  render() {
-    if (this.inMenu) {
-      this.renderMenu();
+
+  // ── Food ─────────────────────────────────────────────────
+
+  _eatFood(food) {
+    const pts = this.food.eat(food);
+    const cx  = food.x * GameConfig.CANVAS.CELL_SIZE + GameConfig.CANVAS.CELL_SIZE / 2;
+    const cy  = food.y * GameConfig.CANVAS.CELL_SIZE + GameConfig.CANVAS.CELL_SIZE / 2;
+
+    // Particles
+    const color = food.type === 'golden' ? '#ffdd00'
+                : food.type === 'bonus'  ? '#ff8844'
+                : '#00ff88';
+    this.particles.explode(cx, cy, color, food.type === 'golden' ? 22 : 14);
+    this.particles.scoreText(cx, cy - 18, `+${pts}`, '#ffffff');
+
+    // Combo label if applicable
+    if (this.state.combo > 1) {
+      this.particles.bigText(cx, cy - 50, `\u00d7${this.state.combo} COMBO!`, '#ffdd00');
+      this.audio.play('combo', { level: this.state.combo });
+    }
+
+    // Sound
+    if (food.type === 'bonus') {
+      this.audio.play('bonusEat');
     } else {
-      this.renderer.render(this.snake, this.food, this.powerUps, this.particles);
-      
-      // Render pause overlay
-      if (this.state.status === 'paused') {
-        this.renderer.drawPause();
-      }
-      
-      // Render game over overlay
-      if (this.state.status === 'gameOver') {
-        this.renderer.drawGameOver();
-      }
+      this.audio.play('eat', { golden: food.type === 'golden' });
     }
   }
-  
-  /**
-   * Render main menu
-   */
-  renderMenu() {
-    this.renderer.drawMenu('NEON SNAKE ARENA', this.menuOptions, this.selectedOption);
+
+  // ── Power-up ─────────────────────────────────────────────
+
+  _collectPowerUp(pu) {
+    const cfg = this.powerUps.collect(pu);
+    const cx  = pu.x * GameConfig.CANVAS.CELL_SIZE + GameConfig.CANVAS.CELL_SIZE / 2;
+    const cy  = pu.y * GameConfig.CANVAS.CELL_SIZE + GameConfig.CANVAS.CELL_SIZE / 2;
+
+    this.particles.explode(cx, cy, cfg.color, 20);
+    this.particles.bigText(cx, cy - 40, cfg.name, cfg.color);
+    this.state.triggerFlash();
+    this.audio.play('powerup', { powerType: pu.type });
   }
-  
-  /**
-   * Handle game over
-   */
-  handleGameOver(data) {
-    console.log('[NeonSnake] Game Over - Score:', data.score);
-    
-    // Submit score to hub
+
+  // ── Game over ────────────────────────────────────────────
+
+  _triggerGameOver() {
+    if (this.state.status === 'gameOver') return;
+
+    // Death explosion
+    const head = this.snake.getHead();
+    if (head) {
+      const cx = head.x * GameConfig.CANVAS.CELL_SIZE + GameConfig.CANVAS.CELL_SIZE / 2;
+      const cy = head.y * GameConfig.CANVAS.CELL_SIZE + GameConfig.CANVAS.CELL_SIZE / 2;
+      this.particles.explode(cx, cy, '#ff0055', 35, { speed: 6, life: 1200 });
+    }
+    this.state.triggerScreenShake(8, 300);
+    this.audio.play('gameover');
+
+    // Capture stats before reset
+    this._gameOverStats = {
+      score:        this.state.score,
+      length:       this.state.snake.segments.length,
+      level:        this.state.level,
+      foodEaten:    this.state.foodEaten,
+      goldenEaten:  this.state.goldenFoodEaten,
+      powerUps:     this.state.stats.powerUpsCollected,
+      elapsedMs:    this.state.elapsedTime,
+      isHighScore:  this.state.score > 0 &&
+                    this.state.score >= (this.state.highScores[this.state.mode] || 0),
+    };
+
+    this.state.setStatus('gameOver');
+
     if (window.ArcadeHub) {
-      ArcadeHub.gameOver(data.score, {
-        mode: this.state.mode,
-        segments: this.state.snake.segments.length,
+      ArcadeHub.gameOver(this.state.score, {
+        mode:     this.state.mode,
+        length:   this.state.snake.segments.length,
         duration: Math.floor(this.state.elapsedTime / 1000),
       });
     }
-    
-    // Save to localStorage
-    this.saveHighScore();
   }
-  
-  /**
-   * Handle food eaten event
-   */
-  handleFoodEaten(data) {
-    // Additional effects can be added here
+
+  // ── Render ───────────────────────────────────────────────
+
+  _render() {
+    const nowMs = performance.now();
+
+    switch (this.state.status) {
+      case 'menu':
+        this.renderer.renderMenu(
+          this.menuOptions,
+          this.selectedMenu,
+          this.state.highScores
+        );
+        break;
+
+      case 'countdown':
+        // Render the live game world behind the countdown
+        this.renderer.render(this.snake, this.food, this.powerUps, this.particles, nowMs);
+        this.renderer.renderCountdown(this.countdownValue);
+        break;
+
+      case 'playing':
+        this.renderer.render(this.snake, this.food, this.powerUps, this.particles, nowMs);
+        break;
+
+      case 'paused':
+        this.renderer.render(this.snake, this.food, this.powerUps, this.particles, nowMs);
+        this.renderer.renderPause();
+        break;
+
+      case 'gameOver':
+        this.renderer.render(this.snake, this.food, this.powerUps, this.particles, nowMs);
+        if (this._gameOverStats) {
+          this.renderer.renderGameOver(this._gameOverStats);
+        }
+        break;
+    }
   }
-  
-  /**
-   * Handle power-up collect event
-   */
-  handlePowerUpCollect(data) {
-    // Additional effects can be added here
+
+  // ── Public controls ──────────────────────────────────────
+
+  /** Called by InputSystem when a menu key is pressed. */
+  handleMenuKey(key) {
+    if (this.state.status !== 'menu') return;
+
+    if (GameConfig.INPUT.UP.includes(key)) {
+      this.selectedMenu = (this.selectedMenu - 1 + this.menuOptions.length) % this.menuOptions.length;
+    } else if (GameConfig.INPUT.DOWN.includes(key)) {
+      this.selectedMenu = (this.selectedMenu + 1) % this.menuOptions.length;
+    } else if (key === 'Enter' || key === ' ') {
+      this.selectMode(this.selectedMenu);
+    }
   }
-  
-  /**
-   * Save high score
-   */
-  saveHighScore() {
-    this.state.saveHighScore();
+
+  selectMode(index) {
+    const modeKeys = Object.keys(GameConfig.MODES);
+    const modeId   = GameConfig.MODES[modeKeys[index]]?.id;
+    if (!modeId) return;
+
+    this.state.setMode(modeId);
+    this._beginGame();
   }
-  
-  /**
-   * Save session state (for resume)
-   */
-  saveSession() {
-    // Could implement auto-save to localStorage or API
-    // For now, just keep in memory
+
+  _beginGame() {
+    // Reset all state
+    this.state.reset();
+    this.state.setMode(this.state.mode);  // re-apply time limit etc.
+
+    // Init entities
+    const cx = Math.floor(GameConfig.CANVAS.GRID_WIDTH / 2);
+    const cy = Math.floor(GameConfig.CANVAS.GRID_HEIGHT / 2);
+    this.snake.init(cx, cy, 3);
+    this.food.clear();
+    this.powerUps.clear();
+    this.particles.clear();
+    this.food.spawn();
+    this.food.spawn();
+
+    // Start countdown
+    this.countdownValue = 3;
+    this.countdownTimer = GameConfig.TIMING.COUNTDOWN_MS;
+    this.accumulator    = 0;
+    this.state.setStatus('countdown');
   }
-  
-  /**
-   * Pause game
-   */
+
+  restart() {
+    this._gameOverStats = null;
+    this._beginGame();
+  }
+
   pause() {
     if (this.state.status === 'playing') {
       this.state.setStatus('paused');
+      this._escapePressCount = 0;
     }
   }
-  
-  /**
-   * Resume game
-   */
+
   resume() {
     if (this.state.status === 'paused') {
       this.state.setStatus('playing');
-      this.lastTime = performance.now();
+      this.lastTime    = performance.now();
+      this.accumulator = 0;
     }
   }
-  
-  /**
-   * Restart game
-   */
-  restart() {
-    this.startGame();
-  }
-  
-  /**
-   * Exit to menu
-   */
+
   exitToMenu() {
+    this._gameOverStats = null;
+    this.food.clear();
+    this.powerUps.clear();
+    this.particles.clear();
+    this.selectedMenu = 0;
     this.state.reset();
-    this.inMenu = true;
-    this.selectedOption = 0;
+    this.state.setStatus('menu');
   }
-  
-  /**
-   * Exit game
-   */
-  exit() {
-    this.isRunning = false;
-    if (this.animationId) {
-      cancelAnimationFrame(this.animationId);
+
+  toggleMute() {
+    const enabled = this.audio.toggle();
+    // Update mute button icon
+    const btn = document.getElementById('muteBtn');
+    if (btn) {
+      btn.textContent = enabled ? '🔊' : '🔇';
+      btn.classList.toggle('muted', !enabled);
     }
-    
-    if (window.ArcadeHub) {
-      ArcadeHub.exitGame();
-    }
+    return enabled;
   }
-  
-  /**
-   * Destroy game instance
-   */
+
   destroy() {
     this.isRunning = false;
-    if (this.animationId) {
-      cancelAnimationFrame(this.animationId);
-    }
-    
-    if (this.input) {
-      this.input.removeEventListeners();
-    }
+    if (this.animationId) cancelAnimationFrame(this.animationId);
+    if (this.input) this.input.removeEventListeners();
   }
 }
 
-// Initialize game when DOM is ready
+// ── Boot ──────────────────────────────────────────────────
+
 let game = null;
 
 function initGame() {
-  if (game) {
-    game.destroy();
-  }
+  if (game) game.destroy();
   game = new NeonSnakeGame();
   game.init();
 }
@@ -504,13 +437,33 @@ if (document.readyState === 'loading') {
   initGame();
 }
 
-// Handle visibility change (pause when tab hidden)
+// Pause on tab-hide
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && game && game.state.status === 'playing') {
     game.pause();
   }
 });
 
-// Export for debugging
+// Handle ESC from game-over to go back to menu
+window.addEventListener('keydown', e => {
+  if (!game) return;
+  if (e.key === 'Escape') {
+    if (game.state.status === 'gameOver') {
+      game.exitToMenu();
+    } else if (game.state.status === 'paused') {
+      // Second ESC exits to menu
+      game._escapePressCount = (game._escapePressCount || 0) + 1;
+      if (game._escapePressCount >= 2) {
+        game.exitToMenu();
+        game._escapePressCount = 0;
+      }
+    }
+  } else if (e.key === 'r' || e.key === 'R') {
+    if (game.state.status === 'paused') {
+      game.restart();
+    }
+  }
+});
+
 window.NeonSnakeGame = NeonSnakeGame;
-window.gameInstance = () => game;
+window.gameInstance  = () => game;
