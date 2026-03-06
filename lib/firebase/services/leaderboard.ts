@@ -100,7 +100,7 @@ export const leaderboardService = {
     try {
       const db = await getFirebaseDb();
       if (!db) {
-        logger.('Firebase not initialized');
+        logger.error('Firebase not initialized');
         return { success: false, error: 'Firebase not initialized' };
       }
 
@@ -144,7 +144,7 @@ export const leaderboardService = {
           });
         }
       } catch (statsError) {
-        logger.('Error updating user stats:', statsError);
+        logger.error('Error updating user stats:', statsError);
         // Don't fail the score submission if stats update fails
       }
 
@@ -154,7 +154,7 @@ export const leaderboardService = {
 
       return { success: true };
     } catch (error) {
-      logger.('submitScore error:', error);
+      logger.error('submitScore error:', error);
       return { success: false, error: 'Failed to submit score' };
     }
   },
@@ -168,7 +168,7 @@ export const leaderboardService = {
     try {
       const db = await getFirebaseDb();
       if (!db) {
-        logger.('Firebase not initialized');
+        logger.error('Firebase not initialized');
         return { entries: [], hasMore: false, lastDoc: null };
       }
 
@@ -177,7 +177,7 @@ export const leaderboardService = {
       
       // Return cached data if valid and this is the first page
       if (!lastDoc && isCacheValid(cached)) {
-        logger.('Returning cached data');
+        logger.debug('Returning cached data');
         return {
           entries: cached!.data,
           hasMore: cached!.data.length === limitCount,
@@ -250,7 +250,7 @@ export const leaderboardService = {
         lastDoc: newLastDoc,
       };
     } catch (error) {
-      logger.('getLeaderboard error:', error);
+      logger.error('getLeaderboard error:', error);
       return { entries: [], hasMore: false, lastDoc: null };
     }
   },
@@ -260,7 +260,7 @@ export const leaderboardService = {
     try {
       const db = await getFirebaseDb();
       if (!db) {
-        logger.('Firebase not initialized');
+        logger.error('Firebase not initialized');
         return null;
       }
 
@@ -292,7 +292,7 @@ export const leaderboardService = {
       // Rank is count of higher scores + 1
       return countSnapshot.size + 1;
     } catch (error) {
-      logger.('getUserRank error:', error);
+      logger.error('getUserRank error:', error);
       return null;
     }
   },
@@ -302,7 +302,7 @@ export const leaderboardService = {
     try {
       const db = await getFirebaseDb();
       if (!db) {
-        logger.('Firebase not initialized');
+        logger.error('Firebase not initialized');
         return 0;
       }
 
@@ -315,7 +315,7 @@ export const leaderboardService = {
       
       return 0;
     } catch (error) {
-      logger.('getUserHighScore error:', error);
+      logger.error('getUserHighScore error:', error);
       return 0;
     }
   },
@@ -325,7 +325,7 @@ export const leaderboardService = {
     try {
       const db = await getFirebaseDb();
       if (!db) {
-        logger.('Firebase not initialized');
+        logger.error('Firebase not initialized');
         return [];
       }
 
@@ -363,7 +363,7 @@ export const leaderboardService = {
         };
       });
     } catch (error) {
-      logger.('getTopPlayers error:', error);
+      logger.error('getTopPlayers error:', error);
       return [];
     }
   },
@@ -371,7 +371,7 @@ export const leaderboardService = {
   // Clear cache (useful after score submission)
   clearCache: (): void => {
     leaderboardCache.clear();
-    logger.('Cache cleared');
+    logger.debug('Cache cleared');
   },
 
   // Get cache stats for debugging

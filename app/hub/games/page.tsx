@@ -1,6 +1,6 @@
 'use client';
 
-// import { useState } from 'react';
+import { useState } from 'react';
 import { GameCard } from '@/components/game/game-card';
 import { useGames } from '@/hooks/useGames';
 import { Search } from 'lucide-react';

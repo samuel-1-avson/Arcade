@@ -224,7 +224,7 @@ export const messagesService = {
         }))
         .reverse();
     } catch (error) {
-      logger.('getMessages error:', error);
+      logger.error('getMessages error:', error);
       return [];
     }
   },
@@ -259,7 +259,7 @@ export const messagesService = {
       await Promise.all(updates);
     } catch (error) {
       // Silently handle - marking as read is non-critical
-      logger.('markAsRead error:', error);
+      logger.error('markAsRead error:', error);
     }
   },
 

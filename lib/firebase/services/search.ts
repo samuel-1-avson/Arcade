@@ -50,7 +50,7 @@ export const searchService = {
     try {
       const db = await getFirebaseDb();
       if (!db) {
-        logger.('Firebase not initialized');
+        logger.error('Firebase not initialized');
         return [];
       }
 
@@ -91,7 +91,7 @@ export const searchService = {
           };
         });
     } catch (error) {
-      logger.('searchUsers error:', error);
+      logger.error('searchUsers error:', error);
       return [];
     }
   },
@@ -114,7 +114,7 @@ export const searchService = {
     const cached = searchCache.get(cacheKey);
     
     if (isCacheValid(cached)) {
-      logger.('Returning cached results');
+      logger.debug('Returning cached results');
       return cached!.results;
     }
 
@@ -142,7 +142,7 @@ export const searchService = {
 
       return results;
     } catch (error) {
-      logger.('search error:', error);
+      logger.error('search error:', error);
       return [];
     }
   },
@@ -208,7 +208,7 @@ export const searchService = {
         },
       };
     } catch (error) {
-      logger.('getUserProfile error:', error);
+      logger.error('getUserProfile error:', error);
       return null;
     }
   },
