@@ -265,27 +265,61 @@ class NeonSnakeGame {
     this.state.triggerScreenShake(8, 300);
     this.audio.play('gameover');
 
-    // Capture stats before reset
+    const finalScore = this.state.score;
+    const finalMode  = this.state.mode;
+
+    // Capture stats before state changes
     this._gameOverStats = {
-      score:        this.state.score,
+      score:        finalScore,
       length:       this.state.snake.segments.length,
       level:        this.state.level,
       foodEaten:    this.state.foodEaten,
       goldenEaten:  this.state.goldenFoodEaten,
       powerUps:     this.state.stats.powerUpsCollected,
       elapsedMs:    this.state.elapsedTime,
-      isHighScore:  this.state.score > 0 &&
-                    this.state.score >= (this.state.highScores[this.state.mode] || 0),
+      mode:         finalMode,
+      isHighScore:  finalScore > 0 &&
+                    finalScore >= (this.state.highScores[finalMode] || 0),
+      leaderboard:  null,   // null = loading; [] = empty; [{rank,displayName,score}] = ready
+      playerRank:   null,
     };
 
     this.state.setStatus('gameOver');
 
+    // ── Hub bridge: notify parent (handles DB write when embedded + authenticated)
     if (window.ArcadeHub) {
-      ArcadeHub.gameOver(this.state.score, {
-        mode:     this.state.mode,
+      ArcadeHub.gameOver(finalScore, {
+        mode:     finalMode,
         length:   this.state.snake.segments.length,
         duration: Math.floor(this.state.elapsedTime / 1000),
       });
+    }
+
+    // ── Standalone: submit score directly to database
+    if (window.ArcadeAPI) {
+      ArcadeAPI.submitScore({
+        score:    finalScore,
+        metadata: { mode: finalMode, duration: Math.floor(this.state.elapsedTime / 1000) },
+      });
+    }
+
+    // ── Fetch leaderboard for display (always, embedded or standalone)
+    if (window.ArcadeAPI) {
+      const stats = this._gameOverStats; // capture reference for async callback
+      ArcadeAPI.fetchLeaderboard({
+        limit:       7,
+        playerScore: finalScore,
+        onSuccess: (data) => {
+          stats.leaderboard = data.entries;
+          stats.playerRank  = data.playerRank;
+        },
+        onError: () => {
+          stats.leaderboard = [];
+          stats.playerRank  = null;
+        },
+      });
+    } else {
+      this._gameOverStats.leaderboard = [];
     }
   }
 

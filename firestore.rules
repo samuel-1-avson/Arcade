@@ -37,8 +37,9 @@ service cloud.firestore {
     // Valid game IDs
     function isValidGameId(gameId) {
       return gameId in [
-        'snake', 'pacman', 'tetris', 'breakout', 
-        'asteroids', 'minesweeper', '2048', 'tictactoe'
+        'snake', 'pacman', 'tetris', 'breakout',
+        'asteroids', 'minesweeper', '2048', 'tictactoe',
+        'neon-snake'
       ];
     }
     

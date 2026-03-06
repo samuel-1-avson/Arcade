@@ -235,97 +235,240 @@ class Renderer {
 
   renderGameOver(stats) {
     const ctx = this.ctx;
-    const W   = this.canvas.width;
-    const H   = this.canvas.height;
+    const W   = this.canvas.width;   // 720
+    const H   = this.canvas.height;  // 576
 
-    ctx.fillStyle = 'rgba(0,0,0,0.88)';
+    ctx.fillStyle = 'rgba(0,0,0,0.90)';
     ctx.fillRect(0, 0, W, H);
 
-    // "GAME OVER"
+    // ── "GAME OVER" title ─────────────────────────────────
     ctx.save();
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
-    ctx.font         = `900 52px "Orbitron", monospace`;
+    ctx.font         = `900 46px "Orbitron", monospace`;
     ctx.shadowBlur   = 36;
     ctx.shadowColor  = '#ff0055';
     ctx.fillStyle    = '#ff0055';
-    ctx.fillText('GAME OVER', W / 2, H * 0.15);
+    ctx.fillText('GAME OVER', W / 2, 60);
     ctx.restore();
 
-    // Score card
-    const bW = Math.min(W * 0.68, 480);
+    // ── Score card ────────────────────────────────────────
+    const bW = Math.min(W * 0.66, 460);
     const bX = (W - bW) / 2;
-    const bY = H * 0.25;
-    const bH = 66;
+    const bY = 90;
+    const bH = 58;
 
     ctx.save();
     ctx.fillStyle   = 'rgba(0,229,255,0.08)';
-    ctx.strokeStyle = 'rgba(0,229,255,0.4)';
+    ctx.strokeStyle = 'rgba(0,229,255,0.45)';
     ctx.lineWidth   = 1.5;
     this._roundRect(ctx, bX, bY, bW, bH, 8);
     ctx.fill(); ctx.stroke();
 
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
-    ctx.font         = `700 12px "Orbitron", monospace`;
+    ctx.font         = `700 11px "Orbitron", monospace`;
     ctx.fillStyle    = 'rgba(255,255,255,0.4)';
-    ctx.fillText('SCORE', W / 2, bY + 16);
-    ctx.font         = `900 30px "Orbitron", monospace`;
+    ctx.fillText('SCORE', W / 2, bY + 14);
+    ctx.font         = `900 28px "Orbitron", monospace`;
     ctx.fillStyle    = '#ffffff';
     ctx.shadowBlur   = 14;
     ctx.shadowColor  = '#ffffff';
-    ctx.fillText(stats.score, W / 2, bY + 46);
+    ctx.fillText(stats.score.toLocaleString(), W / 2, bY + 40);
     ctx.restore();
 
-    // New high score banner
-    if (stats.isHighScore) {
-      ctx.save();
-      ctx.textAlign    = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.font         = `700 15px "Orbitron", monospace`;
-      ctx.shadowBlur   = 18;
-      ctx.shadowColor  = '#ffdd00';
-      ctx.fillStyle    = '#ffdd00';
-      ctx.fillText('\u2605  NEW HIGH SCORE  \u2605', W / 2, bY + bH + 20);
-      ctx.restore();
-    }
-
-    // Stats
-    const statsY = H * 0.52;
-    const lh     = 26;
-    const rows   = [
-      ['LENGTH',      stats.length],
-      ['LEVEL',       stats.level],
-      ['FOOD EATEN',  stats.foodEaten],
-      ['GOLDEN',      stats.goldenEaten],
-      ['POWER-UPS',   stats.powerUps],
-      ['TIME',        this._fmtMs(stats.elapsedMs)],
-    ];
-
-    const col1 = W * 0.20;
-    const col2 = W * 0.62;
-
-    ctx.save();
-    ctx.textBaseline = 'middle';
-    ctx.font         = `11px "Space Mono", monospace`;
-    rows.forEach(([label, val], i) => {
-      const ry = statsY + i * lh;
-      ctx.textAlign = 'left';
-      ctx.fillStyle = 'rgba(255,255,255,0.38)';
-      ctx.fillText(label, col1, ry);
-      ctx.textAlign = 'left';
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText(String(val), col2, ry);
-    });
-    ctx.restore();
-
-    // Footer
+    // High score banner or mode label
     ctx.save();
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
-    ctx.font         = `12px "Orbitron", monospace`;
-    ctx.fillStyle    = 'rgba(255,255,255,0.38)';
-    ctx.fillText('R  restart   \u00b7   ESC  main menu', W / 2, H * 0.9);
+    if (stats.isHighScore) {
+      ctx.font        = `700 13px "Orbitron", monospace`;
+      ctx.shadowBlur  = 18;
+      ctx.shadowColor = '#ffdd00';
+      ctx.fillStyle   = '#ffdd00';
+      ctx.fillText('\u2605  NEW HIGH SCORE  \u2605', W / 2, bY + bH + 16);
+    } else {
+      ctx.font      = `11px "Space Mono", monospace`;
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.fillText((stats.mode || '').toUpperCase() + ' MODE', W / 2, bY + bH + 16);
+    }
+    ctx.restore();
+
+    // ── Compact stats (2 rows × 3 columns) ───────────────
+    const statsY  = bY + bH + 36;
+    const colL    = W * 0.17;
+    const colC    = W * 0.50;
+    const colR    = W * 0.83;
+    const lhStats = 24;
+
+    const statRows = [
+      [['LEN',      stats.length],      ['LVL',    stats.level],      ['TIME',    this._fmtMs(stats.elapsedMs)]],
+      [['FOOD',     stats.foodEaten],   ['GOLDEN', stats.goldenEaten], ['PWR-UPS', stats.powerUps]],
+    ];
+
+    ctx.save();
+    ctx.textBaseline = 'middle';
+    statRows.forEach((row, ri) => {
+      const ry = statsY + ri * lhStats;
+      [[colL, row[0]], [colC, row[1]], [colR, row[2]]].forEach(([cx, [label, val]]) => {
+        ctx.textAlign = 'center';
+        ctx.font      = `9px "Space Mono", monospace`;
+        ctx.fillStyle = 'rgba(255,255,255,0.38)';
+        ctx.fillText(label, cx, ry - 6);
+        ctx.font      = `700 12px "Orbitron", monospace`;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(String(val), cx, ry + 9);
+      });
+    });
+    ctx.restore();
+
+    // ── Divider ───────────────────────────────────────────
+    const divY = statsY + statRows.length * lhStats + 10;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(0,229,255,0.18)';
+    ctx.lineWidth   = 1;
+    ctx.beginPath();
+    ctx.moveTo(W * 0.08, divY); ctx.lineTo(W * 0.92, divY);
+    ctx.stroke();
+    ctx.restore();
+
+    // ── Leaderboard section ───────────────────────────────
+    const lbHeaderY = divY + 16;
+
+    ctx.save();
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font         = `700 10px "Orbitron", monospace`;
+    ctx.fillStyle    = 'rgba(0,229,255,0.7)';
+    ctx.letterSpacing = '2px';
+    ctx.fillText('TOP  SCORES  —  NEON  SNAKE', W / 2, lbHeaderY);
+    ctx.restore();
+
+    const lbStartY = lbHeaderY + 18;
+    const rowH     = 28;
+    const maxRows  = 7;
+    const padL     = W * 0.09;
+    const padR     = W * 0.91;
+
+    // Medal colours for top 3
+    const rankColor = ['#FFD700', '#C0C0C0', '#CD7F32'];
+
+    const leaderboard = stats.leaderboard; // null | [] | [{rank, displayName, score}]
+
+    if (leaderboard === null) {
+      // Loading…
+      ctx.save();
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font         = `12px "Space Mono", monospace`;
+      ctx.fillStyle    = 'rgba(255,255,255,0.35)';
+      const dotCount   = Math.floor(performance.now() / 400) % 4;
+      ctx.fillText('LOADING' + '.'.repeat(dotCount), W / 2, lbStartY + rowH * 3);
+      ctx.restore();
+
+    } else if (leaderboard.length === 0) {
+      // Empty
+      ctx.save();
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font         = `11px "Space Mono", monospace`;
+      ctx.fillStyle    = 'rgba(255,255,255,0.3)';
+      ctx.fillText('NO SCORES YET — BE THE FIRST!', W / 2, lbStartY + rowH * 2);
+      ctx.restore();
+
+    } else {
+      // Rows
+      const displayRows = leaderboard.slice(0, maxRows);
+
+      displayRows.forEach((entry, i) => {
+        const ry = lbStartY + i * rowH;
+
+        // Highlight player's own entry (score match)
+        const isPlayer = (entry.score === stats.score);
+        if (isPlayer) {
+          ctx.save();
+          ctx.fillStyle = 'rgba(0,229,255,0.08)';
+          ctx.strokeStyle = 'rgba(0,229,255,0.3)';
+          ctx.lineWidth = 1;
+          this._roundRect(ctx, padL - 6, ry - rowH / 2 + 2, padR - padL + 12, rowH - 4, 4);
+          ctx.fill(); ctx.stroke();
+          ctx.restore();
+        }
+
+        ctx.save();
+        ctx.textBaseline = 'middle';
+
+        // Rank number
+        const rc = rankColor[i] || (isPlayer ? '#00e5ff' : 'rgba(255,255,255,0.55)');
+        ctx.font      = `700 11px "Orbitron", monospace`;
+        ctx.fillStyle = rc;
+        ctx.textAlign = 'left';
+        ctx.fillText('#' + entry.rank, padL, ry);
+
+        // Display name (truncated)
+        const maxNameW = (padR - padL) * 0.58;
+        ctx.font      = isPlayer ? `700 11px "Space Mono", monospace` : `11px "Space Mono", monospace`;
+        ctx.fillStyle = isPlayer ? '#00e5ff' : 'rgba(255,255,255,0.75)';
+        const nameX   = padL + 36;
+        // Clip long names
+        let name = entry.displayName || 'Anonymous';
+        while (name.length > 3 && ctx.measureText(name).width > maxNameW) {
+          name = name.slice(0, -1);
+        }
+        ctx.textAlign = 'left';
+        ctx.fillText(name, nameX, ry);
+
+        // Score (right-aligned)
+        ctx.font      = `700 11px "Orbitron", monospace`;
+        ctx.fillStyle = i === 0 ? '#FFD700' : (isPlayer ? '#00e5ff' : 'rgba(255,255,255,0.8)');
+        ctx.textAlign = 'right';
+        ctx.fillText(entry.score.toLocaleString(), padR, ry);
+
+        ctx.restore();
+      });
+
+      // Player rank line (shown below list if player is not in top rows)
+      const playerInList = displayRows.some(e => e.score === stats.score);
+      if (!playerInList && stats.playerRank !== null) {
+        const extraY = lbStartY + displayRows.length * rowH + 6;
+
+        // Dashed separator
+        ctx.save();
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.lineWidth   = 1;
+        ctx.beginPath();
+        ctx.moveTo(padL, extraY - 4); ctx.lineTo(padR, extraY - 4);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+
+        ctx.save();
+        ctx.textBaseline = 'middle';
+        ctx.font         = `700 11px "Orbitron", monospace`;
+        ctx.fillStyle    = '#00e5ff';
+        ctx.textAlign    = 'left';
+        ctx.fillText('#' + stats.playerRank, padL, extraY + rowH / 2);
+
+        ctx.font      = `700 11px "Space Mono", monospace`;
+        ctx.fillStyle = '#00e5ff';
+        ctx.textAlign = 'left';
+        ctx.fillText('YOU', padL + 36, extraY + rowH / 2);
+
+        ctx.font      = `700 11px "Orbitron", monospace`;
+        ctx.textAlign = 'right';
+        ctx.fillText(stats.score.toLocaleString(), padR, extraY + rowH / 2);
+        ctx.restore();
+      }
+    }
+
+    // ── Footer ────────────────────────────────────────────
+    ctx.save();
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font         = `11px "Orbitron", monospace`;
+    ctx.fillStyle    = 'rgba(255,255,255,0.3)';
+    ctx.fillText('R  restart   \u00b7   ESC  main menu', W / 2, H - 18);
     ctx.restore();
   }
 
