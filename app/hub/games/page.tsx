@@ -1,8 +1,10 @@
+'use client';
+
 import Link from 'next/link';
 
 export default function GamesPage() {
   return (
-    <div style={{ padding: 40 }}>
+    <div style={{ padding: 40, color: 'white' }}>
       <h1 style={{ color: '#00e5ff', fontSize: 28, marginBottom: 20 }}>
         GAME LIBRARY
       </h1>
