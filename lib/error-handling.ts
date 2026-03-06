@@ -1,4 +1,7 @@
 // Error handling utilities for consistent error handling across the app
+import { createLogger } from './logger';
+
+const logger = createLogger('ErrorHandling');
 
 export type ErrorSeverity = 'low' | 'medium' | 'high' | 'critical';
 
@@ -102,7 +105,7 @@ export function handleError(
 
   // Log to console
   if (logToConsole) {
-    console.error(`[Error] ${context || 'Unknown operation'}:`, {
+    logger.error(`${context || 'Unknown operation'}:`, {
       message: appError.message,
       code: appError.code,
       severity: appError.severity,

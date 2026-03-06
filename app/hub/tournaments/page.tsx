@@ -8,6 +8,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { tournamentsService, Tournament } from '@/lib/firebase/services/tournaments';
 import { cn } from '@/lib/utils';
 import { Modal, ModalFooter } from '@/components/ui/modal';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('Tournaments');
 
 
 type TabType = 'upcoming' | 'active' | 'ended';
@@ -115,9 +118,9 @@ export default function TournamentsPage() {
   };
 
   const handleCreateTournament = async () => {
-    console.log('[Tournaments] Create tournament clicked, user:', user);
+    logger.debug('Create tournament clicked, user:', user?.id);
     if (!user) {
-      console.log('[Tournaments] No user, returning');
+      logger.debug('No user, returning');
       return;
     };
     
@@ -224,7 +227,7 @@ export default function TournamentsPage() {
         <Button 
           disabled={!user}
           onClick={() => {
-            console.log('[Tournaments] Opening create dialog');
+            logger.debug('Opening create dialog');
             setIsCreateDialogOpen(true);
           }}
         >
@@ -352,7 +355,7 @@ export default function TournamentsPage() {
               <Button 
                 disabled={!user}
                 onClick={() => {
-                  console.log('[Tournaments] Opening create dialog from empty state');
+                  logger.debug('Opening create dialog from empty state');
                   setIsCreateDialogOpen(true);
                 }}
               >

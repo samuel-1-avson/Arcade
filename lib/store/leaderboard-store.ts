@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import { LeaderboardEntry } from '@/types/game';
 import { leaderboardService, LeaderboardResult } from '@/lib/firebase/services/leaderboard';
 import { QueryDocumentSnapshot } from 'firebase/firestore';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('LeaderboardStore');
 
 interface LeaderboardState {
   entries: LeaderboardEntry[];
@@ -63,7 +66,7 @@ export const useLeaderboardStore = create<LeaderboardState>()((set, get) => ({
           .catch(() => set({ currentUserRank: null }));
       }
     } catch (error) {
-      console.error('[LeaderboardStore] fetchLeaderboard error:', error);
+      logger.error('fetchLeaderboard error:', error);
       set({ 
         error: 'Failed to load leaderboard. Please try again.', 
         isLoading: false,
@@ -92,7 +95,7 @@ export const useLeaderboardStore = create<LeaderboardState>()((set, get) => ({
         lastDoc: result.lastDoc,
       });
     } catch (error) {
-      console.error('[LeaderboardStore] loadMore error:', error);
+      logger.error('loadMore error:', error);
       set({ 
         error: 'Failed to load more entries. Please try again.', 
         isLoadingMore: false,

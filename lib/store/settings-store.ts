@@ -4,6 +4,9 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { getFirebaseDb } from '@/lib/firebase/config';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('Settings');
 
 export interface Settings {
   soundEnabled: boolean;
@@ -73,7 +76,7 @@ export const useSettingsStore = create<SettingsState>()(
             updatedAt: serverTimestamp(),
           }, { merge: true });
         } catch (error) {
-          console.warn('[Settings] Failed to sync to Firestore:', error);
+          logger.warn('Failed to sync to Firestore:', error);
         }
       },
 
@@ -97,7 +100,7 @@ export const useSettingsStore = create<SettingsState>()(
             set(firebaseSettings);
           }
         } catch (error) {
-          console.warn('[Settings] Failed to load from Firestore:', error);
+          logger.warn('Failed to load from Firestore:', error);
         }
       },
     }),

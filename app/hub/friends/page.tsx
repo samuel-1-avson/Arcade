@@ -23,6 +23,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { friendsService, Friend, FriendRequest } from '@/lib/firebase/services/friends';
 import { messagesService, Message, Conversation } from '@/lib/firebase/services/messages';
 import { cn } from '@/lib/utils';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('Friends');
 
 export default function FriendsPage() {
   const { user } = useAuth();
@@ -65,7 +68,7 @@ export default function FriendsPage() {
       const friendIds = new Set(friendsData.map(f => f.id));
       setOnlineUsers(onlineData.filter(u => u.userId !== user.id && !friendIds.has(u.userId)));
     } catch (error) {
-      console.error('[Friends] Error loading data:', error);
+      logger.error('Error loading data:', error);
     } finally {
       setIsLoading(false);
     }

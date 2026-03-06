@@ -70,3 +70,7 @@ temp/
 diff.txt
 *.bak
 *.swp
+
+# Firebase Functions compiled output
+functions/lib/
+functions/.runtimeconfig.json

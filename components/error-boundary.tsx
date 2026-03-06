@@ -4,6 +4,9 @@ import { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react';
 import { Button } from './ui/button';
 import Link from 'next/link';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('ErrorBoundary');
 
 interface Props {
   children: ReactNode;
@@ -30,7 +33,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('[ErrorBoundary] Uncaught error:', error, errorInfo);
+    logger.error('Uncaught error:', error, errorInfo);
     
     this.setState(prev => ({
       error,
@@ -296,7 +299,7 @@ export function HubErrorBoundary({ children }: { children: ReactNode }) {
     <ErrorBoundary
       onError={(error, errorInfo) => {
         // Log to your error tracking service
-        console.error('[HubErrorBoundary]', error, errorInfo);
+        logger.error('[HubErrorBoundary]', error, errorInfo);
       }}
     >
       {children}

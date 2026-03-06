@@ -1,5 +1,8 @@
 'use client';
 
+import { createLogger } from '@/lib/logger';
+const logger = createLogger('GameIcon');
+
 import { 
   Gamepad2, 
   Ghost, 
@@ -55,7 +58,7 @@ export function GameIcon({ icon, className, size = 24 }: GameIconProps) {
   const IconComponent = iconMap[icon];
   
   if (!IconComponent) {
-    console.warn(`Icon "${icon}" not found, using default`);
+    logger.warn(`Icon "${icon}" not found, using default`);
     return <Gamepad2 className={className} size={size} />;
   }
   

@@ -15,6 +15,9 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { getFirebaseDb } from '../config';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('Messages');
 
 const CONVERSATIONS_COLLECTION = 'conversations';
 const MESSAGES_COLLECTION = 'messages';
@@ -221,7 +224,7 @@ export const messagesService = {
         }))
         .reverse();
     } catch (error) {
-      console.error('[Messages] getMessages error:', error);
+      logger.('getMessages error:', error);
       return [];
     }
   },
@@ -256,7 +259,7 @@ export const messagesService = {
       await Promise.all(updates);
     } catch (error) {
       // Silently handle - marking as read is non-critical
-      console.warn('[Messages] markAsRead error:', error);
+      logger.('markAsRead error:', error);
     }
   },
 

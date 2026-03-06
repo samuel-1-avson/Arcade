@@ -1,92 +1,114 @@
 /**
- * User Lifecycle
- * Handles user creation, profile updates, and notifications
+ * User Lifecycle Management
+ * User creation, updates, and notifications
  */
 
-import { functions, admin, db, sendNotification, recordAnalyticsEvent } from './utils';
-const { logger, LogCategory } = require('../logger');
+import { onDocumentUpdated, onDocumentCreated } from 'firebase-functions/v2/firestore';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { db, sendNotification, recordAnalyticsEvent, logger, LogCategory } from './utils';
+import * as admin from 'firebase-admin';
 
 /**
- * Handle user profile updates (e.g., level-up detection)
+ * Handle user profile updates
  */
-export const onUserUpdate = functions.firestore
-    .document('users/{userId}')
-    .onUpdate(async (change, context) => {
-        const userId = context.params.userId;
-        const before = change.before.data();
-        const after = change.after.data();
+export const onUserUpdate = onDocumentUpdated(
+  {
+    document: 'users/{userId}',
+    region: 'us-central1',
+    memory: '256MiB',
+  },
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    const userId = event.params.userId;
 
-        // Check for level up
-        if (after.level > before.level) {
-            await sendNotification(userId, {
-                type: 'level_up',
-                title: 'Level Up!',
-                message: `Congratulations! You reached level ${after.level}!`,
-                icon: '⬆️',
-            });
+    if (!before || !after) return;
 
-            await recordAnalyticsEvent('level_up', {
-                userId,
-                newLevel: after.level,
-                previousLevel: before.level,
-            });
-        }
+    // Check for level up
+    if (after.level > before.level) {
+      await sendNotification(userId, {
+        type: 'level_up',
+        title: 'Level Up!',
+        message: `Congratulations! You reached level ${after.level}!`,
+        icon: '⬆️',
+      });
 
-        return null;
-    });
+      await recordAnalyticsEvent('level_up', {
+        userId,
+        newLevel: after.level,
+        previousLevel: before.level,
+      });
+    }
+  }
+);
 
 /**
  * Handle new user creation
  */
-export const onUserCreate = functions.firestore
-    .document('users/{userId}')
-    .onCreate(async (snap, context) => {
-        const userId = context.params.userId;
-        const userData = snap.data();
+export const onUserCreate = onDocumentCreated(
+  {
+    document: 'users/{userId}',
+    region: 'us-central1',
+    memory: '256MiB',
+  },
+  async (event) => {
+    const snap = event.data;
+    if (!snap) return;
 
-        logger.info(LogCategory.USER, `New user created: ${userId}`);
+    const userId = event.params.userId;
+    const userData = snap.data();
 
-        // Increment global user count
-        await db.collection('stats').doc('global').set(
-            {
-                totalUsers: admin.firestore.FieldValue.increment(1),
-            },
-            { merge: true }
-        );
+    logger.info(LogCategory.USER, `New user created: ${userId}`);
 
-        // Send welcome notification
-        await sendNotification(userId, {
-            type: 'welcome',
-            title: 'Welcome to Arcade Hub!',
-            message: 'Start playing games to earn achievements and climb the leaderboards!',
-            icon: '🎮',
-        });
+    // Initialize user stats document
+    await db
+      .collection('stats')
+      .doc('global')
+      .set(
+        {
+          totalUsers: admin.firestore.FieldValue.increment(1),
+        },
+        { merge: true }
+      );
 
-        // Record analytics
-        await recordAnalyticsEvent('user_signup', {
-            userId,
-            isAnonymous: userData.isAnonymous || false,
-        });
-
-        return null;
+    // Send welcome notification
+    await sendNotification(userId, {
+      type: 'welcome',
+      title: 'Welcome to Arcade Hub!',
+      message: 'Start playing games to earn achievements and climb the leaderboards!',
+      icon: '🎮',
     });
 
+    await recordAnalyticsEvent('user_signup', {
+      userId,
+      isAnonymous: userData.isAnonymous || false,
+    });
+  }
+);
+
 /**
- * HTTP endpoint for sending test notifications
+ * HTTP endpoint for sending notifications (for testing)
  */
-export const sendTestNotification = functions.https.onCall(async (data, context) => {
-    if (!context.auth) {
-        throw new functions.https.HttpsError('unauthenticated', 'Must be signed in');
+export const sendTestNotification = onCall(
+  {
+    region: 'us-central1',
+    memory: '256MiB',
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'Must be signed in');
     }
 
-    const userId = context.auth.uid;
+    const userId = request.auth.uid;
+    const data = request.data;
 
     await sendNotification(userId, {
-        type: 'test',
-        title: data.title || 'Test Notification',
-        message: data.message || 'This is a test notification',
-        icon: '🔔',
+      type: 'test',
+      title: data.title || 'Test Notification',
+      message: data.message || 'This is a test notification',
+      icon: '🔔',
     });
 
     return { success: true };
-});
+  }
+);

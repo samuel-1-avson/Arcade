@@ -18,6 +18,9 @@ import {
   QuerySnapshot,
 } from 'firebase/firestore';
 import { getFirebaseDb } from '../config';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('Leaderboard');
 import { LeaderboardEntry } from '@/types/game';
 
 const SCORES_COLLECTION = 'scores';
@@ -97,7 +100,7 @@ export const leaderboardService = {
     try {
       const db = await getFirebaseDb();
       if (!db) {
-        console.error('[Leaderboard] Firebase not initialized');
+        logger.('Firebase not initialized');
         return { success: false, error: 'Firebase not initialized' };
       }
 
@@ -141,7 +144,7 @@ export const leaderboardService = {
           });
         }
       } catch (statsError) {
-        console.error('[Leaderboard] Error updating user stats:', statsError);
+        logger.('Error updating user stats:', statsError);
         // Don't fail the score submission if stats update fails
       }
 
@@ -151,7 +154,7 @@ export const leaderboardService = {
 
       return { success: true };
     } catch (error) {
-      console.error('[Leaderboard] submitScore error:', error);
+      logger.('submitScore error:', error);
       return { success: false, error: 'Failed to submit score' };
     }
   },
@@ -165,7 +168,7 @@ export const leaderboardService = {
     try {
       const db = await getFirebaseDb();
       if (!db) {
-        console.error('[Leaderboard] Firebase not initialized');
+        logger.('Firebase not initialized');
         return { entries: [], hasMore: false, lastDoc: null };
       }
 
@@ -174,7 +177,7 @@ export const leaderboardService = {
       
       // Return cached data if valid and this is the first page
       if (!lastDoc && isCacheValid(cached)) {
-        console.log('[Leaderboard] Returning cached data');
+        logger.('Returning cached data');
         return {
           entries: cached!.data,
           hasMore: cached!.data.length === limitCount,
@@ -247,7 +250,7 @@ export const leaderboardService = {
         lastDoc: newLastDoc,
       };
     } catch (error) {
-      console.error('[Leaderboard] getLeaderboard error:', error);
+      logger.('getLeaderboard error:', error);
       return { entries: [], hasMore: false, lastDoc: null };
     }
   },
@@ -257,7 +260,7 @@ export const leaderboardService = {
     try {
       const db = await getFirebaseDb();
       if (!db) {
-        console.error('[Leaderboard] Firebase not initialized');
+        logger.('Firebase not initialized');
         return null;
       }
 
@@ -289,7 +292,7 @@ export const leaderboardService = {
       // Rank is count of higher scores + 1
       return countSnapshot.size + 1;
     } catch (error) {
-      console.error('[Leaderboard] getUserRank error:', error);
+      logger.('getUserRank error:', error);
       return null;
     }
   },
@@ -299,7 +302,7 @@ export const leaderboardService = {
     try {
       const db = await getFirebaseDb();
       if (!db) {
-        console.error('[Leaderboard] Firebase not initialized');
+        logger.('Firebase not initialized');
         return 0;
       }
 
@@ -312,7 +315,7 @@ export const leaderboardService = {
       
       return 0;
     } catch (error) {
-      console.error('[Leaderboard] getUserHighScore error:', error);
+      logger.('getUserHighScore error:', error);
       return 0;
     }
   },
@@ -322,7 +325,7 @@ export const leaderboardService = {
     try {
       const db = await getFirebaseDb();
       if (!db) {
-        console.error('[Leaderboard] Firebase not initialized');
+        logger.('Firebase not initialized');
         return [];
       }
 
@@ -360,7 +363,7 @@ export const leaderboardService = {
         };
       });
     } catch (error) {
-      console.error('[Leaderboard] getTopPlayers error:', error);
+      logger.('getTopPlayers error:', error);
       return [];
     }
   },
@@ -368,7 +371,7 @@ export const leaderboardService = {
   // Clear cache (useful after score submission)
   clearCache: (): void => {
     leaderboardCache.clear();
-    console.log('[Leaderboard] Cache cleared');
+    logger.('Cache cleared');
   },
 
   // Get cache stats for debugging

@@ -11,6 +11,9 @@ import {
   getDoc,
 } from 'firebase/firestore';
 import { getFirebaseDb } from '../config';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('Search');
 
 export interface SearchResult {
   id: string;
@@ -47,7 +50,7 @@ export const searchService = {
     try {
       const db = await getFirebaseDb();
       if (!db) {
-        console.error('[Search] Firebase not initialized');
+        logger.('Firebase not initialized');
         return [];
       }
 
@@ -88,7 +91,7 @@ export const searchService = {
           };
         });
     } catch (error) {
-      console.error('[Search] searchUsers error:', error);
+      logger.('searchUsers error:', error);
       return [];
     }
   },
@@ -111,7 +114,7 @@ export const searchService = {
     const cached = searchCache.get(cacheKey);
     
     if (isCacheValid(cached)) {
-      console.log('[Search] Returning cached results');
+      logger.('Returning cached results');
       return cached!.results;
     }
 
@@ -139,7 +142,7 @@ export const searchService = {
 
       return results;
     } catch (error) {
-      console.error('[Search] search error:', error);
+      logger.('search error:', error);
       return [];
     }
   },
@@ -205,7 +208,7 @@ export const searchService = {
         },
       };
     } catch (error) {
-      console.error('[Search] getUserProfile error:', error);
+      logger.('getUserProfile error:', error);
       return null;
     }
   },

@@ -7,6 +7,9 @@ import { useAuthStore, useGameStore } from '@/lib/store';
 import { leaderboardService } from '@/lib/firebase/services/leaderboard';
 import { ArrowLeft, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('GameClient');
 
 interface GameClientProps {
   gameId: string;
@@ -40,7 +43,7 @@ export function GameClient({ gameId }: GameClientProps) {
                   score: event.data.score,
                 });
               } catch (error) {
-                console.error('[GameClient] Failed to submit score:', error);
+                logger.error('Failed to submit score:', error);
               }
             }
           }

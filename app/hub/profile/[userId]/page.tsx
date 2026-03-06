@@ -18,6 +18,9 @@ import { publicProfilesService, PublicProfile } from '@/lib/firebase/services/pu
 import { friendsService } from '@/lib/firebase/services/friends';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { cn } from '@/lib/utils';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('Profile');
 import { Button } from '@/components/ui/button';
 
 export default function PublicProfilePage() {
@@ -85,7 +88,7 @@ export default function PublicProfilePage() {
         setFriendStatus('none');
       }
     } catch (err) {
-      console.error('Failed to check friend status:', err);
+      logger.error('Failed to check friend status:', err);
     }
   };
 
@@ -97,7 +100,7 @@ export default function PublicProfilePage() {
       await friendsService.sendFriendRequest(currentUser.id, userId);
       setFriendStatus('pending_sent');
     } catch (err) {
-      console.error('Failed to send friend request:', err);
+      logger.error('Failed to send friend request:', err);
     } finally {
       setIsAddingFriend(false);
     }

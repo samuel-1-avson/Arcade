@@ -3,6 +3,9 @@
 import { useEffect, useCallback } from 'react';
 import { friendsService } from '@/lib/firebase/services/friends';
 import { useAuthStore } from '@/lib/store';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('Presence');
 
 export function usePresence() {
   const user = useAuthStore((state) => state.user);
@@ -13,7 +16,7 @@ export function usePresence() {
     try {
       await friendsService.updatePresence(user.id, online, currentGame);
     } catch (error) {
-      console.error('[Presence] Failed to update:', error);
+      logger.error('Failed to update:', error);
     }
   }, [user?.id]);
 

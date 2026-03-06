@@ -14,6 +14,9 @@ import {
   limit as firestoreLimit,
 } from 'firebase/firestore';
 import { getFirebaseDb } from '../config';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('Party');
 
 const PARTIES_COLLECTION = 'parties';
 const PARTY_MESSAGES_COLLECTION = 'partyMessages';
@@ -84,7 +87,7 @@ export const partyService = {
 
       return { partyId, code };
     } catch (error) {
-      console.error('[Party] createParty error:', error);
+      logger.error('createParty error:', error);
       return null;
     }
   },
@@ -131,7 +134,7 @@ export const partyService = {
       const party = await partyService.getParty(partyDoc.id);
       return { success: true, party: party || undefined };
     } catch (error) {
-      console.error('[Party] joinParty error:', error);
+      logger.error('joinParty error:', error);
       return { success: false, error: 'Failed to join party' };
     }
   },
@@ -162,7 +165,7 @@ export const partyService = {
         updatedAt: data.updatedAt?.toDate?.() || new Date(),
       };
     } catch (error) {
-      console.error('[Party] getParty error:', error);
+      logger.error('getParty error:', error);
       return null;
     }
   },
@@ -198,7 +201,7 @@ export const partyService = {
 
       return true;
     } catch (error) {
-      console.error('[Party] leaveParty error:', error);
+      logger.error('leaveParty error:', error);
       return false;
     }
   },
@@ -226,7 +229,7 @@ export const partyService = {
 
       return true;
     } catch (error) {
-      console.error('[Party] setReady error:', error);
+      logger.error('setReady error:', error);
       return false;
     }
   },
@@ -253,7 +256,7 @@ export const partyService = {
 
       return true;
     } catch (error) {
-      console.error('[Party] startGame error:', error);
+      logger.error('startGame error:', error);
       return false;
     }
   },
@@ -276,7 +279,7 @@ export const partyService = {
 
       return true;
     } catch (error) {
-      console.error('[Party] sendMessage error:', error);
+      logger.error('sendMessage error:', error);
       return false;
     }
   },
@@ -307,7 +310,7 @@ export const partyService = {
         .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
         .slice(-limitCount);
     } catch (error) {
-      console.error('[Party] getMessages error:', error);
+      logger.error('getMessages error:', error);
       return [];
     }
   },
@@ -345,7 +348,7 @@ export const partyService = {
           });
         },
         (error) => {
-          console.error('[Party] subscribeToParty error:', error);
+          logger.error('subscribeToParty error:', error);
           callback(null);
         }
       );
@@ -381,7 +384,7 @@ export const partyService = {
           callback(messages);
         },
         (error) => {
-          console.error('[Party] subscribeToMessages error:', error);
+          logger.error('subscribeToMessages error:', error);
           callback([]);
         }
       );
@@ -417,7 +420,7 @@ export const partyService = {
 
       return true;
     } catch (error) {
-      console.error('[Party] kickMember error:', error);
+      logger.error('kickMember error:', error);
       return false;
     }
   },
@@ -440,7 +443,7 @@ export const partyService = {
 
       return true;
     } catch (error) {
-      console.error('[Party] inviteToParty error:', error);
+      logger.error('inviteToParty error:', error);
       return false;
     }
   },
