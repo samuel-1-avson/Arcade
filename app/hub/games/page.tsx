@@ -2,25 +2,37 @@
 
 import { useState } from 'react';
 import { GameCard } from '@/components/game/game-card';
-import { useGames } from '@/hooks/useGames';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import type { Game } from '@/types/game';
+
+// Hardcoded games - direct import
+const GAMES: Game[] = [
+  {
+    id: 'neon-snake',
+    name: 'Neon Snake Arena',
+    description: 'A modern cyberpunk twist on the classic Snake game with neon aesthetics, power-ups, and multiple game modes.',
+    icon: 'Gamepad2',
+    difficulty: 'easy',
+    category: 'Arcade',
+    path: '/games/neon-snake/index.html',
+  },
+];
 
 export default function GamesPage() {
-  const { games, filter, setFilter, allGames } = useGames();
+  const [filter, setFilter] = useState<'all' | 'easy' | 'medium' | 'hard'>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Debug logging
-  console.log('[GamesPage] allGames:', allGames);
-  console.log('[GamesPage] games:', games);
-
+  // Filter games
   const filteredGames = searchQuery
-    ? games.filter(g =>
-      g.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      g.description.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    : games;
+    ? GAMES.filter(g =>
+        g.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        g.description.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : filter === 'all'
+    ? GAMES
+    : GAMES.filter(g => g.difficulty === filter);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -31,7 +43,7 @@ export default function GamesPage() {
             Game Library
           </h1>
           <p className="text-muted-foreground text-sm">
-            {allGames.length} games available
+            {GAMES.length} games available
           </p>
         </div>
 
@@ -80,13 +92,10 @@ export default function GamesPage() {
         </div>
       ) : (
         <div className="bg-elevated border border-white/[0.06] p-12 text-center">
-          <p className="text-muted-foreground mb-2">No games found.</p>
-          <p className="text-muted-foreground text-sm mb-4">
-            Debug: allGames.length = {allGames.length}, games.length = {games.length}
-          </p>
+          <p className="text-muted-foreground">No games found.</p>
           <button
             onClick={() => { setSearchQuery(''); setFilter('all'); }}
-            className="text-accent hover:underline text-sm"
+            className="text-accent hover:underline mt-2 text-sm"
           >
             Clear filters
           </button>
