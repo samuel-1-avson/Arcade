@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Neon Snake Arena - A modern cyberpunk snake game with power-ups and multiple game modes">
+  <title>Neon Snake Arena | Arcade Hub</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Game Container -->
+  <div id="gameContainer" class="game-container">
+    <!-- Canvas -->
+    <canvas id="gameCanvas" class="game-canvas"></canvas>
+    
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+      <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <h1 class="loading-title">NEON SNAKE ARENA</h1>
+        <p class="loading-text">Loading...</p>
+      </div>
+    </div>
+    
+    <!-- Controls Hint -->
+    <div id="controlsHint" class="controls-hint">
+      <div class="controls-section">
+        <h3>Movement</h3>
+        <div class="keys">
+          <span class="key">WASD</span> or <span class="key">Arrows</span>
+        </div>
+      </div>
+      <div class="controls-section">
+        <h3>Pause</h3>
+        <div class="keys">
+          <span class="key">P</span> or <span class="key">ESC</span>
+        </div>
+      </div>
+      <div class="controls-section">
+        <h3>Restart</h3>
+        <div class="keys">
+          <span class="key">R</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Power-up Legend -->
+    <div id="powerupLegend" class="powerup-legend">
+      <h3>Power-ups</h3>
+      <div class="powerup-list">
+        <div class="powerup-item">
+          <span class="powerup-icon" style="color: #ffee00;">⚡</span>
+          <span class="powerup-name">Speed Boost</span>
+        </div>
+        <div class="powerup-item">
+          <span class="powerup-icon" style="color: #00e5ff;">👻</span>
+          <span class="powerup-name">Ghost Mode</span>
+        </div>
+        <div class="powerup-item">
+          <span class="powerup-icon" style="color: #00ff88;">✨</span>
+          <span class="powerup-name">2x Score</span>
+        </div>
+        <div class="powerup-item">
+          <span class="powerup-icon" style="color: #ff0055;">🔽</span>
+          <span class="powerup-name">Shrink</span>
+        </div>
+        <div class="powerup-item">
+          <span class="powerup-icon" style="color: #b300ff;">🧲</span>
+          <span class="powerup-name">Magnet</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Mobile Controls -->
+    <div id="mobileControls" class="mobile-controls">
+      <div class="d-pad">
+        <button class="d-btn d-up" data-dir="up">▲</button>
+        <div class="d-middle">
+          <button class="d-btn d-left" data-dir="left">◀</button>
+          <button class="d-btn d-center">●</button>
+          <button class="d-btn d-right" data-dir="right">▶</button>
+        </div>
+        <button class="d-btn d-down" data-dir="down">▼</button>
+      </div>
+      <button class="action-btn pause-btn">⏸</button>
+    </div>
+  </div>
+  
+  <!-- Game Bridge -->
+  <script src="/games/game-bridge.js"></script>
+  
+  <!-- Game Modules -->
+  <script src="js/core/config.js"></script>
+  <script src="js/core/state.js"></script>
+  <script src="js/entities/snake.js"></script>
+  <script src="js/entities/food.js"></script>
+  <script src="js/entities/power-up.js"></script>
+  <script src="js/entities/particle.js"></script>
+  <script src="js/systems/input.js"></script>
+  <script src="js/systems/renderer.js"></script>
+  <script src="js/systems/audio.js"></script>
+  <script src="js/main.js"></script>
+  
+  <!-- Hide loading screen when ready -->
+  <script>
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const loadingScreen = document.getElementById('loadingScreen');
+        if (loadingScreen) {
+          loadingScreen.style.opacity = '0';
+          setTimeout(() => {
+            loadingScreen.style.display = 'none';
+          }, 500);
+        }
+      }, 1000);
+    });
+    
+    // Handle hub init
+    if (window.ArcadeHub) {
+      ArcadeHub.onInit((data) => {
+        console.log('[NeonSnake] Hub initialized:', data);
+      });
+    }
+  </script>
+</body>
+</html>

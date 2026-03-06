@@ -5,7 +5,15 @@ import { useGameStore } from '@/lib/store';
 import { Game } from '@/types/game';
 
 const GAMES: Game[] = [
-  // Games will be added here
+  {
+    id: 'neon-snake',
+    name: 'Neon Snake Arena',
+    description: 'A modern cyberpunk twist on the classic Snake game with neon aesthetics, power-ups, and multiple game modes.',
+    icon: 'Gamepad2',
+    difficulty: 'easy',
+    category: 'Arcade',
+    path: '/games/neon-snake/index.html',
+  },
 ];
 
 export function useGames() {
