@@ -12,19 +12,27 @@ interface GameState {
   setHighScore: (gameId: string, score: number) => void;
 }
 
-export const useGameStore = create<GameState>()((set) => ({
+export const useGameStore = create<GameState>()((set, get) => ({
   games: [],
   filter: 'all',
   highScores: {},
   
-  setGames: (games) => set({ games }),
+  setGames: (games) => {
+    console.log('[GameStore] Setting games:', games);
+    set({ games });
+  },
   
   setFilter: (filter) => set({ filter }),
   
-  setHighScore: (gameId, score) => set((state) => ({
-    highScores: {
-      ...state.highScores,
-      [gameId]: Math.max(state.highScores[gameId] || 0, score),
-    },
-  })),
+  setHighScore: (gameId, score) => {
+    const currentHigh = get().highScores[gameId] || 0;
+    if (score > currentHigh) {
+      set((state) => ({
+        highScores: {
+          ...state.highScores,
+          [gameId]: score,
+        },
+      }));
+    }
+  },
 }));
