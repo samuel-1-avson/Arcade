@@ -2,14 +2,27 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
-import { useGames } from '@/hooks/useGames';
 import { useAuthStore, useGameStore } from '@/lib/store';
 import { leaderboardService } from '@/lib/firebase/services/leaderboard';
 import { ArrowLeft, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { createLogger } from '@/lib/logger';
+import type { Game } from '@/types/game';
 
 const logger = createLogger('GameClient');
+
+// Hardcoded games list - same as in useGames.ts
+const GAMES: Game[] = [
+  {
+    id: 'neon-snake',
+    name: 'Neon Snake Arena',
+    description: 'A modern cyberpunk twist on the classic Snake game with neon aesthetics, power-ups, and multiple game modes.',
+    icon: 'Gamepad2',
+    difficulty: 'easy',
+    category: 'Arcade',
+    path: '/games/neon-snake/index.html',
+  },
+];
 
 interface GameClientProps {
   gameId: string;
@@ -17,12 +30,12 @@ interface GameClientProps {
 
 export function GameClient({ gameId }: GameClientProps) {
   const router = useRouter();
-  const { allGames } = useGames();
   const { user } = useAuthStore();
   const { setHighScore } = useGameStore();
   const [isLoading, setIsLoading] = useState(true);
   
-  const game = allGames.find(g => g.id === gameId);
+  // Find game in hardcoded list
+  const game = GAMES.find(g => g.id === gameId);
 
   // Listen for messages from the game iframe
   useEffect(() => {
@@ -59,7 +72,7 @@ export function GameClient({ gameId }: GameClientProps) {
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [gameId, router, setHighScore]);
+  }, [gameId, router, setHighScore, user]);
 
   const handleExit = useCallback(() => {
     router.push('/hub/');
@@ -77,6 +90,7 @@ export function GameClient({ gameId }: GameClientProps) {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <h1 className="font-display text-2xl font-bold text-primary mb-4">Game Not Found</h1>
+          <p className="text-muted-foreground mb-4">Game ID: {gameId}</p>
           <Button onClick={handleExit}>Go Back</Button>
         </div>
       </div>

@@ -4,7 +4,7 @@ import { GameClient } from './game-client';
 // Generate static params for all games
 export function generateStaticParams() {
   return [
-    // Games will be added here
+    { gameId: 'neon-snake' },
   ];
 }
 
