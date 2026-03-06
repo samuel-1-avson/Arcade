@@ -1,7 +1,5 @@
 import { Metadata } from 'next';
-import { HeroSection } from '@/components/hero/hero-section';
-import { QuickStats } from '@/components/dashboard/quick-stats';
-import { GameGrid } from '@/components/game/game-grid';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Arcade Gaming Hub',
@@ -10,10 +8,25 @@ export const metadata: Metadata = {
 
 export default function HomePage() {
   return (
-    <div className="space-y-8 animate-fade-in">
-      <HeroSection />
-      <QuickStats />
-      <GameGrid />
+    <div style={{ padding: 40, color: 'white' }}>
+      <h1 style={{ color: '#00e5ff', fontSize: 32, marginBottom: 30 }}>
+        Arcade Gaming Hub
+      </h1>
+      
+      <Link 
+        href="/hub/games"
+        style={{
+          display: 'inline-block',
+          padding: '15px 30px',
+          background: '#00e5ff',
+          color: 'black',
+          textDecoration: 'none',
+          borderRadius: 8,
+          fontWeight: 'bold',
+        }}
+      >
+        Browse Games →
+      </Link>
     </div>
   );
 }
