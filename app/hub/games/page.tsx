@@ -36,6 +36,12 @@ export default function GamesPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* DEBUG INFO - Very visible */}
+      <div style={{ background: 'red', color: 'white', padding: '10px', fontSize: '14px' }}>
+        DEBUG: GAMES.length = {GAMES.length}, filteredGames.length = {filteredGames.length}, 
+        filter = {filter}, searchQuery = &quot;{searchQuery}&quot;
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -101,6 +107,17 @@ export default function GamesPage() {
           </button>
         </div>
       )}
+
+      {/* Manual Game Link - Fallback */}
+      <div className="mt-8 p-6 border border-dashed border-accent/30 rounded">
+        <h3 className="text-accent font-display mb-4">Available Game (Direct Link)</h3>
+        <a 
+          href="/game/neon-snake/" 
+          className="inline-block px-6 py-3 bg-accent text-black font-bold rounded hover:bg-accent/80 transition-colors"
+        >
+          Play Neon Snake Arena →
+        </a>
+      </div>
     </div>
   );
 }
