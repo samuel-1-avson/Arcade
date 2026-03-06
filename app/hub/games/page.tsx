@@ -11,6 +11,10 @@ export default function GamesPage() {
   const { games, filter, setFilter, allGames } = useGames();
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Debug logging
+  console.log('[GamesPage] allGames:', allGames);
+  console.log('[GamesPage] games:', games);
+
   const filteredGames = searchQuery
     ? games.filter(g =>
       g.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -76,10 +80,13 @@ export default function GamesPage() {
         </div>
       ) : (
         <div className="bg-elevated border border-white/[0.06] p-12 text-center">
-          <p className="text-muted-foreground">No games found matching your search.</p>
+          <p className="text-muted-foreground mb-2">No games found.</p>
+          <p className="text-muted-foreground text-sm mb-4">
+            Debug: allGames.length = {allGames.length}, games.length = {games.length}
+          </p>
           <button
             onClick={() => { setSearchQuery(''); setFilter('all'); }}
-            className="text-accent hover:underline mt-2 text-sm"
+            className="text-accent hover:underline text-sm"
           >
             Clear filters
           </button>
