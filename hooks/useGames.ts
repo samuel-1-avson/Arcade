@@ -26,15 +26,12 @@ export function useGames() {
       highScore: highScores[game.id] || 0,
     }));
     setGames(gamesWithScores);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [highScores, setGames]);
 
   const filteredGames = useMemo(() => {
     if (filter === 'all') return games;
     return games.filter((g) => g.difficulty === filter);
   }, [games, filter]);
-
-
 
   return {
     games: filteredGames,
