@@ -3,26 +3,17 @@
  * User creation, updates, and notifications
  */
 
-import { onDocumentUpdated, onDocumentCreated } from 'firebase-functions/v2/firestore';
-import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { db, sendNotification, recordAnalyticsEvent, logger, LogCategory } from './utils';
-import * as admin from 'firebase-admin';
+import { functions, admin, db, sendNotification, recordAnalyticsEvent, logger, LogCategory } from './utils';
 
 /**
  * Handle user profile updates
  */
-export const onUserUpdate = onDocumentUpdated(
-  {
-    document: 'users/{userId}',
-    region: 'us-central1',
-    memory: '256MiB',
-  },
-  async (event) => {
-    const before = event.data?.before.data();
-    const after = event.data?.after.data();
-    const userId = event.params.userId;
-
-    if (!before || !after) return;
+export const onUserUpdate = functions.firestore
+  .document('users/{userId}')
+  .onUpdate(async (change, context) => {
+    const before = change.before.data();
+    const after = change.after.data();
+    const userId = context.params.userId;
 
     // Check for level up
     if (after.level > before.level) {
@@ -39,23 +30,17 @@ export const onUserUpdate = onDocumentUpdated(
         previousLevel: before.level,
       });
     }
-  }
-);
+
+    return null;
+  });
 
 /**
  * Handle new user creation
  */
-export const onUserCreate = onDocumentCreated(
-  {
-    document: 'users/{userId}',
-    region: 'us-central1',
-    memory: '256MiB',
-  },
-  async (event) => {
-    const snap = event.data;
-    if (!snap) return;
-
-    const userId = event.params.userId;
+export const onUserCreate = functions.firestore
+  .document('users/{userId}')
+  .onCreate(async (snap, context) => {
+    const userId = context.params.userId;
     const userData = snap.data();
 
     logger.info(LogCategory.USER, `New user created: ${userId}`);
@@ -83,32 +68,26 @@ export const onUserCreate = onDocumentCreated(
       userId,
       isAnonymous: userData.isAnonymous || false,
     });
-  }
-);
+
+    return null;
+  });
 
 /**
  * HTTP endpoint for sending notifications (for testing)
  */
-export const sendTestNotification = onCall(
-  {
-    region: 'us-central1',
-    memory: '256MiB',
-  },
-  async (request) => {
-    if (!request.auth) {
-      throw new HttpsError('unauthenticated', 'Must be signed in');
-    }
-
-    const userId = request.auth.uid;
-    const data = request.data;
-
-    await sendNotification(userId, {
-      type: 'test',
-      title: data.title || 'Test Notification',
-      message: data.message || 'This is a test notification',
-      icon: '🔔',
-    });
-
-    return { success: true };
+export const sendTestNotification = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Must be signed in');
   }
-);
+
+  const userId = context.auth.uid;
+
+  await sendNotification(userId, {
+    type: 'test',
+    title: data.title || 'Test Notification',
+    message: data.message || 'This is a test notification',
+    icon: '🔔',
+  });
+
+  return { success: true };
+});

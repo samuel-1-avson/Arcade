@@ -3,24 +3,14 @@
  * Event processing, counters, and daily rollups
  */
 
-import { onDocumentCreated } from 'firebase-functions/v2/firestore';
-import { onSchedule } from 'firebase-functions/v2/scheduler';
-import { db, logger, LogCategory } from './utils';
-import * as admin from 'firebase-admin';
+import { functions, admin, db, logger, LogCategory } from './utils';
 
 /**
  * Process analytics events
  */
-export const processAnalytics = onDocumentCreated(
-  {
-    document: 'analytics/{eventId}',
-    region: 'us-central1',
-    memory: '256MiB',
-  },
-  async (event) => {
-    const snap = event.data;
-    if (!snap) return;
-
+export const processAnalytics = functions.firestore
+  .document('analytics/{eventId}')
+  .onCreate(async (snap, context) => {
     const eventData = snap.data();
     logger.info(LogCategory.ANALYTICS, `Processing analytics event: ${eventData.type}`);
 
@@ -39,8 +29,9 @@ export const processAnalytics = onDocumentCreated(
     } catch (error: any) {
       logger.error(LogCategory.ANALYTICS, 'Analytics processing error', { error: error.message });
     }
-  }
-);
+
+    return null;
+  });
 
 /**
  * Update real-time analytics counters
@@ -64,14 +55,10 @@ async function updateAnalyticsCounters(eventData: any): Promise<void> {
 /**
  * Daily analytics aggregation (runs at midnight)
  */
-export const dailyAnalyticsRollup = onSchedule(
-  {
-    schedule: '0 0 * * *',
-    timeZone: 'UTC',
-    region: 'us-central1',
-    memory: '256MiB',
-  },
-  async () => {
+export const dailyAnalyticsRollup = functions.pubsub
+  .schedule('0 0 * * *')
+  .timeZone('UTC')
+  .onRun(async (context) => {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const dateStr = yesterday.toISOString().split('T')[0];
@@ -94,5 +81,6 @@ export const dailyAnalyticsRollup = onSchedule(
     } catch (error: any) {
       logger.error(LogCategory.ANALYTICS, 'Daily rollup error', { error: error.message });
     }
-  }
-);
+
+    return null;
+  });

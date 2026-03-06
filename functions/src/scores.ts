@@ -3,35 +3,23 @@
  * Handles score processing, anti-cheat validation, and leaderboard updates
  */
 
-import { onDocumentCreated } from 'firebase-functions/v2/firestore';
-import { db, rtdb, sendNotification, recordAnalyticsEvent, logger, LogCategory } from './utils';
+import { functions, admin, db, rtdb, sendNotification, recordAnalyticsEvent, logger, LogCategory } from './utils';
 import { checkRateLimit } from './rateLimiter';
 import {
   validateScore,
   isUserBanned,
   logSuspiciousActivity,
 } from './antiCheat';
-import * as admin from 'firebase-admin';
 
 /**
  * Validate and process score submissions
  * Triggered when a new score is added to Firestore
  */
-export const onScoreSubmit = onDocumentCreated(
-  {
-    document: 'scores/{scoreId}',
-    region: 'us-central1',
-    memory: '256MiB',
-  },
-  async (event) => {
-    const snap = event.data;
-    if (!snap) {
-      logger.error(LogCategory.SCORE, 'No data in event');
-      return;
-    }
-
+export const onScoreSubmit = functions.firestore
+  .document('scores/{scoreId}')
+  .onCreate(async (snap, context) => {
     const scoreData = snap.data();
-    const scoreId = event.params.scoreId;
+    const scoreId = context.params.scoreId;
     const startTime = logger.startTimer();
 
     logger.info(LogCategory.SCORE, 'Score submission received', {
@@ -54,7 +42,7 @@ export const onScoreSubmit = onDocumentCreated(
           invalidReason: 'User banned',
           processedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
-        return;
+        return null;
       }
 
       // Rate limit check
@@ -69,7 +57,7 @@ export const onScoreSubmit = onDocumentCreated(
           invalidReason: 'Rate limit exceeded',
           processedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
-        return;
+        return null;
       }
 
       // Enhanced anti-cheat validation
@@ -107,7 +95,7 @@ export const onScoreSubmit = onDocumentCreated(
           processedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
 
-        return;
+        return null;
       }
 
       // Mark as verified
@@ -132,15 +120,17 @@ export const onScoreSubmit = onDocumentCreated(
 
       logger.logScoreSubmission(scoreData.userId, scoreData.gameId, scoreData.score, 'verified');
       logger.endTimer(startTime, 'onScoreSubmit', { scoreId });
+
+      return null;
     } catch (error: any) {
       logger.error(LogCategory.SCORE, 'Score processing error', {
         scoreId,
         error: error.message,
         stack: error.stack,
       });
+      return null;
     }
-  }
-);
+  });
 
 /**
  * Update live leaderboard in RTDB

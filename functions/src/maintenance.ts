@@ -3,21 +3,15 @@
  * Cleanup tasks, health checks, and scheduled maintenance
  */
 
-import { onSchedule } from 'firebase-functions/v2/scheduler';
-import { onRequest } from 'firebase-functions/v2/https';
-import { rtdb, logger, LogCategory } from './utils';
+import { functions, rtdb, logger, LogCategory } from './utils';
 import { cleanupRateLimits } from './rateLimiter';
 
 /**
  * Clean up stale presence data every 10 minutes
  */
-export const cleanupPresence = onSchedule(
-  {
-    schedule: 'every 10 minutes',
-    region: 'us-central1',
-    memory: '256MiB',
-  },
-  async () => {
+export const cleanupPresence = functions.pubsub
+  .schedule('every 10 minutes')
+  .onRun(async (context) => {
     logger.info(LogCategory.SYSTEM, 'Cleaning up stale presence');
 
     const staleThreshold = Date.now() - 60 * 60 * 1000; // 1 hour
@@ -44,41 +38,28 @@ export const cleanupPresence = onSchedule(
     } catch (error: any) {
       logger.error(LogCategory.SYSTEM, 'Presence cleanup error', { error: error.message });
     }
-  }
-);
+
+    return null;
+  });
 
 /**
  * Clean up stale rate limit documents hourly
  */
-export const cleanupRateLimitsScheduled = onSchedule(
-  {
-    schedule: 'every 1 hours',
-    region: 'us-central1',
-    memory: '256MiB',
-  },
-  async () => {
+export const cleanupRateLimitsFn = functions.pubsub
+  .schedule('every 1 hours')
+  .onRun(async (context) => {
     logger.info(LogCategory.SYSTEM, 'Cleaning up stale rate limit documents');
     await cleanupRateLimits();
-  }
-);
+    return null;
+  });
 
 /**
  * Health check endpoint
  */
-export const healthCheck = onRequest(
-  {
-    region: 'us-central1',
-    memory: '256MiB',
-  },
-  (req, res) => {
-    res.json({
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      version: '2.0.0',
-      region: 'us-central1',
-    });
-  }
-);
-
-// Re-export cleanupRateLimits for direct use
-export { cleanupRateLimits };
+export const healthCheck = functions.https.onRequest((req, res) => {
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    version: '2.0.0',
+  });
+});

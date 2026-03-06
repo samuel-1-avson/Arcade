@@ -3,21 +3,15 @@
  * Scheduled tournament start/end and finalization
  */
 
-import { onSchedule } from 'firebase-functions/v2/scheduler';
-import { db, sendNotification, logger, LogCategory } from './utils';
-import * as admin from 'firebase-admin';
+import { functions, admin, db, sendNotification, logger, LogCategory } from './utils';
 
 /**
  * Start scheduled tournaments
  * Runs every 5 minutes to check for tournaments that should start or end
  */
-export const startScheduledTournaments = onSchedule(
-  {
-    schedule: 'every 5 minutes',
-    region: 'us-central1',
-    memory: '256MiB',
-  },
-  async () => {
+export const startScheduledTournaments = functions.pubsub
+  .schedule('every 5 minutes')
+  .onRun(async (context) => {
     const now = admin.firestore.Timestamp.now();
 
     // Find tournaments that should start
@@ -55,8 +49,9 @@ export const startScheduledTournaments = onSchedule(
     for (const doc of toEnd.docs) {
       await finalizeTournament(doc);
     }
-  }
-);
+
+    return null;
+  });
 
 /**
  * Finalize a tournament and determine winners

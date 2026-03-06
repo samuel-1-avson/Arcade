@@ -3,9 +3,7 @@
  * Scheduled aggregation of game leaderboards
  */
 
-import { onSchedule } from 'firebase-functions/v2/scheduler';
-import { db, logger, LogCategory } from './utils';
-import * as admin from 'firebase-admin';
+import { functions, admin, db, logger, LogCategory } from './utils';
 
 const GAMES = [
   'snake',
@@ -24,13 +22,9 @@ const GAMES = [
 /**
  * Aggregate leaderboards every 15 minutes
  */
-export const aggregateLeaderboards = onSchedule(
-  {
-    schedule: 'every 15 minutes',
-    region: 'us-central1',
-    memory: '256MiB',
-  },
-  async () => {
+export const aggregateLeaderboards = functions.pubsub
+  .schedule('every 15 minutes')
+  .onRun(async (context) => {
     logger.info(LogCategory.SCORE, 'Running leaderboard aggregation');
 
     for (const gameId of GAMES) {
@@ -43,8 +37,9 @@ export const aggregateLeaderboards = onSchedule(
 
     // Update global stats
     await updateGlobalStats();
-  }
-);
+
+    return null;
+  });
 
 /**
  * Aggregate a single game's leaderboard
